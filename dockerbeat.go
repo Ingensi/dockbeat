@@ -180,6 +180,7 @@ func (d *Dockerbeat) getMemoryEvent(container *docker.APIContainers, stats *dock
 			"limit":    stats.MemoryStats.Limit,
 			"maxUsage": stats.MemoryStats.MaxUsage,
 			"usage":    stats.MemoryStats.Usage,
+			"usage_p": (float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit)) * 100,
 		},
 	}
 
