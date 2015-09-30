@@ -21,6 +21,14 @@
         }
       ],
       "properties": {
+        "cpu": {
+          "properties": {
+            "usage_p": {
+              "doc_values": "true",
+              "type": "float"
+            }
+          }
+        },
         "timestamp": {
           "type": "date"
         },
