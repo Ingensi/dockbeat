@@ -1,0 +1,61 @@
+{
+	"ImportPath": "github.com/ingensi/dockerbeat",
+	"GoVersion": "go1.5.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/elastic/libbeat/beat",
+			"Comment": "v1.0.0-beta3-90-gb4cc3ae",
+			"Rev": "b4cc3aec923a0aad2c53887ab6a305f6c862f619"
+		},
+		{
+			"ImportPath": "github.com/elastic/libbeat/cfgfile",
+			"Comment": "v1.0.0-beta3-90-gb4cc3ae",
+			"Rev": "b4cc3aec923a0aad2c53887ab6a305f6c862f619"
+		},
+		{
+			"ImportPath": "github.com/elastic/libbeat/common",
+			"Comment": "v1.0.0-beta3-90-gb4cc3ae",
+			"Rev": "b4cc3aec923a0aad2c53887ab6a305f6c862f619"
+		},
+		{
+			"ImportPath": "github.com/elastic/libbeat/logp",
+			"Comment": "v1.0.0-beta3-90-gb4cc3ae",
+			"Rev": "b4cc3aec923a0aad2c53887ab6a305f6c862f619"
+		},
+		{
+			"ImportPath": "github.com/elastic/libbeat/outputs",
+			"Comment": "v1.0.0-beta3-90-gb4cc3ae",
+			"Rev": "b4cc3aec923a0aad2c53887ab6a305f6c862f619"
+		},
+		{
+			"ImportPath": "github.com/elastic/libbeat/publisher",
+			"Comment": "v1.0.0-beta3-90-gb4cc3ae",
+			"Rev": "b4cc3aec923a0aad2c53887ab6a305f6c862f619"
+		},
+		{
+			"ImportPath": "github.com/elastic/libbeat/service",
+			"Comment": "v1.0.0-beta3-90-gb4cc3ae",
+			"Rev": "b4cc3aec923a0aad2c53887ab6a305f6c862f619"
+		},
+		{
+			"ImportPath": "github.com/fsouza/go-dockerclient",
+			"Rev": "af9789bbd78acf3e279274caa54682185eb7ed33"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Rev": "d8dbe4d94f15fe89232e0402c6e8a0ddf21af3ab"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Rev": "d8dbe4d94f15fe89232e0402c6e8a0ddf21af3ab"
+		},
+		{
+			"ImportPath": "github.com/nranchev/go-libGeoIP",
+			"Rev": "c78e8bd2dd3599feb21fd30886043979e82fe948"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "7ad95dd0798a40da1ccdff6dff35fd177b5edf40"
+		}
+	]
+}

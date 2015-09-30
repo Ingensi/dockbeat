@@ -1,0 +1,29 @@
+language: go
+
+go:
+  - 1.5.1
+
+sudo: false
+
+before_install:
+  # Redo the travis setup but with the ingensi/dockerbeat path. This is needed so the package path is correct
+  - mkdir -p $HOME/gopath/src/github.com/ingensi/dockerbeat
+  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/ingensi/dockerbeat/
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/ingensi/dockerbeat
+  - cd $HOME/gopath/src/github.com/ingensi/dockerbeat
+
+install:
+  - make
+
+script:
+  - make cover
+
+notifications:
+  hipchat:
+    rooms:
+      secure:
+
+after_success:
+  # Copy profile.cov to coverage.txt because codecov.io requires this file
+  - cp profile.cov coverage.txt
+  - bash <(curl -s https://codecov.io/bash)
