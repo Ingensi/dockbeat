@@ -41,7 +41,7 @@ func (d *Dockerbeat) Config(b *beat.Beat) error {
 	}
 
 	logp.Debug("dockerbeat", "Init dockerbeat")
-	logp.Debug("dockerbeat", "Follow socker %q\n", d.socket)
+	logp.Debug("dockerbeat", "Follow docker socket %q\n", d.socket)
 	logp.Debug("dockerbeat", "Period %v\n", d.period)
 
 	return nil
@@ -60,20 +60,16 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 	var err error
 
 	for d.isAlive {
-
+		time.Sleep(d.period)
 		containers, err := d.dockerClient.ListContainers(docker.ListContainersOptions{})
 
 		if err == nil {
 			for _, container := range containers {
-				logp.Info("3")
 				d.exportContainerStats(container)
-				logp.Info("4")
 			}
-			logp.Info("running! %s", d.socket)
 		} else {
 			logp.Err("Cannot get container list: %d", err)
 		}
-		time.Sleep(d.period)
 	}
 
 	return err
@@ -93,9 +89,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 	errC := make(chan error, 1)
 	statsOptions := docker.StatsOptions{container.ID, statsC, false, done, -1}
 	go func() {
-		logp.Info("1")
 		errC <- d.dockerClient.Stats(statsOptions)
-		logp.Info("2")
 		close(errC)
 	}()
 
@@ -117,22 +111,21 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 
 func (d *Dockerbeat) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
-		//		"timestamp": common.Time(time.Now()),
-		"timestamp": common.Time(stats.Read),
-		"type":      "container",
-		"containerID": container.ID,
+		"timestamp":      common.Time(stats.Read),
+		"type":           "container",
+		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"container": common.MapStr{
-			"id": container.ID,
-			"command": container.Command,
-			"created": time.Unix(container.Created, 0),
-			"image": container.Image,
-			"labels": container.Labels,
-			"names": container.Names,
-			"ports": d.convertContainerPorts(&container.Ports),
+		"container":      common.MapStr{
+			"id":         container.ID,
+			"command":    container.Command,
+			"created":    time.Unix(container.Created, 0),
+			"image":      container.Image,
+			"labels":     container.Labels,
+			"names":      container.Names,
+			"ports":      d.convertContainerPorts(&container.Ports),
 			"sizeRootFs": container.SizeRootFs,
-			"sizeRw": container.SizeRw,
-			"status": container.Status,
+			"sizeRw":     container.SizeRw,
+			"status":     container.Status,
 		},
 	}
 	return event
@@ -140,15 +133,15 @@ func (d *Dockerbeat) getContainerEvent(container *docker.APIContainers, stats *d
 
 func (d *Dockerbeat) getCpuEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
-		"timestamp": common.Time(stats.Read),
-		"type":      "cpu",
-		"containerID": container.ID,
+		"timestamp":     common.Time(stats.Read),
+		"type":          "cpu",
+		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"cpu": common.MapStr{
-			"percpuUsage": stats.CPUStats.CPUUsage.PercpuUsage,
-			"totalUsage": stats.CPUStats.CPUUsage.TotalUsage,
+		"cpu":            common.MapStr{
+			"percpuUsage":       stats.CPUStats.CPUUsage.PercpuUsage,
+			"totalUsage":        stats.CPUStats.CPUUsage.TotalUsage,
 			"usageInKernelmode": stats.CPUStats.CPUUsage.UsageInKernelmode,
-			"usageInUsermode": stats.CPUStats.CPUUsage.UsageInUsermode,
+			"usageInUsermode":   stats.CPUStats.CPUUsage.UsageInUsermode,
 		},
 	}
 
@@ -157,18 +150,18 @@ func (d *Dockerbeat) getCpuEvent(container *docker.APIContainers, stats *docker.
 
 func (d *Dockerbeat) getNetworkEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
-		"timestamp": common.Time(stats.Read),
-		"type":      "net",
-		"containerID": container.ID,
+		"timestamp":      common.Time(stats.Read),
+		"type":           "net",
+		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"net": common.MapStr{
-			"rxBytes": stats.Network.RxBytes,
+		"net":            common.MapStr{
+			"rxBytes":   stats.Network.RxBytes,
 			"rxDropped": stats.Network.RxDropped,
-			"rxErrors": stats.Network.RxErrors,
+			"rxErrors":  stats.Network.RxErrors,
 			"rxPackets": stats.Network.RxPackets,
-			"txBytes": stats.Network.TxBytes,
+			"txBytes":   stats.Network.TxBytes,
 			"txDropped": stats.Network.TxDropped,
-			"txErrors": stats.Network.TxErrors,
+			"txErrors":  stats.Network.TxErrors,
 			"txPackets": stats.Network.TxPackets,
 		},
 	}
@@ -178,13 +171,13 @@ func (d *Dockerbeat) getNetworkEvent(container *docker.APIContainers, stats *doc
 
 func (d *Dockerbeat) getMemoryEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
-		"timestamp": common.Time(stats.Read),
-		"type":      "memory",
-		"containerID": container.ID,
+		"timestamp":      common.Time(stats.Read),
+		"type":           "memory",
+		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"memory": common.MapStr{
-			"failcnt": stats.MemoryStats.Failcnt,
-			"limit": stats.MemoryStats.Limit,
+		"memory":         common.MapStr{
+			"failcnt":  stats.MemoryStats.Failcnt,
+			"limit":    stats.MemoryStats.Limit,
 			"maxUsage": stats.MemoryStats.MaxUsage,
 			"usage": stats.MemoryStats.Usage,
 			"usage_p": (float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit)) * 100,
@@ -198,10 +191,10 @@ func (d *Dockerbeat) convertContainerPorts(ports *[]docker.APIPort) []map[string
 	var outputPorts []map[string]interface{}
 	for _, port := range *ports {
 		outputPort := common.MapStr{
-			"ip": port.IP,
+			"ip":          port.IP,
 			"privatePort": port.PrivatePort,
-			"publicPort": port.PublicPort,
-			"type": port.Type,
+			"publicPort":  port.PublicPort,
+			"type":        port.Type,
 		}
 		outputPorts = append(outputPorts, outputPort)
 	}
