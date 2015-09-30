@@ -65,9 +65,7 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 
 		if err == nil {
 			for _, container := range containers {
-				logp.Info("3")
 				d.exportContainerStats(container)
-				logp.Info("4")
 			}
 			logp.Info("running! %s", d.socket)
 		} else {
@@ -93,9 +91,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 	errC := make(chan error, 1)
 	statsOptions := docker.StatsOptions{container.ID, statsC, false, done, -1}
 	go func() {
-		logp.Info("1")
 		errC <- d.dockerClient.Stats(statsOptions)
-		logp.Info("2")
 		close(errC)
 	}()
 
@@ -139,21 +135,28 @@ func (d *Dockerbeat) getContainerEvent(container *docker.APIContainers, stats *d
 }
 
 func (d *Dockerbeat) getCpuEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
+
+	calculator := CPUCalculator{
+		CPUData{stats.PreCPUStats.CPUUsage.PercpuUsage, stats.PreCPUStats.CPUUsage.TotalUsage, stats.PreCPUStats.CPUUsage.UsageInKernelmode, stats.PreCPUStats.CPUUsage.UsageInUsermode},
+		CPUData{stats.CPUStats.CPUUsage.PercpuUsage, stats.CPUStats.CPUUsage.TotalUsage, stats.CPUStats.CPUUsage.UsageInKernelmode, stats.CPUStats.CPUUsage.UsageInUsermode},
+	}
+
 	event := common.MapStr{
 		"timestamp": common.Time(stats.Read),
 		"type":      "cpu",
 		"containerID": container.ID,
 		"containerNames": container.Names,
 		"cpu": common.MapStr{
-			"percpuUsage": stats.CPUStats.CPUUsage.PercpuUsage,
-			"totalUsage": stats.CPUStats.CPUUsage.TotalUsage,
-			"usageInKernelmode": stats.CPUStats.CPUUsage.UsageInKernelmode,
-			"usageInUsermode": stats.CPUStats.CPUUsage.UsageInUsermode,
+			"percpuUsage": calculator.perCpuUsage(),
+			"totalUsage": calculator.totalUsage(),
+			"usageInKernelmode": calculator.usageInKernelmode(),
+			"usageInUsermode": calculator.usageInUsermode(),
 		},
 	}
-
 	return event
 }
+
+
 
 func (d *Dockerbeat) getNetworkEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
