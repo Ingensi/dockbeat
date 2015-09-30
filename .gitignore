@@ -5,6 +5,7 @@ dockerbeat
 *.so
 *.swp
 *.swo
+*.iml
 
 
 *.dev.yml
