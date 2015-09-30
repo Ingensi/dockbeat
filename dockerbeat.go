@@ -132,19 +132,24 @@ func (d *Dockerbeat) getContainerEvent(container *docker.APIContainers, stats *d
 }
 
 func (d *Dockerbeat) getCpuEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
+
+	calculator := CPUCalculator{
+		CPUData{stats.PreCPUStats.CPUUsage.PercpuUsage, stats.PreCPUStats.CPUUsage.TotalUsage, stats.PreCPUStats.CPUUsage.UsageInKernelmode, stats.PreCPUStats.CPUUsage.UsageInUsermode},
+		CPUData{stats.CPUStats.CPUUsage.PercpuUsage, stats.CPUStats.CPUUsage.TotalUsage, stats.CPUStats.CPUUsage.UsageInKernelmode, stats.CPUStats.CPUUsage.UsageInUsermode},
+	}
+
 	event := common.MapStr{
 		"timestamp":     common.Time(stats.Read),
 		"type":          "cpu",
 		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"cpu":            common.MapStr{
-			"percpuUsage":       stats.CPUStats.CPUUsage.PercpuUsage,
-			"totalUsage":        stats.CPUStats.CPUUsage.TotalUsage,
-			"usageInKernelmode": stats.CPUStats.CPUUsage.UsageInKernelmode,
-			"usageInUsermode":   stats.CPUStats.CPUUsage.UsageInUsermode,
+		"cpu": common.MapStr{
+			"percpuUsage": calculator.perCpuUsage(),
+			"totalUsage": calculator.totalUsage(),
+			"usageInKernelmode": calculator.usageInKernelmode(),
+			"usageInUsermode": calculator.usageInUsermode(),
 		},
 	}
-
 	return event
 }
 
