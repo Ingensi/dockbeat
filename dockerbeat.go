@@ -5,10 +5,10 @@ import (
 
 	"github.com/elastic/libbeat/beat"
 	"github.com/elastic/libbeat/cfgfile"
+	"github.com/elastic/libbeat/common"
 	"github.com/elastic/libbeat/logp"
 	"github.com/elastic/libbeat/publisher"
 	"github.com/fsouza/go-dockerclient"
-	"github.com/elastic/libbeat/common"
 )
 
 type Dockerbeat struct {
@@ -29,11 +29,13 @@ func (d *Dockerbeat) Config(b *beat.Beat) error {
 		return err
 	}
 
+	//init the period
 	if d.TbConfig.Input.Period != nil {
 		d.period = time.Duration(*d.TbConfig.Input.Period) * time.Second
 	} else {
 		d.period = 1 * time.Second
 	}
+	//init the socket
 	if d.TbConfig.Input.Socket != nil {
 		d.socket = *d.TbConfig.Input.Socket
 	} else {
@@ -48,6 +50,7 @@ func (d *Dockerbeat) Config(b *beat.Beat) error {
 }
 
 func (d *Dockerbeat) Setup(b *beat.Beat) error {
+	//populate Dockerbeat
 	d.events = b.Events
 	d.dockerClient, _ = docker.NewClient(d.socket)
 	d.networkStats = make(map[string]NetworkData)
@@ -60,11 +63,13 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 
 	var err error
 
+	//main loop
 	for d.isAlive {
 		time.Sleep(d.period)
-		containers, err := d.dockerClient.ListContainers(docker.ListContainersOptions{})
 
+		containers, err := d.dockerClient.ListContainers(docker.ListContainersOptions{})
 		if err == nil {
+			//export stats for each container
 			for _, container := range containers {
 				d.exportContainerStats(container)
 			}
@@ -87,15 +92,18 @@ func (d *Dockerbeat) Stop() {
 }
 
 func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error {
+	// statsOptions creation
 	statsC := make(chan *docker.Stats)
 	done := make(chan bool)
 	errC := make(chan error, 1)
+	// the stream bool is set to false to only listen the first stats
 	statsOptions := docker.StatsOptions{container.ID, statsC, false, done, -1}
+	// goroutine to listen to the stats
 	go func() {
 		errC <- d.dockerClient.Stats(statsOptions)
 		close(errC)
 	}()
-
+	// goroutine to get the stats & publish it
 	go func() {
 		stats := <-statsC
 
@@ -118,7 +126,7 @@ func (d *Dockerbeat) getContainerEvent(container *docker.APIContainers, stats *d
 		"type":           "container",
 		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"container":      common.MapStr{
+		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
 			"created":    time.Unix(container.Created, 0),
@@ -142,8 +150,8 @@ func (d *Dockerbeat) getCpuEvent(container *docker.APIContainers, stats *docker.
 	}
 
 	event := common.MapStr{
-		"timestamp":     common.Time(stats.Read),
-		"type":          "cpu",
+		"timestamp":      common.Time(stats.Read),
+		"type":           "cpu",
 		"containerID":    container.ID,
 		"containerNames": container.Names,
 		"cpu": common.MapStr{
@@ -181,7 +189,7 @@ func (d *Dockerbeat) getNetworkEvent(container *docker.APIContainers, stats *doc
 			"type":           "net",
 			"containerID":    container.ID,
 			"containerNames": container.Names,
-			"net":            common.MapStr{
+			"net": common.MapStr{
 				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
 				"rxDropped_ps": calculator.getRxDroppedPerSecond(),
 				"rxErrors_ps":  calculator.getRxErrorsPerSecond(),
@@ -198,7 +206,7 @@ func (d *Dockerbeat) getNetworkEvent(container *docker.APIContainers, stats *doc
 			"type":           "net",
 			"containerID":    container.ID,
 			"containerNames": container.Names,
-			"net":            common.MapStr{
+			"net": common.MapStr{
 				"rxBytes":   0,
 				"rxDropped": 0,
 				"rxErrors":  0,
@@ -211,7 +219,7 @@ func (d *Dockerbeat) getNetworkEvent(container *docker.APIContainers, stats *doc
 		}
 	}
 
-	d.networkStats[container.ID] = newNetworkData;
+	d.networkStats[container.ID] = newNetworkData
 	return event
 
 }
@@ -222,12 +230,12 @@ func (d *Dockerbeat) getMemoryEvent(container *docker.APIContainers, stats *dock
 		"type":           "memory",
 		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"memory":         common.MapStr{
+		"memory": common.MapStr{
 			"failcnt":  stats.MemoryStats.Failcnt,
 			"limit":    stats.MemoryStats.Limit,
 			"maxUsage": stats.MemoryStats.MaxUsage,
 			"usage":    stats.MemoryStats.Usage,
-			"usage_p": (float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit)) * 100,
+			"usage_p":  (float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit)) * 100,
 		},
 	}
 
