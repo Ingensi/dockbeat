@@ -21,9 +21,33 @@
         }
       ],
       "properties": {
-        "cpu": {
+        "memory": {
           "properties": {
             "usage_p": {
+              "doc_values": "true",
+              "type": "float"
+            }
+          }
+        },
+        "cpu": {
+          "properties": {
+            "percpuUsage": {
+              "properties": {
+                "cpu*": {
+                  "doc_values": "true",
+                  "type": "float"
+                }
+              }
+            },
+            "totalUsage": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "usageInKernelmode": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "usageInUsermode": {
               "doc_values": "true",
               "type": "float"
             }

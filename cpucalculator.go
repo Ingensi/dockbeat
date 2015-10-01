@@ -1,5 +1,10 @@
 package main
 
+import (
+	"github.com/elastic/libbeat/common"
+	"strconv"
+)
+
 type CPUData struct {
 	perCpuUsage       []uint64
 	totalUsage        uint64
@@ -12,12 +17,12 @@ type CPUCalculator struct {
 	new CPUData
 }
 
-func (c *CPUCalculator) perCpuUsage() []uint64 {
-	var output []uint64
+func (c *CPUCalculator) perCpuUsage() common.MapStr {
+	var output common.MapStr
 	if cap(c.new.perCpuUsage) == cap(c.old.perCpuUsage) {
-		output = make([]uint64, cap(c.new.perCpuUsage))
+		output = common.MapStr{}
 		for index := range c.new.perCpuUsage {
-			output[index] = c.calculateLoad(c.new.perCpuUsage[index] - c.old.perCpuUsage[index])
+			output["cpu"+strconv.Itoa(index)] = c.calculateLoad(c.new.perCpuUsage[index] - c.old.perCpuUsage[index])
 		}
 	}
 	return output
