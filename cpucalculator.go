@@ -22,7 +22,7 @@ func (c *CPUCalculator) perCpuUsage() common.MapStr {
 	if cap(c.new.perCpuUsage) == cap(c.old.perCpuUsage) {
 		output = common.MapStr{}
 		for index := range c.new.perCpuUsage {
-			output["cpu" + strconv.Itoa(index)] = c.calculateLoad(c.new.perCpuUsage[index] - c.old.perCpuUsage[index])
+			output["cpu"+strconv.Itoa(index)] = c.calculateLoad(c.new.perCpuUsage[index] - c.old.perCpuUsage[index])
 		}
 	}
 	return output
