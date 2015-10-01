@@ -54,7 +54,7 @@ func TestCPUUsageInUsermode(t *testing.T) {
 	var calculator = CPUCalculator{oldData, newData}
 
 	// WHEN
-	value := calculator.usageInKernelmode()
+	value := calculator.usageInUsermode()
 
 	// THEN
 	// value should be 0%
