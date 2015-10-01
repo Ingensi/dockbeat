@@ -3,7 +3,7 @@
 ############################# Input ############################################
 input:
  # In seconds, defines how often to read server statistics
- period: 10
+ period: 5
 
 # Define the docker socket path
 # By default, this will get the unix:///var/run/docker.sock
