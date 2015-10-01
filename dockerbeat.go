@@ -17,7 +17,7 @@ type Dockerbeat struct {
 	socket       string
 	TbConfig     ConfigSettings
 	dockerClient *docker.Client
-	dockerStats  map[string]chan *docker.Stats
+	networkStats map[string]NetworkData
 	events       publisher.Client
 }
 
@@ -50,6 +50,7 @@ func (d *Dockerbeat) Config(b *beat.Beat) error {
 func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	d.events = b.Events
 	d.dockerClient, _ = docker.NewClient(d.socket)
+	d.networkStats = make(map[string]NetworkData)
 	return nil
 }
 
@@ -70,6 +71,8 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 		} else {
 			logp.Err("Cannot get container list: %d", err)
 		}
+
+		d.cleanOldStats(containers)
 	}
 
 	return err
@@ -144,10 +147,10 @@ func (d *Dockerbeat) getCpuEvent(container *docker.APIContainers, stats *docker.
 		"containerID":    container.ID,
 		"containerNames": container.Names,
 		"cpu": common.MapStr{
-			"percpuUsage": calculator.perCpuUsage(),
-			"totalUsage": calculator.totalUsage(),
+			"percpuUsage":       calculator.perCpuUsage(),
+			"totalUsage":        calculator.totalUsage(),
 			"usageInKernelmode": calculator.usageInKernelmode(),
-			"usageInUsermode": calculator.usageInUsermode(),
+			"usageInUsermode":   calculator.usageInUsermode(),
 		},
 	}
 
@@ -155,24 +158,62 @@ func (d *Dockerbeat) getCpuEvent(container *docker.APIContainers, stats *docker.
 }
 
 func (d *Dockerbeat) getNetworkEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
-	event := common.MapStr{
-		"timestamp":      common.Time(stats.Read),
-		"type":           "net",
-		"containerID":    container.ID,
-		"containerNames": container.Names,
-		"net":            common.MapStr{
-			"rxBytes":   stats.Network.RxBytes,
-			"rxDropped": stats.Network.RxDropped,
-			"rxErrors":  stats.Network.RxErrors,
-			"rxPackets": stats.Network.RxPackets,
-			"txBytes":   stats.Network.TxBytes,
-			"txDropped": stats.Network.TxDropped,
-			"txErrors":  stats.Network.TxErrors,
-			"txPackets": stats.Network.TxPackets,
-		},
+	newNetworkData := NetworkData{
+		stats.Read,
+		stats.Network.RxBytes,
+		stats.Network.RxDropped,
+		stats.Network.RxErrors,
+		stats.Network.RxPackets,
+		stats.Network.TxBytes,
+		stats.Network.TxDropped,
+		stats.Network.TxErrors,
+		stats.Network.TxPackets,
 	}
 
+	var event common.MapStr
+
+	oldNetworkData, ok := d.networkStats[container.ID]
+
+	if ok {
+		calculator := NetworkCalculator{oldNetworkData, newNetworkData}
+		event = common.MapStr{
+			"timestamp":      common.Time(stats.Read),
+			"type":           "net",
+			"containerID":    container.ID,
+			"containerNames": container.Names,
+			"net":            common.MapStr{
+				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
+				"rxDropped_ps": calculator.getRxDroppedPerSecond(),
+				"rxErrors_ps":  calculator.getRxErrorsPerSecond(),
+				"rxPackets_ps": calculator.getRxPacketsPerSecond(),
+				"txBytes_ps":   calculator.getTxBytesPerSecond(),
+				"txDropped_ps": calculator.getTxDroppedPerSecond(),
+				"txErrors_ps":  calculator.getTxErrorsPerSecond(),
+				"txPackets_ps": calculator.getTxPacketsPerSecond(),
+			},
+		}
+	} else {
+		event = common.MapStr{
+			"timestamp":      common.Time(stats.Read),
+			"type":           "net",
+			"containerID":    container.ID,
+			"containerNames": container.Names,
+			"net":            common.MapStr{
+				"rxBytes":   0,
+				"rxDropped": 0,
+				"rxErrors":  0,
+				"rxPackets": 0,
+				"txBytes":   0,
+				"txDropped": 0,
+				"txErrors":  0,
+				"txPackets": 0,
+			},
+		}
+	}
+
+	d.networkStats[container.ID] = newNetworkData;
 	return event
+
 }
 
 func (d *Dockerbeat) getMemoryEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
@@ -206,4 +247,19 @@ func (d *Dockerbeat) convertContainerPorts(ports *[]docker.APIPort) []map[string
 	}
 
 	return outputPorts
+}
+
+func (d *Dockerbeat) cleanOldStats(containers []docker.APIContainers) {
+	found := false
+	for containerStatKey, _ := range d.networkStats {
+		for _, container := range containers {
+			if container.ID == containerStatKey {
+				found = true
+				continue
+			}
+		}
+		if !found {
+			delete(d.networkStats, containerStatKey)
+		}
+	}
 }

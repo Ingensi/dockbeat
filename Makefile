@@ -36,4 +36,3 @@ cover:
 .PHONY: clean
 clean:
 	rm dockerbeat || true
-	-rm -r cover

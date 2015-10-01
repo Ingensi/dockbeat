@@ -29,6 +29,42 @@
             }
           }
         },
+        "net": {
+          "properties": {
+            "rxBytes_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "rxDropped_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "rxErrors_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "rxPackets_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "txBytes_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "txDropped_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "txErrors_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "txPackets_ps": {
+              "doc_values": "true",
+              "type": "float"
+            }
+          }
+        },
         "timestamp": {
           "type": "date"
         },
