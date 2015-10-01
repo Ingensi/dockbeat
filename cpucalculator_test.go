@@ -1,8 +1,9 @@
 package main
 
 import (
-	"testing"
+	"github.com/elastic/libbeat/common"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestCPUperCpuUsage(t *testing.T) {
@@ -16,7 +17,12 @@ func TestCPUperCpuUsage(t *testing.T) {
 
 	// THEN
 	// value should be 10%, 20%, 30% and 40%
-	assert.Equal(t, []uint64{10, 20, 30, 40}, value)
+	assert.Equal(t, common.MapStr{
+		"cpu0": uint64(10),
+		"cpu1": uint64(20),
+		"cpu2": uint64(30),
+		"cpu3": uint64(40),
+	}, value)
 }
 
 func TestCPUTotalUsage(t *testing.T) {

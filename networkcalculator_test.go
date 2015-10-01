@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNetworkGetRxBytesPerSecond(t *testing.T) {

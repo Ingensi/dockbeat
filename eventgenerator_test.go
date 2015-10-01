@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/elastic/libbeat/common"
+	"github.com/fsouza/go-dockerclient"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
-	"github.com/stretchr/testify/assert"
-	"github.com/fsouza/go-dockerclient"
-	"github.com/elastic/libbeat/common"
-	"github.com/stretchr/testify/mock"
 )
 
 type MockedStats struct {
@@ -42,18 +42,18 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"type":           "container",
 		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"container":      common.MapStr{
-			"id":         container.ID,
-			"command":    container.Command,
-			"created":    time.Unix(container.Created, 0),
-			"image":      container.Image,
-			"labels":     container.Labels,
-			"names":      container.Names,
-			"ports":      []map[string]interface{}{common.MapStr{
-				"ip": container.Ports[0].IP,
+		"container": common.MapStr{
+			"id":      container.ID,
+			"command": container.Command,
+			"created": time.Unix(container.Created, 0),
+			"image":   container.Image,
+			"labels":  container.Labels,
+			"names":   container.Names,
+			"ports": []map[string]interface{}{common.MapStr{
+				"ip":          container.Ports[0].IP,
 				"privatePort": container.Ports[0].PrivatePort,
-				"publicPort": container.Ports[0].PublicPort,
-				"type": container.Ports[0].Type,
+				"publicPort":  container.Ports[0].PublicPort,
+				"type":        container.Ports[0].Type,
 			}},
 			"sizeRootFs": container.SizeRootFs,
 			"sizeRw":     container.SizeRw,

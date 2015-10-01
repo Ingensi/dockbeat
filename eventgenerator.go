@@ -1,12 +1,13 @@
 package main
+
 import (
-"github.com/fsouza/go-dockerclient"
-"github.com/elastic/libbeat/common"
+	"github.com/elastic/libbeat/common"
+	"github.com/fsouza/go-dockerclient"
 	"time"
 )
 
 type EventGenerator struct {
-	networkStats   map[string]NetworkData
+	networkStats map[string]NetworkData
 }
 
 func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
@@ -15,7 +16,7 @@ func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stat
 		"type":           "container",
 		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"container":      common.MapStr{
+		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
 			"created":    time.Unix(container.Created, 0),
@@ -39,8 +40,8 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 	}
 
 	event := common.MapStr{
-		"timestamp":     common.Time(stats.Read),
-		"type":          "cpu",
+		"timestamp":      common.Time(stats.Read),
+		"type":           "cpu",
 		"containerID":    container.ID,
 		"containerNames": container.Names,
 		"cpu": common.MapStr{
@@ -78,7 +79,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 			"type":           "net",
 			"containerID":    container.ID,
 			"containerNames": container.Names,
-			"net":            common.MapStr{
+			"net": common.MapStr{
 				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
 				"rxDropped_ps": calculator.getRxDroppedPerSecond(),
 				"rxErrors_ps":  calculator.getRxErrorsPerSecond(),
@@ -95,7 +96,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 			"type":           "net",
 			"containerID":    container.ID,
 			"containerNames": container.Names,
-			"net":            common.MapStr{
+			"net": common.MapStr{
 				"rxBytes":   0,
 				"rxDropped": 0,
 				"rxErrors":  0,
@@ -108,7 +109,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 		}
 	}
 
-	d.networkStats[container.ID] = newNetworkData;
+	d.networkStats[container.ID] = newNetworkData
 	return event
 }
 
@@ -118,12 +119,12 @@ func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *
 		"type":           "memory",
 		"containerID":    container.ID,
 		"containerNames": container.Names,
-		"memory":         common.MapStr{
+		"memory": common.MapStr{
 			"failcnt":  stats.MemoryStats.Failcnt,
 			"limit":    stats.MemoryStats.Limit,
 			"maxUsage": stats.MemoryStats.MaxUsage,
 			"usage":    stats.MemoryStats.Usage,
-			"usage_p": (float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit)) * 100,
+			"usage_p":  (float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit)) * 100,
 		},
 	}
 
