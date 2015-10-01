@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/Ingensi/dockerbeat.svg?branch=develop)](https://travis-ci.org/Ingensi/dockerbeat)
+[![codecov.io](http://codecov.io/github/Ingensi/dockerbeat/coverage.svg?branch=develop)](http://codecov.io/github/Ingensi/dockerbeat?branch=develop)
+
 # dockerbeat
 
 Dockerbeat is the [Beat](https://www.elastic.co/products/beats) used for
