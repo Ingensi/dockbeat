@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetRxBytesPerSecond(t *testing.T) {
+func TestNetworkGetRxBytesPerSecond(t *testing.T) {
 	// GIVEN
 	var oldDate = time.Now()
 	// 1000000000 nanoseconds = 1 second
@@ -26,7 +26,7 @@ func TestGetRxBytesPerSecond(t *testing.T) {
 	assert.Equal(t, float64(100), value)
 }
 
-func TestGetRxDroppedPerSecond(t *testing.T) {
+func TestNetworkGetRxDroppedPerSecond(t *testing.T) {
 	// GIVEN
 	var oldDate = time.Now()
 	// 2000000000 nanoseconds = 2 seconds
@@ -46,7 +46,7 @@ func TestGetRxDroppedPerSecond(t *testing.T) {
 	assert.Equal(t, float64(50), value)
 }
 
-func TestGetRxErrorsPerSecond(t *testing.T) {
+func TestNetworkGetRxErrorsPerSecond(t *testing.T) {
 	// GIVEN
 	var oldDate = time.Now()
 	// 10000000000 nanoseconds = 10 seconds
@@ -66,7 +66,7 @@ func TestGetRxErrorsPerSecond(t *testing.T) {
 	assert.Equal(t, float64(0.1), value)
 }
 
-func TestGetRxPacketsPerSecond(t *testing.T) {
+func TestNetworkGetRxPacketsPerSecond(t *testing.T) {
 	// GIVEN
 	var oldDate = time.Now()
 	// 10000000000 nanoseconds = 10 seconds
@@ -86,7 +86,7 @@ func TestGetRxPacketsPerSecond(t *testing.T) {
 	assert.Equal(t, float64(10), value)
 }
 
-func TestGetTxBytesPerSecond(t *testing.T) {
+func TestNetworkGetTxBytesPerSecond(t *testing.T) {
 	// GIVEN
 	var oldDate = time.Now()
 	// 1000000000 nanoseconds = 1 second
@@ -106,7 +106,7 @@ func TestGetTxBytesPerSecond(t *testing.T) {
 	assert.Equal(t, float64(0), value)
 }
 
-func TestGetTxDroppedPerSecond(t *testing.T) {
+func TestNetworkGetTxDroppedPerSecond(t *testing.T) {
 	// GIVEN
 	var oldDate = time.Now()
 	// 2000000000 nanoseconds = 2 seconds
@@ -126,7 +126,7 @@ func TestGetTxDroppedPerSecond(t *testing.T) {
 	assert.Equal(t, float64(0), value)
 }
 
-func TestGetTxErrorsPerSecond(t *testing.T) {
+func TestNetworkGetTxErrorsPerSecond(t *testing.T) {
 	// GIVEN
 	var oldDate = time.Now()
 	// 10000000000 nanoseconds = 10 seconds
@@ -146,7 +146,7 @@ func TestGetTxErrorsPerSecond(t *testing.T) {
 	assert.Equal(t, float64(10), value)
 }
 
-func TestGetTxPacketsPerSecond(t *testing.T) {
+func TestNetworkGetTxPacketsPerSecond(t *testing.T) {
 	// GIVEN
 	var oldDate = time.Now()
 	// 10000000000 nanoseconds = 10 seconds
