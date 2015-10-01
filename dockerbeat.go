@@ -62,17 +62,7 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 
 	for d.isAlive {
 		time.Sleep(d.period)
-		containers, err := d.dockerClient.ListContainers(docker.ListContainersOptions{})
-
-		if err == nil {
-			for _, container := range containers {
-				d.exportContainerStats(container)
-			}
-		} else {
-			logp.Err("Cannot get container list: %d", err)
-		}
-
-		d.eventGenerator.cleanOldStats(containers)
+		d.RunOneTime(b)
 	}
 
 	return err
@@ -84,6 +74,22 @@ func (d *Dockerbeat) Cleanup(b *beat.Beat) error {
 
 func (d *Dockerbeat) Stop() {
 	d.isAlive = false
+}
+
+func (d *Dockerbeat) RunOneTime(b *beat.Beat) error {
+	containers, err := d.dockerClient.ListContainers(docker.ListContainersOptions{})
+
+	if err == nil {
+		for _, container := range containers {
+			d.exportContainerStats(container)
+		}
+	} else {
+		logp.Err("Cannot get container list: %d", err)
+	}
+
+	d.eventGenerator.cleanOldStats(containers)
+
+	return nil
 }
 
 func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error {
