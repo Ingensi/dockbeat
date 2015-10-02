@@ -1,0 +1,58 @@
+################# Dockerbeat Configuration Example #######################
+
+############################# Input ############################################
+input:
+ # In seconds, defines how often to read server statistics
+ period: 5
+
+# Define the docker socket path
+# By default, this will get the unix:///var/run/docker.sock
+ socket:
+
+############################# Shipper ############################################
+shipper:
+
+ # The name of the shipper that publishes the network data. It can be used to group
+ # all the transactions sent by a single shipper in the web interface.
+ # If this options is not defined, the hostname is used.
+ name:
+
+ # The tags of the shipper are included in their own field with each
+ # transaction published. Tags make it easy to group transactions by different
+ # logical properties.
+ #tags: ["service1"]
+
+############################# Output ############################################
+
+# Configure what outputs to use when sending the data collected by dockerbeat.
+# You can enable one or multiple outputs by setting enabled option to true.
+output:
+
+  # Elasticsearch as output
+  # Options:
+  # host, port: where Elasticsearch is listening on
+  elasticsearch:
+    enabled: true
+    hosts: ["elasticsearch:9200"]
+
+  # Redis as output
+  # Options:
+  # host, port: where Redis is listening on
+  #redis:
+  #  enabled: true
+  #  host: localhost
+  #  port: 6379
+
+  # File as output
+  # Options:
+  # path: where to save the files
+  # filename: name of the files
+  # rotate_every_kb: maximum size of the files in path
+  # number of files: maximum number of files in path
+  #file:
+  #  enabled: true
+  #  path: "/tmp/dockerbeat"
+  #  filename: dockerbeat
+  #  rotate_every_kb: 1000
+  #  number_of_files: 7
+

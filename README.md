@@ -105,3 +105,24 @@ There are four types of documents exported:
 To apply dockerbeat template:
 
     curl -XPUT 'http://localhost:9200/_template/dockerbeat' -d@etc/dockerbeat.template.json
+
+## Run in a docker container
+
+To launch dockerbeat in a container, use the `ingensi/dockerbeat` docker image, available on the [docker hub](https://hub.docker.com/r/ingensi/dockerbeat/).
+ 
+ Docker run command should:
+ 
+ * mount the target Docker socket to `/var/run/docker.sock`
+ * link an Elasticsearch node as `elasticsearch`
+ 
+ Example:
+
+ ```
+ docker run -d -v /var/run/docker.sock:/var/run/docker.sock --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta1
+ ```
+ 
+ To override the default configuration, just link yours to `/etc/dockerbeat/dockerbeat.yml`:
+ 
+ ```
+  docker run -d -v /var/run/docker.sock:/var/run/docker.sock -v /your/custom/conf.yml:/etc/dockerbeat/dockerbeat.yml --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta1
+  ```
