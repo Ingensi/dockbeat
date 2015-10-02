@@ -15,6 +15,18 @@ getdeps:
 test:
 	$(GODEP) go test ./...
 
+.PHONY: updatedeps
+updatedeps:
+	$(GODEP) update ...
+
+.PHONY: dockermake
+dockermake:
+	docker run --rm \
+		-v ${PWD}:/usr/src/dockerbeat \
+		-w /usr/src/dockerbeat \
+		-e http_proxy=${http_proxy} \
+		-e https_proxy=${https_proxy} \
+		golang:1.5.1 /bin/bash -c "make && chown $$(id -ru):$$(id -rg) dockerbeat"
 
 .PHONY: install_cfg
 install_cfg:
@@ -24,6 +36,10 @@ install_cfg:
 	cp etc/dockerbeat.yml $(PREFIX)/dockerbeat-darwin.yml
 	# win
 	cp etc/dockerbeat.yml $(PREFIX)/dockerbeat-win.yml
+
+.PHONY: gofmt
+gofmt:
+	go fmt ./...
 
 .PHONY: cover
 cover:
@@ -35,4 +51,6 @@ cover:
 
 .PHONY: clean
 clean:
+	rm -r cover || true
+	rm profile.cov || true
 	rm dockerbeat || true
