@@ -1,9 +1,6 @@
 FROM golang:1.5.1
 MAINTAINER Ingensi labs <contact@ingensi.com>
 
-ENV http_proxy=http://172.31.1.71:8081/
-ENV https_proxy=http://172.31.1.71:8081/
-
 COPY . /usr/src/dockerbeat
 RUN cd /usr/src/dockerbeat && make
 
