@@ -97,14 +97,14 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 			"containerID":    container.ID,
 			"containerNames": container.Names,
 			"net": common.MapStr{
-				"rxBytes":   0,
-				"rxDropped": 0,
-				"rxErrors":  0,
-				"rxPackets": 0,
-				"txBytes":   0,
-				"txDropped": 0,
-				"txErrors":  0,
-				"txPackets": 0,
+				"rxBytes_ps":   0,
+				"rxDropped_ps": 0,
+				"rxErrors_ps":  0,
+				"rxPackets_ps": 0,
+				"txBytes_ps":   0,
+				"txDropped_ps": 0,
+				"txErrors_ps":  0,
+				"txPackets_ps": 0,
 			},
 		}
 	}
