@@ -33,7 +33,7 @@ output:
   # host, port: where Elasticsearch is listening on
   elasticsearch:
     enabled: true
-    hosts: ["localhost:9200"]
+    hosts: ["elasticsearch:9200"]
 
   # Redis as output
   # Options:

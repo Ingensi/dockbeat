@@ -21,6 +21,166 @@
         }
       ],
       "properties": {
+        "memory": {
+          "properties": {
+            "usage_p": {
+              "doc_values": "true",
+              "type": "float"
+            }
+          }
+        },
+        "cpu": {
+          "properties": {
+            "percpuUsage": {
+              "properties": {
+                "cpu0": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu1": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu2": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu3": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu4": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu5": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu6": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu7": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu8": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu9": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu10": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu11": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu12": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu13": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu14": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu15": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu16": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu17": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu18": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu19": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu20": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu21": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu22": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu23": {
+                  "doc_values": "true",
+                  "type": "float"
+                }
+              }
+            },
+            "totalUsage": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "usageInKernelmode": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "usageInUsermode": {
+              "doc_values": "true",
+              "type": "float"
+            }
+          }
+        },
+        "net": {
+          "properties": {
+            "rxBytes_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "rxDropped_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "rxErrors_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "rxPackets_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "txBytes_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "txDropped_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "txErrors_ps": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "txPackets_ps": {
+              "doc_values": "true",
+              "type": "float"
+            }
+          }
+        },
         "timestamp": {
           "type": "date"
         },
