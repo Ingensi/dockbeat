@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>Dockerbeat by Ingensi</title>
+  </head>
+
+  <body>
+    <div id="container">
+      <div class="inner">
+
+        <header>
+          <h1>Dockerbeat</h1>
+          <h2>Dockerbeat - The elastic Beat for docker daemon monitoring</h2>
+        </header>
+
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/Ingensi/dockerbeat/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/Ingensi/dockerbeat/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/Ingensi/dockerbeat" id="view-on-github" class="button"><span>View on GitHub</span></a>
+        </section>
+
+        <hr>
+
+        <section id="main_content">
+          <p><a href="https://travis-ci.org/Ingensi/dockerbeat"><img src="https://travis-ci.org/Ingensi/dockerbeat.svg?branch=develop" alt="Build Status"></a>
+<a href="http://codecov.io/github/Ingensi/dockerbeat?branch=develop"><img src="http://codecov.io/github/Ingensi/dockerbeat/coverage.svg?branch=develop" alt="codecov.io"></a></p>
+
+<h1>
+<a id="dockerbeat" class="anchor" href="#dockerbeat" aria-hidden="true"><span class="octicon octicon-link"></span></a>dockerbeat</h1>
+
+<p>Dockerbeat is the <a href="https://www.elastic.co/products/beats">Beat</a> used for
+docker daemon monitoring. It is a lightweight agent that installed on your servers,
+reads periodically docker container statistics and indexes them in
+Elasticsearch.</p>
+
+<p>This is quite early stage and not yet released.</p>
+
+<h2>
+<a id="exported-document-types" class="anchor" href="#exported-document-types" aria-hidden="true"><span class="octicon octicon-link"></span></a>Exported document types</h2>
+
+<p>There are four types of documents exported:</p>
+
+<ul>
+<li>
+<code>type: container</code> for container attributes</li>
+<li>
+<code>type: cpu</code> for per process container statistics. One per container is generated.</li>
+<li>
+<code>type: net</code> for container network statistics. One per container is generated.</li>
+<li>
+<code>type: memory</code> for container memory statistics. One per container is generated.</li>
+</ul>
+
+<h3>
+<a id="container-type" class="anchor" href="#container-type" aria-hidden="true"><span class="octicon octicon-link"></span></a>Container type</h3>
+
+<pre>
+{
+  "_index": "dockerbeat-2015.10.02",
+  "_type": "container",
+  "_id": "AVAow1NYKDyuAT4RG9KO",
+  "_score": null,
+  "_source": {
+    "container": {
+      "command": "/docker-entrypoint.sh kibana",
+      "created": "2015-08-10T13:33:10Z",
+      "id": "7e91fbb0c7885f55ef8bf9402bbe4b366f88224c8baf31d36265061aa5ba2735",
+      "image": "kibana",
+      "labels": {},
+      "names": [
+        "/kibana"
+      ],
+      "ports": [
+        {
+          "ip": "0.0.0.0",
+          "privatePort": 5601,
+          "publicPort": 5601,
+          "type": "tcp"
+        }
+      ],
+      "sizeRootFs": 0,
+      "sizeRw": 0,
+      "status": "Up 2 minutes"
+    },
+    "containerID": "7e91fbb0c7885f55ef8bf9402bbe4b366f88224c8baf31d36265061aa5ba2735",
+    "containerNames": [
+      "/kibana"
+    ],
+    "count": 1,
+    "shipper": "0b42b9dded44",
+    "timestamp": "2015-10-02T13:35:00.338Z",
+    "type": "container"
+  },
+  "fields": {
+    "timestamp": [
+      1443792900338
+    ]
+  },
+  "sort": [
+    1443792900338
+  ]
+}
+</pre>
+
+<h3>
+<a id="cpu-type" class="anchor" href="#cpu-type" aria-hidden="true"><span class="octicon octicon-link"></span></a>cpu type</h3>
+
+<pre>
+{
+  "_index": "dockerbeat-2015.10.02",
+  "_type": "cpu",
+  "_id": "AVAoxIvYKDyuAT4RG9NL",
+  "_score": null,
+  "_source": {
+    "containerID": "0b42b9dded44697f4f7e40a3090b3cdb20f679b8718818b44cd20f215c0f14d2",
+    "containerNames": [
+      "/furious_mayer"
+    ],
+    "count": 1,
+    "cpu": {
+      "percpuUsage": {
+        "cpu0": 0,
+        "cpu1": 0,
+        "cpu2": 0,
+        "cpu3": 0
+      },
+      "totalUsage": 0,
+      "usageInKernelmode": 0,
+      "usageInUsermode": 0
+    },
+    "shipper": "0b42b9dded44",
+    "timestamp": "2015-10-02T13:36:20.338Z",
+    "type": "cpu"
+  },
+  "fields": {
+    "timestamp": [
+      1443792980338
+    ]
+  },
+  "sort": [
+    1443792980338
+  ]
+}
+</pre>
+
+<h3>
+<a id="net-type" class="anchor" href="#net-type" aria-hidden="true"><span class="octicon octicon-link"></span></a>net type</h3>
+
+<pre>
+{
+  "_index": "dockerbeat-2015.10.02",
+  "_type": "net",
+  "_id": "AVAo0iRPKDyuAT4RG9ul",
+  "_score": null,
+  "_source": {
+    "containerID": "0b42b9dded44697f4f7e40a3090b3cdb20f679b8718818b44cd20f215c0f14d2",
+    "containerNames": [
+      "/furious_mayer"
+    ],
+    "count": 1,
+    "net": {
+      "rxBytes_ps": 332.3976262820712,
+      "rxDropped_ps": 0,
+      "rxErrors_ps": 0,
+      "rxPackets_ps": 0.3999971435403985,
+      "txBytes_ps": 1231.3912063891169,
+      "txDropped_ps": 0,
+      "txErrors_ps": 0,
+      "txPackets_ps": 0.5999957153105978
+    },
+    "shipper": "0b42b9dded44",
+    "timestamp": "2015-10-02T13:51:11.338Z",
+    "type": "net"
+  },
+  "fields": {
+    "timestamp": [
+      1443793871338
+    ]
+  },
+  "sort": [
+    1443793871338
+  ]
+}
+</pre>
+
+<h3>
+<a id="memory-type" class="anchor" href="#memory-type" aria-hidden="true"><span class="octicon octicon-link"></span></a>memory type</h3>
+
+<pre>
+{
+  "_index": "dockerbeat-2015.10.02",
+  "_type": "memory",
+  "_id": "AVAo0vsnKDyuAT4RG9ww",
+  "_score": null,
+  "_source": {
+    "containerID": "7e91fbb0c7885f55ef8bf9402bbe4b366f88224c8baf31d36265061aa5ba2735",
+    "containerNames": [
+      "/kibana"
+    ],
+    "count": 1,
+    "memory": {
+      "failcnt": 0,
+      "limit": 7950745600,
+      "maxUsage": 77565952,
+      "usage": 77475840,
+      "usage_p": 0.9744474782339911
+    },
+    "shipper": "0b42b9dded44",
+    "timestamp": "2015-10-02T13:52:06.338Z",
+    "type": "memory"
+  },
+  "fields": {
+    "timestamp": [
+      1443793926338
+    ]
+  },
+  "sort": [
+    1443793926338
+  ]
+}
+</pre>
+
+<h2>
+<a id="elasticsearch-template" class="anchor" href="#elasticsearch-template" aria-hidden="true"><span class="octicon octicon-link"></span></a>Elasticsearch template</h2>
+
+<p>To apply dockerbeat template:</p>
+
+<pre><code>curl -XPUT 'http://localhost:9200/_template/dockerbeat' -d@etc/dockerbeat.template.json
+</code></pre>
+
+<h2>
+<a id="run-dockerbeat" class="anchor" href="#run-dockerbeat" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run dockerbeat</h2>
+
+<p>To launch a dockerbeat, run the following command:</p>
+
+<pre><code>./dockerbeat -c etc/dockerbeat.yml
+</code></pre>
+
+<h2>
+<a id="run-in-a-docker-container" class="anchor" href="#run-in-a-docker-container" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run in a docker container</h2>
+
+<p>To launch dockerbeat in a container, use the <code>ingensi/dockerbeat</code> docker image, available on the <a href="https://hub.docker.com/r/ingensi/dockerbeat/">docker hub</a>.</p>
+
+<p>Docker run command should:</p>
+
+<ul>
+<li>mount the target Docker socket to <code>/var/run/docker.sock</code>
+</li>
+<li>
+<p>link an Elasticsearch node as <code>elasticsearch</code></p>
+
+<p>Example:</p>
+
+<pre><code>docker run -d -v /var/run/docker.sock:/var/run/docker.sock --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta1
+</code></pre>
+
+<p>To override the default configuration, just link yours to <code>/etc/dockerbeat/dockerbeat.yml</code>:</p>
+
+<pre><code>docker run -d -v /var/run/docker.sock:/var/run/docker.sock -v /your/custom/conf.yml:/etc/dockerbeat/dockerbeat.yml --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta1
+</code></pre>
+</li>
+</ul>
+        </section>
+
+        <footer>
+          Dockerbeat is maintained by <a href="https://github.com/Ingensi">Ingensi</a><br>
+          This page was generated by <a href="https://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
+  </body>
+</html>
