@@ -118,6 +118,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 			d.eventGenerator.getCpuEvent(&container, stats),
 			d.eventGenerator.getMemoryEvent(&container, stats),
 			d.eventGenerator.getNetworkEvent(&container, stats),
+			d.eventGenerator.getBlkioEvent(&container, stats),
 		}
 
 		d.events.PublishEvents(events)

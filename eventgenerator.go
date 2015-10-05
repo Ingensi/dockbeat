@@ -131,6 +131,25 @@ func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *
 	return event
 }
 
+func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
+
+	calculator := BlkioCalculator{stats.BlkioStats.IOServiceBytesRecursive}
+
+	event := common.MapStr{
+		"timestamp":      common.Time(stats.Read),
+		"type":           "blkio",
+		"containerID":    container.ID,
+		"containerNames": container.Names,
+		"blkio": common.MapStr{
+			"read":  calculator.getRead(),
+			"write": calculator.getWrite(),
+			"total": calculator.getTotal(),
+		},
+	}
+
+	return event
+}
+
 func (d *EventGenerator) convertContainerPorts(ports *[]docker.APIPort) []map[string]interface{} {
 	var outputPorts []map[string]interface{}
 	for _, port := range *ports {
