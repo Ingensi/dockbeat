@@ -1,42 +1,24 @@
 package main
 
-import (
-	"github.com/fsouza/go-dockerclient"
-)
+type BlkioStats struct {
+	reads  uint64
+	writes uint64
+	totals uint64
+}
 
 type BlkioCalculator struct {
-	ioServiceBytes []docker.BlkioStatsEntry
+	old BlkioStats
+	new BlkioStats
 }
 
 func (c *BlkioCalculator) getRead() uint64 {
-	var total uint64
-	total = 0
-	for _, iostat := range c.ioServiceBytes {
-		if iostat.Op == "Read" {
-			total += iostat.Value
-		}
-	}
-	return total
+	return c.new.reads - c.old.reads
 }
 
 func (c *BlkioCalculator) getWrite() uint64 {
-	var total uint64
-	total = 0
-	for _, iostat := range c.ioServiceBytes {
-		if iostat.Op == "Write" {
-			total += iostat.Value
-		}
-	}
-	return total
+	return c.new.writes - c.old.writes
 }
 
 func (c *BlkioCalculator) getTotal() uint64 {
-	var total uint64
-	total = 0
-	for _, iostat := range c.ioServiceBytes {
-		if iostat.Op == "Total" {
-			total += iostat.Value
-		}
-	}
-	return total
+	return c.new.totals - c.old.totals
 }

@@ -53,7 +53,7 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	//populate Dockerbeat
 	d.events = b.Events
 	d.dockerClient, _ = docker.NewClient(d.socket)
-	d.eventGenerator = EventGenerator{map[string]NetworkData{}}
+	d.eventGenerator = EventGenerator{map[string]NetworkData{}, map[string]BlkioStats{}}
 	return nil
 }
 
