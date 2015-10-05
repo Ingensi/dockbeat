@@ -189,6 +189,14 @@ There are four types of documents exported:
 To apply dockerbeat template:
 
     curl -XPUT 'http://localhost:9200/_template/dockerbeat' -d@etc/dockerbeat.template.json
+    
+## Run dockerbeat
+
+To launch a dockerbeat, run the following command:
+ 
+```
+./dockerbeat -c etc/dockerbeat.yml
+```
 
 ## Run in a docker container
 
