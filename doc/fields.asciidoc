@@ -1,0 +1,78 @@
+
+////
+This file is generated! See etc/fields.yml and scripts/generate_field_docs.py
+////
+
+[[exported-fields]]
+== Exported fields
+
+This document describes the fields that are exported by the
+dockerbeat. They are grouped in the
+following categories:
+
+* <<exported-fields-env>>
+* <<exported-fields-system>>
+* <<exported-fields-process>>
+* <<exported-fields-filesystem>>
+
+[[exported-fields-env]]
+=== Common fields fields
+
+Contains common fields available in all event types.
+
+
+
+==== timestamp
+
+type: date
+
+example: 2015-01-24 14:06:05.071000
+
+format: YYYY-MM-DDTHH:MM:SS.milliZ
+
+required: True
+
+The timestamp when the measurements were taken. The precision is in milliseconds. The timezone is UTC.
+
+
+==== type
+
+required: True
+
+Can be one of *container*, *cpu*, *net*, *memory* to specify metric type.
+
+
+==== count
+
+type: int
+
+required: True
+
+For how many transactions is this event representative. This is generally the inverse of the sampling rate. For example, for a sample rate of 1/10, the count is 10. The count is used by the UIs to return estimated values. Reserved for future usage.
+
+
+==== containerID
+
+type: string
+
+required: True
+
+Docker container ID related to the current metric event.
+
+
+==== containerNames
+
+type: string
+
+required: True
+
+Names of the Docker container related to the current metric event.
+
+
+==== shipper
+
+type: string
+
+Name of the shipper sending the statistics.
+
+
