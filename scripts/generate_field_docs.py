@@ -7,17 +7,18 @@ Usage: python generate_field_docs.py file.yml file.asciidoc
 """
 
 import sys
+
 import yaml
 
 SECTIONS = [
     ("env", "Common fields"),
-    ("system", "System wide statistics"),
-    ("process", "Per process statistics"),
-    ("filesystem", "File system statistics")]
+    ("container", "Docker container informations"),
+    ("net", "Network container statistics"),
+    ("memory", "Memory container statistics"),
+    ("cpu", "CPU container statistics")]
 
 
 def document_fields(output, section):
-
     if "anchor" in section:
         output.write("[[exported-fields-{}]]\n".format(section["anchor"]))
     output.write("=== {} fields\n\n".format(section["name"]))
@@ -40,7 +41,6 @@ def document_fields(output, section):
 
 
 def document_field(output, field):
-
     if "path" not in field:
         field["path"] = field["name"]
 
@@ -60,7 +60,6 @@ def document_field(output, field):
 
 
 def fields_to_asciidoc(input, output):
-
     output.write("""
 ////
 This file is generated! See etc/fields.yml and scripts/generate_field_docs.py
