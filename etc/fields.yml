@@ -214,6 +214,29 @@ memory:
           description: >
             Amount of memory used by the container in percents between 0.0 and 100.0.
 
+blkio:
+  type: group
+  description: >
+    Gather disk usage of the current container.
+  fields:
+    - name: blkio
+      type: group
+      fields:
+        - name: read
+          type: int
+          description: >
+            Difference between the last read stat and the current read stat given by Docker.
+            It represent the amount of byte read by the container on the disk(s) during the duration.
+        - name: write
+          type: int
+          description: >
+            Difference between the last write stat and the current write stat given by Docker.
+            It represent the amount of byte written by the container on the disk(s) during the duration.
+        - name: total
+          type: int
+          description: >
+            Difference between the last total stat and the current total stat given by Docker.
+            It represent the amount of byte read and written by the container on the disk(s) during the duration.
 cpu:
   type: group
   description: >
@@ -314,3 +337,5 @@ cpu:
 
             - name: cpu23
               type: float
+
+
