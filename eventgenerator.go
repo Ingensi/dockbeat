@@ -4,6 +4,7 @@ import (
 	"github.com/elastic/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"time"
+	"strings"
 )
 
 type EventGenerator struct {
@@ -15,7 +16,7 @@ func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stat
 		"timestamp":      common.Time(stats.Read),
 		"type":           "container",
 		"containerID":    container.ID,
-		"containerNames": container.Names,
+		"containerName": d.extractContainerName(container.Names),
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
@@ -43,7 +44,7 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 		"timestamp":      common.Time(stats.Read),
 		"type":           "cpu",
 		"containerID":    container.ID,
-		"containerNames": container.Names,
+		"containerName": d.extractContainerName(container.Names),
 		"cpu": common.MapStr{
 			"percpuUsage":       calculator.perCpuUsage(),
 			"totalUsage":        calculator.totalUsage(),
@@ -78,7 +79,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 			"timestamp":      common.Time(stats.Read),
 			"type":           "net",
 			"containerID":    container.ID,
-			"containerNames": container.Names,
+			"containerName": d.extractContainerName(container.Names),
 			"net": common.MapStr{
 				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
 				"rxDropped_ps": calculator.getRxDroppedPerSecond(),
@@ -95,7 +96,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 			"timestamp":      common.Time(stats.Read),
 			"type":           "net",
 			"containerID":    container.ID,
-			"containerNames": container.Names,
+			"containerName": d.extractContainerName(container.Names),
 			"net": common.MapStr{
 				"rxBytes_ps":   0,
 				"rxDropped_ps": 0,
@@ -118,7 +119,7 @@ func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *
 		"timestamp":      common.Time(stats.Read),
 		"type":           "memory",
 		"containerID":    container.ID,
-		"containerNames": container.Names,
+		"containerName": d.extractContainerName(container.Names),
 		"memory": common.MapStr{
 			"failcnt":  stats.MemoryStats.Failcnt,
 			"limit":    stats.MemoryStats.Limit,
@@ -159,4 +160,17 @@ func (d *EventGenerator) cleanOldStats(containers []docker.APIContainers) {
 			delete(d.networkStats, containerStatKey)
 		}
 	}
+}
+
+func (d *EventGenerator) extractContainerName(names []string) string {
+	output := names[0]
+
+	if cap(names) > 1 {
+		for _, name := range names {
+			if strings.Count(output, "/") > strings.Count(name, "/") {
+				output = name
+			}
+		}
+	}
+	return strings.Trim(output, "/")
 }

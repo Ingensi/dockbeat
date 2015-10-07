@@ -41,10 +41,10 @@ env:
         Docker container ID related to the current metric event.
       required: true
 
-    - name: containerNames
+    - name: containerName
       type: string
       description: >
-        Names of the Docker container related to the current metric event.
+        Name of the Docker container related to the current metric event.
       required: true
 
     - name: shipper

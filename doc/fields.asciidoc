@@ -61,13 +61,13 @@ required: True
 Docker container ID related to the current metric event.
 
 
-==== containerNames
+==== containerName
 
 type: string
 
 required: True
 
-Names of the Docker container related to the current metric event.
+Name of the Docker container related to the current metric event.
 
 
 ==== shipper

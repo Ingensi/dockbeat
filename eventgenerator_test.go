@@ -27,7 +27,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
 		123,
 		456,
-		[]string{"name1", "name2"},
+		[]string{"/name1", "name1/fake"},
 		labels,
 	}
 
@@ -41,7 +41,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"timestamp":      common.Time(timestamp),
 		"type":           "container",
 		"containerID":    container.ID,
-		"containerNames": container.Names,
+		"containerName": "name1",
 		"container": common.MapStr{
 			"id":      container.ID,
 			"command": container.Command,
@@ -66,4 +66,28 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 
 	// THEN
 	assert.Equal(t, expectedEvent, event)
+}
+
+func TestExtractContainerNameAlone(t *testing.T) {
+	// GIVEN
+	var eventGenerator = EventGenerator{nil}
+	expectedName := "containerName"
+
+	// WHEN
+	name := eventGenerator.extractContainerName([]string{"/" + expectedName})
+
+	// THEN
+	assert.Equal(t, expectedName, name)
+}
+
+func TestExtractContainerNameMultiple(t *testing.T) {
+	// GIVEN
+	var eventGenerator = EventGenerator{nil}
+	expectedName := "containerName"
+
+	// WHEN
+	name := eventGenerator.extractContainerName([]string{"/name1/fake", "/" + expectedName, "/name3/fake"})
+
+	// THEN
+	assert.Equal(t, expectedName, name)
 }
