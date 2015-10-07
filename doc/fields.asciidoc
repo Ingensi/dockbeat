@@ -1,0 +1,437 @@
+
+////
+This file is generated! See etc/fields.yml and scripts/generate_field_docs.py
+////
+
+[[exported-fields]]
+== Exported fields
+
+This document describes the fields that are exported by the
+dockerbeat. They are grouped in the
+following categories:
+
+* <<exported-fields-env>>
+* <<exported-fields-container>>
+* <<exported-fields-net>>
+* <<exported-fields-memory>>
+* <<exported-fields-cpu>>
+
+[[exported-fields-env]]
+=== Common fields fields
+
+Contains common fields available in all event types.
+
+
+
+==== timestamp
+
+type: date
+
+example: 2015-01-24 14:06:05.071000
+
+format: YYYY-MM-DDTHH:MM:SS.milliZ
+
+required: True
+
+The timestamp when the measurements were taken. The precision is in milliseconds. The timezone is UTC.
+
+
+==== type
+
+required: True
+
+Can be one of *container*, *cpu*, *net*, *memory* to specify metric type.
+
+
+==== count
+
+type: int
+
+required: True
+
+For how many transactions is this event representative. This is generally the inverse of the sampling rate. For example, for a sample rate of 1/10, the count is 10. The count is used by the UIs to return estimated values. Reserved for future usage.
+
+
+==== containerID
+
+type: string
+
+required: True
+
+Docker container ID related to the current metric event.
+
+
+==== containerName
+
+type: string
+
+required: True
+
+Name of the Docker container related to the current metric event.
+
+
+==== shipper
+
+type: string
+
+Name of the shipper sending the statistics.
+
+
+[[exported-fields-container]]
+=== Docker container informations fields
+
+Contains container informations. Details that you can get by running a *docker ps* command.
+
+
+
+[[exported-fields-container]]
+=== Docker container informations fields
+
+
+==== command
+
+type: string
+
+Command used to run the Docker container.
+
+
+==== created
+
+type: date
+
+example: 2015-01-24 14:06:05
+
+format: YYYY-MM-DDTHH:MM:SSZ
+
+Command used to run the Docker container.
+
+
+==== id
+
+type: string
+
+ID of the Docker container.
+
+
+==== image
+
+type: string
+
+Name of the Docker image from which contained has been launched.
+
+
+=== labels fields
+
+Key value related to the label metadata of the Docker container.
+
+
+
+==== names
+
+type: string
+
+Human readable names of the container.
+
+
+=== ports fields
+
+List of published ports.
+
+
+
+==== ip
+
+type: string
+
+Binding IP.
+
+
+==== privatePort
+
+type: integer
+
+Private port (container side) of the binding.
+
+
+==== publicPort
+
+type: integer
+
+Public port (host side) of the binding.
+
+
+==== type
+
+type: string
+
+Type of binding. Can be either *tcp* or *udp*.
+
+
+==== sizeRootFs
+
+type: float
+
+TODO
+
+
+==== sizeRw
+
+type: string
+
+TODO
+
+
+==== status
+
+type: string
+
+Status of the container.
+
+
+[[exported-fields-net]]
+=== Network container statistics fields
+
+Gather container metrics about network (rx/tx)
+
+
+
+[[exported-fields-net]]
+=== Network container statistics fields
+
+
+==== rxBytes_ps
+
+type: float
+
+Average number of bytes received per second since the last event.
+
+
+==== rxDropped_ps
+
+type: float
+
+Average received dropped packets per second since the last event.
+
+
+==== rxErrors_ps
+
+type: float
+
+Average number of errors received per second since the last event.
+
+
+==== rxPackets_ps
+
+type: float
+
+Average number of packets received per second since the last event.
+
+
+==== txBytes_ps
+
+type: float
+
+Average number of bytes transmitted per second since the last event.
+
+
+==== txDropped_ps
+
+type: float
+
+Average transmitted dropped packets per second since the last event.
+
+
+==== txErrors_ps
+
+type: float
+
+Average number of errors transmitted per second since the last event.
+
+
+==== txPackets_ps
+
+type: float
+
+Average number of packets transmitted per second since the last event.
+
+
+[[exported-fields-memory]]
+=== Memory container statistics fields
+
+Contains metrics about container memory usage.
+
+
+
+[[exported-fields-memory]]
+=== Memory container statistics fields
+
+
+==== failcnt
+
+type: float
+
+TODO
+
+
+==== limit
+
+type: float
+
+Limit of memory (max memory available) in Bytes.
+
+
+==== maxUsage
+
+type: float
+
+Maximum memory used by the container in Bytes.
+
+
+==== usage
+
+type: float
+
+Current memory consumption in Bytes.
+
+
+==== usage_p
+
+type: float
+
+Amount of memory used by the container in percents between 0.0 and 100.0.
+
+
+[[exported-fields-cpu]]
+=== CPU container statistics fields
+
+Gather cpu consumption of the current container.
+
+
+
+[[exported-fields-cpu]]
+=== CPU container statistics fields
+
+
+==== totalUsage
+
+type: float
+
+Total cpu consumption in percent. This value can be greater than 100%, depending on the number of available CPUs.
+
+
+==== usageInKernelmode
+
+type: float
+
+Same as *totalUsage*, but only the Kernel mode consumptions.
+
+
+==== usageInUsermode
+
+type: float
+
+Same as *totalUsage*, but only the User mode consumptions.
+
+
+=== percpuUsage fields
+
+Detailled cpu consumption per cpu (in percent).
+
+
+
+==== cpu0
+
+type: float
+
+==== cpu1
+
+type: float
+
+==== cpu2
+
+type: float
+
+==== cpu3
+
+type: float
+
+==== cpu4
+
+type: float
+
+==== cpu5
+
+type: float
+
+==== cpu6
+
+type: float
+
+==== cpu7
+
+type: float
+
+==== cpu8
+
+type: float
+
+==== cpu9
+
+type: float
+
+==== cpu10
+
+type: float
+
+==== cpu11
+
+type: float
+
+==== cpu12
+
+type: float
+
+==== cpu13
+
+type: float
+
+==== cpu14
+
+type: float
+
+==== cpu15
+
+type: float
+
+==== cpu16
+
+type: float
+
+==== cpu17
+
+type: float
+
+==== cpu18
+
+type: float
+
+==== cpu19
+
+type: float
+
+==== cpu20
+
+type: float
+
+==== cpu21
+
+type: float
+
+==== cpu22
+
+type: float
+
+==== cpu23
+
+type: float
+
