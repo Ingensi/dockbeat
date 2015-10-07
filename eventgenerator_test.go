@@ -91,7 +91,7 @@ func TestBuildStats(t *testing.T) {
 
 func TestExtractContainerNameAlone(t *testing.T) {
 	// GIVEN
-	var eventGenerator = EventGenerator{nil}
+	var eventGenerator = EventGenerator{nil, nil}
 	expectedName := "containerName"
 
 	// WHEN
@@ -103,7 +103,7 @@ func TestExtractContainerNameAlone(t *testing.T) {
 
 func TestExtractContainerNameMultiple(t *testing.T) {
 	// GIVEN
-	var eventGenerator = EventGenerator{nil}
+	var eventGenerator = EventGenerator{nil, nil}
 	expectedName := "containerName"
 
 	// WHEN
