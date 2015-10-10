@@ -9,6 +9,7 @@ import (
 
 type EventGenerator struct {
 	networkStats map[string]NetworkData
+	blkioStats   map[string]BlkioStats
 }
 
 func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
@@ -132,6 +133,44 @@ func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *
 	return event
 }
 
+func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
+	blkioStats := d.buildStats(stats.BlkioStats.IOServicedRecursive)
+
+	var event common.MapStr
+
+	oldBlkioStats, ok := d.blkioStats[container.ID]
+
+	if ok {
+		calculator := BlkioCalculator{oldBlkioStats, blkioStats}
+		event = common.MapStr{
+			"timestamp":      common.Time(stats.Read),
+			"type":           "blkio",
+			"containerID":    container.ID,
+			"containerNames": container.Names,
+			"blkio": common.MapStr{
+				"read":  calculator.getRead(),
+				"write": calculator.getWrite(),
+				"total": calculator.getTotal(),
+			},
+		}
+	} else {
+		event = common.MapStr{
+			"timestamp":      common.Time(stats.Read),
+			"type":           "blkio",
+			"containerID":    container.ID,
+			"containerNames": container.Names,
+			"blkio": common.MapStr{
+				"read":  uint64(0),
+				"write": uint64(0),
+				"total": uint64(0),
+			},
+		}
+	}
+
+	d.blkioStats[container.ID] = blkioStats
+	return event
+}
+
 func (d *EventGenerator) convertContainerPorts(ports *[]docker.APIPort) []map[string]interface{} {
 	var outputPorts []map[string]interface{}
 	for _, port := range *ports {
@@ -160,6 +199,20 @@ func (d *EventGenerator) cleanOldStats(containers []docker.APIContainers) {
 			delete(d.networkStats, containerStatKey)
 		}
 	}
+}
+
+func (d *EventGenerator) buildStats(entry []docker.BlkioStatsEntry) BlkioStats {
+	var stats = BlkioStats{0, 0, 0}
+	for _, s := range entry {
+		if s.Op == "Read" {
+			stats.reads += s.Value
+		} else if s.Op == "Write" {
+			stats.writes += s.Value
+		} else if s.Op == "Total" {
+			stats.totals += s.Value
+		}
+	}
+	return stats
 }
 
 func (d *EventGenerator) extractContainerName(names []string) string {

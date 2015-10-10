@@ -34,7 +34,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{nil}
+	var eventGenerator = EventGenerator{nil, nil}
 
 	// expected output
 	expectedEvent := common.MapStr{
@@ -68,9 +68,30 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	assert.Equal(t, expectedEvent, event)
 }
 
+func TestBuildStats(t *testing.T) {
+	//GIVEN
+	var eventGenerator = EventGenerator{nil, nil}
+	var data []docker.BlkioStatsEntry
+	data = make([]docker.BlkioStatsEntry, 20, 20)
+	data[0] = docker.BlkioStatsEntry{0, 0, "Read", 1000}
+	data[1] = docker.BlkioStatsEntry{0, 0, "Write", 2000}
+	data[2] = docker.BlkioStatsEntry{0, 0, "Total", 3000}
+	data[3] = docker.BlkioStatsEntry{0, 1, "Read", 10}
+	data[4] = docker.BlkioStatsEntry{0, 1, "Write", 20}
+	data[5] = docker.BlkioStatsEntry{0, 1, "Total", 30}
+
+	//WHEN
+	value := eventGenerator.buildStats(data)
+
+	//THEN
+	assert.Equal(t, uint64(1010), value.reads)
+	assert.Equal(t, uint64(2020), value.writes)
+	assert.Equal(t, uint64(3030), value.totals)
+}
+
 func TestExtractContainerNameAlone(t *testing.T) {
 	// GIVEN
-	var eventGenerator = EventGenerator{nil}
+	var eventGenerator = EventGenerator{nil, nil}
 	expectedName := "containerName"
 
 	// WHEN
@@ -82,7 +103,7 @@ func TestExtractContainerNameAlone(t *testing.T) {
 
 func TestExtractContainerNameMultiple(t *testing.T) {
 	// GIVEN
-	var eventGenerator = EventGenerator{nil}
+	var eventGenerator = EventGenerator{nil, nil}
 	expectedName := "containerName"
 
 	// WHEN

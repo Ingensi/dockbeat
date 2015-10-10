@@ -53,7 +53,7 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	//populate Dockerbeat
 	d.events = b.Events
 	d.dockerClient, _ = docker.NewClient(d.socket)
-	d.eventGenerator = EventGenerator{map[string]NetworkData{}}
+	d.eventGenerator = EventGenerator{map[string]NetworkData{}, map[string]BlkioStats{}}
 	return nil
 }
 
@@ -118,6 +118,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 			d.eventGenerator.getCpuEvent(&container, stats),
 			d.eventGenerator.getMemoryEvent(&container, stats),
 			d.eventGenerator.getNetworkEvent(&container, stats),
+			d.eventGenerator.getBlkioEvent(&container, stats),
 		}
 
 		d.events.PublishEvents(events)
