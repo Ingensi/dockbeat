@@ -14,17 +14,26 @@ import (
 	"strings"
 )
 
+type SoftwareVersion struct {
+	major int
+	minor int
+}
+
 type Dockerbeat struct {
-	isAlive        bool
-	period         time.Duration
-	socket         string
-	TbConfig       ConfigSettings
-	dockerClient   *docker.Client
-	events         publisher.Client
-	eventGenerator EventGenerator
+	isAlive              bool
+	period               time.Duration
+	socket               string
+	TbConfig             ConfigSettings
+	dockerClient         *docker.Client
+	events               publisher.Client
+	eventGenerator       EventGenerator
+	minimalDockerVersion SoftwareVersion
 }
 
 func (d *Dockerbeat) Config(b *beat.Beat) error {
+
+	// Requires Docker 1.5 minimum
+	d.minimalDockerVersion = SoftwareVersion{1, 5}
 
 	err := cfgfile.Read(&d.TbConfig, "")
 	if err != nil {
@@ -57,7 +66,8 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	d.events = b.Events
 	d.dockerClient, _ = docker.NewClient(d.socket)
 	d.eventGenerator = EventGenerator{map[string]NetworkData{}, map[string]BlkioStats{}}
-	return nil
+
+	return d.checkPrerequisites()
 }
 
 func (d *Dockerbeat) Run(b *beat.Beat) error {
@@ -71,17 +81,11 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 		time.Sleep(d.period)
 
 		// check prerequisites
-		env, err := d.dockerClient.Version()
+		var err = d.checkPrerequisites()
 
 		if err != nil {
-			logp.Err("Docker server unreachable: %s", err)
+			logp.Err("Unable to collect metrics: %s", err)
 			continue
-		}
-
-		valid, _ := d.validVersion(env.Get("version"))
-
-		if !valid {
-			logp.Err("Docker server is too old (version 1.5.x and earlier is required)")
 		}
 
 		// collect and emit metrics
@@ -146,9 +150,29 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 	return nil
 }
 
+func (d *Dockerbeat) checkPrerequisites() error {
+	var output error = nil
+
+	env, err := d.dockerClient.Version()
+
+	if err == nil {
+		version := env.Get("Version")
+		valid, _ := d.validVersion(version)
+
+		if !valid {
+			output = errors.New("Docker server is too old (version " +
+			strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
+			" and earlier is required)")
+		}
+
+	} else {
+		output = errors.New("Docker server unreachable: " + err.Error())
+	}
+
+	return output
+}
+
 func (d *Dockerbeat) validVersion(version string) (bool, error) {
-	expectedMinimalMajorVersion := 1
-	expectedMinimalMinorVersion := 5
 
 	splitsStr := strings.Split(version, ".")
 
@@ -166,8 +190,8 @@ func (d *Dockerbeat) validVersion(version string) (bool, error) {
 	}
 	var output bool
 
-	if actualMajorVersion > expectedMinimalMajorVersion ||
-	(actualMajorVersion == expectedMinimalMajorVersion && actualMinorVersion >= expectedMinimalMinorVersion) {
+	if actualMajorVersion > d.minimalDockerVersion.major ||
+	(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
 		output = true
 	} else {
 		output = false

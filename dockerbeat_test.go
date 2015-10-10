@@ -21,6 +21,7 @@ func getEmptyDockerbeat() Dockerbeat {
 			map[string]NetworkData{},
 			map[string]BlkioStats{},
 		},
+		SoftwareVersion{1, 5},
 	}
 }
 
@@ -56,7 +57,7 @@ func TestDockerbeatValidVersionMalformed(t *testing.T) {
 
 func TestDockerbeatValidVersion(t *testing.T) {
 	// GIVEN
-	var versions = []string{"1.5.0", "1.5.3", "1.6.12"}
+	var versions = []string{"1.5.0", "1.5.3", "1.6.12", "1.8.2"}
 	var beat = getEmptyDockerbeat()
 
 	for _, version := range versions {
