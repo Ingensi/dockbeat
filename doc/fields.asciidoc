@@ -14,6 +14,7 @@ following categories:
 * <<exported-fields-container>>
 * <<exported-fields-net>>
 * <<exported-fields-memory>>
+* <<exported-fields-blkio>>
 * <<exported-fields-cpu>>
 
 [[exported-fields-env]]
@@ -299,6 +300,38 @@ Current memory consumption in Bytes.
 type: float
 
 Amount of memory used by the container in percents between 0.0 and 100.0.
+
+
+[[exported-fields-blkio]]
+=== Blkio (disk) container statistics fields
+
+Gather disk usage of the current container.
+
+
+
+[[exported-fields-blkio]]
+=== Blkio (disk) container statistics fields
+
+
+==== read
+
+type: int
+
+Difference between the last read stat and the current read stat given by Docker. It represent the amount of byte read by the container on the disk(s) during the duration.
+
+
+==== write
+
+type: int
+
+Difference between the last write stat and the current write stat given by Docker. It represent the amount of byte written by the container on the disk(s) during the duration.
+
+
+==== total
+
+type: int
+
+Difference between the last total stat and the current total stat given by Docker. It represent the amount of byte read and written by the container on the disk(s) during the duration.
 
 
 [[exported-fields-cpu]]
