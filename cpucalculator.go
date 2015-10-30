@@ -28,21 +28,22 @@ func (c *CPUCalculator) perCpuUsage() common.MapStr {
 	return output
 }
 
-func (c *CPUCalculator) totalUsage() uint64 {
+func (c *CPUCalculator) totalUsage() float64  {
 	return c.calculateLoad(c.new.totalUsage - c.old.totalUsage)
 }
 
-func (c *CPUCalculator) usageInKernelmode() uint64 {
+func (c *CPUCalculator) usageInKernelmode() float64 {
 	return c.calculateLoad(c.new.usageInKernelmode - c.old.usageInKernelmode)
 }
 
-func (c *CPUCalculator) usageInUsermode() uint64 {
+func (c *CPUCalculator) usageInUsermode() float64  {
 	return c.calculateLoad(c.new.usageInUsermode - c.old.usageInUsermode)
 }
 
-func (c *CPUCalculator) calculateLoad(value uint64) uint64 {
+func (c *CPUCalculator) calculateLoad(value uint64) float64 {
 	// value is the count of CPU nanosecond in 1sec
 	// TODO save the old stat timestamp and reuse here in case of docker read time changes...
-	// value * 100 / 1000000000
-	return value / 10000000
+	// 1s = 1000000000 ns
+	// value / 1000000000
+	return float64 (value) / float64 (1000000000)
 }

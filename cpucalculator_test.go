@@ -18,10 +18,10 @@ func TestCPUperCpuUsage(t *testing.T) {
 	// THEN
 	// value should be 10%, 20%, 30% and 40%
 	assert.Equal(t, common.MapStr{
-		"cpu0": uint64(10),
-		"cpu1": uint64(20),
-		"cpu2": uint64(30),
-		"cpu3": uint64(40),
+		"cpu0": float64 (0.10),
+		"cpu1": float64 (0.20),
+		"cpu2": float64 (0.30),
+		"cpu3": float64 (0.40),
 	}, value)
 }
 
@@ -36,7 +36,7 @@ func TestCPUTotalUsage(t *testing.T) {
 
 	// THEN
 	// value should be 50%
-	assert.Equal(t, uint64(50), value)
+	assert.Equal(t, 0.50, value)
 }
 
 func TestCPUUsageInKernelmode(t *testing.T) {
@@ -50,7 +50,7 @@ func TestCPUUsageInKernelmode(t *testing.T) {
 
 	// THEN
 	// value should be 80%
-	assert.Equal(t, uint64(80), value)
+	assert.Equal(t, float64(0.80), value)
 }
 
 func TestCPUUsageInUsermode(t *testing.T) {
@@ -64,5 +64,5 @@ func TestCPUUsageInUsermode(t *testing.T) {
 
 	// THEN
 	// value should be 0%
-	assert.Equal(t, uint64(0), value)
+	assert.Equal(t, float64(0), value)
 }
