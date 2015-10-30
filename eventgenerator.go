@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/elastic/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
-	"time"
 	"strings"
+	"time"
 )
 
 type EventGenerator struct {
@@ -14,9 +14,9 @@ type EventGenerator struct {
 
 func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
-		"timestamp":      common.Time(stats.Read),
-		"type":           "container",
-		"containerID":    container.ID,
+		"timestamp":     common.Time(stats.Read),
+		"type":          "container",
+		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
 		"container": common.MapStr{
 			"id":         container.ID,
@@ -42,9 +42,9 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 	}
 
 	event := common.MapStr{
-		"timestamp":      common.Time(stats.Read),
-		"type":           "cpu",
-		"containerID":    container.ID,
+		"timestamp":     common.Time(stats.Read),
+		"type":          "cpu",
+		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
 		"cpu": common.MapStr{
 			"percpuUsage":       calculator.perCpuUsage(),
@@ -77,9 +77,9 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 	if ok {
 		calculator := NetworkCalculator{oldNetworkData, newNetworkData}
 		event = common.MapStr{
-			"timestamp":      common.Time(stats.Read),
-			"type":           "net",
-			"containerID":    container.ID,
+			"timestamp":     common.Time(stats.Read),
+			"type":          "net",
+			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
 			"net": common.MapStr{
 				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
@@ -94,9 +94,9 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 		}
 	} else {
 		event = common.MapStr{
-			"timestamp":      common.Time(stats.Read),
-			"type":           "net",
-			"containerID":    container.ID,
+			"timestamp":     common.Time(stats.Read),
+			"type":          "net",
+			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
 			"net": common.MapStr{
 				"rxBytes_ps":   0,
@@ -117,9 +117,9 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 
 func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
-		"timestamp":      common.Time(stats.Read),
-		"type":           "memory",
-		"containerID":    container.ID,
+		"timestamp":     common.Time(stats.Read),
+		"type":          "memory",
+		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
 		"memory": common.MapStr{
 			"failcnt":  stats.MemoryStats.Failcnt,

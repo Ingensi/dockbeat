@@ -3,25 +3,37 @@ package main
 import (
 	"time"
 
+	"errors"
 	"github.com/elastic/libbeat/beat"
 	"github.com/elastic/libbeat/cfgfile"
 	"github.com/elastic/libbeat/common"
 	"github.com/elastic/libbeat/logp"
 	"github.com/elastic/libbeat/publisher"
 	"github.com/fsouza/go-dockerclient"
+	"strconv"
+	"strings"
 )
 
+type SoftwareVersion struct {
+	major int
+	minor int
+}
+
 type Dockerbeat struct {
-	isAlive        bool
-	period         time.Duration
-	socket         string
-	TbConfig       ConfigSettings
-	dockerClient   *docker.Client
-	events         publisher.Client
-	eventGenerator EventGenerator
+	isAlive              bool
+	period               time.Duration
+	socket               string
+	TbConfig             ConfigSettings
+	dockerClient         *docker.Client
+	events               publisher.Client
+	eventGenerator       EventGenerator
+	minimalDockerVersion SoftwareVersion
 }
 
 func (d *Dockerbeat) Config(b *beat.Beat) error {
+
+	// Requires Docker 1.5 minimum
+	d.minimalDockerVersion = SoftwareVersion{1, 5}
 
 	err := cfgfile.Read(&d.TbConfig, "")
 	if err != nil {
@@ -54,7 +66,8 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	d.events = b.Events
 	d.dockerClient, _ = docker.NewClient(d.socket)
 	d.eventGenerator = EventGenerator{map[string]NetworkData{}, map[string]BlkioStats{}}
-	return nil
+
+	return d.checkPrerequisites()
 }
 
 func (d *Dockerbeat) Run(b *beat.Beat) error {
@@ -66,6 +79,16 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 	//main loop
 	for d.isAlive {
 		time.Sleep(d.period)
+
+		// check prerequisites
+		var err = d.checkPrerequisites()
+
+		if err != nil {
+			logp.Err("Unable to collect metrics: %s", err)
+			continue
+		}
+
+		// collect and emit metrics
 		d.RunOneTime(b)
 	}
 
@@ -125,4 +148,53 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 	}()
 
 	return nil
+}
+
+func (d *Dockerbeat) checkPrerequisites() error {
+	var output error = nil
+
+	env, err := d.dockerClient.Version()
+
+	if err == nil {
+		version := env.Get("Version")
+		valid, _ := d.validVersion(version)
+
+		if !valid {
+			output = errors.New("Docker server is too old (version " +
+			strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
+			" and earlier is required)")
+		}
+
+	} else {
+		output = errors.New("Docker server unreachable: " + err.Error())
+	}
+
+	return output
+}
+
+func (d *Dockerbeat) validVersion(version string) (bool, error) {
+
+	splitsStr := strings.Split(version, ".")
+
+	if cap(splitsStr) < 2 {
+		return false, errors.New("Malformed version")
+	}
+
+	actualMajorVersion, err := strconv.Atoi(splitsStr[0])
+	if err != nil {
+		return false, err
+	}
+	actualMinorVersion, err := strconv.Atoi(splitsStr[1])
+	if err != nil {
+		return false, err
+	}
+	var output bool
+
+	if actualMajorVersion > d.minimalDockerVersion.major ||
+	(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
+		output = true
+	} else {
+		output = false
+	}
+	return output, nil
 }
