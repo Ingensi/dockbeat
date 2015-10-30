@@ -20,13 +20,13 @@ type SoftwareVersion struct {
 }
 
 type Dockerbeat struct {
-	isAlive              bool
-	period               time.Duration
-	socket               string
-	TbConfig             ConfigSettings
-	dockerClient         *docker.Client
-	events               publisher.Client
-	eventGenerator       EventGenerator
+	done           chan struct{}
+	period         time.Duration
+	socket         string
+	TbConfig       ConfigSettings
+	dockerClient   *docker.Client
+	events         publisher.Client
+	eventGenerator EventGenerator
 	minimalDockerVersion SoftwareVersion
 }
 
@@ -64,6 +64,7 @@ func (d *Dockerbeat) Config(b *beat.Beat) error {
 func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	//populate Dockerbeat
 	d.events = b.Events
+	d.done = make(chan struct{})
 	d.dockerClient, _ = docker.NewClient(d.socket)
 	d.eventGenerator = EventGenerator{map[string]NetworkData{}, map[string]BlkioStats{}}
 
@@ -71,25 +72,33 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 }
 
 func (d *Dockerbeat) Run(b *beat.Beat) error {
-
-	d.isAlive = true
-
 	var err error
 
+	ticker := time.NewTicker(d.period)
+	defer ticker.Stop()
+
 	//main loop
-	for d.isAlive {
-		time.Sleep(d.period)
-
-		// check prerequisites
-		var err = d.checkPrerequisites()
-
-		if err != nil {
-			logp.Err("Unable to collect metrics: %s", err)
-			continue
+	for {
+		select {
+		case <-d.done:
+			return nil
+		case <-ticker.C:
 		}
 
-		// collect and emit metrics
+		// check prerequisites
+		if d.checkPrerequisites() != nil {
+			logp.Err("Unable to collect metrics: %s", err)
+			continue
+		} 
+
+		timerStart := time.Now()
 		d.RunOneTime(b)
+		timerEnd := time.Now()
+
+		duration := timerEnd.Sub(timerStart)
+		if duration.Nanoseconds() > d.period.Nanoseconds() {
+			logp.Warn("Ignoring tick(s) due to processing taking longer than one period")
+		}
 	}
 
 	return err
@@ -100,7 +109,7 @@ func (d *Dockerbeat) Cleanup(b *beat.Beat) error {
 }
 
 func (d *Dockerbeat) Stop() {
-	d.isAlive = false
+	close(d.done)
 }
 
 func (d *Dockerbeat) RunOneTime(b *beat.Beat) error {
