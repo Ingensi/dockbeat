@@ -20,13 +20,13 @@ type SoftwareVersion struct {
 }
 
 type Dockerbeat struct {
-	done           chan struct{}
-	period         time.Duration
-	socket         string
-	TbConfig       ConfigSettings
-	dockerClient   *docker.Client
-	events         publisher.Client
-	eventGenerator EventGenerator
+	done                 chan struct{}
+	period               time.Duration
+	socket               string
+	TbConfig             ConfigSettings
+	dockerClient         *docker.Client
+	events               publisher.Client
+	eventGenerator       EventGenerator
 	minimalDockerVersion SoftwareVersion
 }
 
@@ -89,7 +89,7 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 		if d.checkPrerequisites() != nil {
 			logp.Err("Unable to collect metrics: %s", err)
 			continue
-		} 
+		}
 
 		timerStart := time.Now()
 		d.RunOneTime(b)
@@ -170,8 +170,8 @@ func (d *Dockerbeat) checkPrerequisites() error {
 
 		if !valid {
 			output = errors.New("Docker server is too old (version " +
-			strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
-			" and earlier is required)")
+				strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
+				" and earlier is required)")
 		}
 
 	} else {
@@ -200,7 +200,7 @@ func (d *Dockerbeat) validVersion(version string) (bool, error) {
 	var output bool
 
 	if actualMajorVersion > d.minimalDockerVersion.major ||
-	(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
+		(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
 		output = true
 	} else {
 		output = false
