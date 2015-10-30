@@ -9,7 +9,7 @@ import (
 // helper method
 func getEmptyDockerbeat() Dockerbeat {
 	return Dockerbeat{
-		false,
+		make(chan struct{}),
 		time.Duration(10),
 		"/fake/path/to/socket.sock",
 		ConfigSettings{
