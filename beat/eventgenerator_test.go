@@ -1,4 +1,4 @@
-package main
+package beat
 
 import (
 	"github.com/elastic/libbeat/common"

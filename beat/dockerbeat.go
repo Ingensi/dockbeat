@@ -1,4 +1,4 @@
-package main
+package beat
 
 import (
 	"time"
@@ -28,6 +28,10 @@ type Dockerbeat struct {
 	events               publisher.Client
 	eventGenerator       EventGenerator
 	minimalDockerVersion SoftwareVersion
+}
+
+func New() *Dockerbeat {
+	return &Dockerbeat{}
 }
 
 func (d *Dockerbeat) Config(b *beat.Beat) error {

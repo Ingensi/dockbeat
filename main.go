@@ -1,6 +1,7 @@
 package main
 
 import (
+	dockerbeat "github.com/ingensi/dockerbeat/beat"
 	"os"
 
 	"github.com/elastic/libbeat/beat"
@@ -13,14 +14,14 @@ var Name = "dockerbeat"
 
 func main() {
 
-	tb := &Dockerbeat{}
+	d := dockerbeat.New()
 
-	b := beat.NewBeat(Name, Version, tb)
+	b := beat.NewBeat(Name, Version, d)
 
 	b.CommandLineSetup()
 
 	b.LoadConfig()
-	err := tb.Config(b)
+	err := d.Config(b)
 	if err != nil {
 		logp.Critical("Config error: %v", err)
 		os.Exit(1)

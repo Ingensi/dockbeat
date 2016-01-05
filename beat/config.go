@@ -1,4 +1,4 @@
-package main
+package beat
 
 type DockerConfig struct {
 	Period *int64

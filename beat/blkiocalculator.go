@@ -1,4 +1,4 @@
-package main
+package beat
 
 type BlkioStats struct {
 	reads  uint64
