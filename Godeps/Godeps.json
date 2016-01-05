@@ -4,38 +4,38 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/elastic/libbeat/beat",
-			"Comment": "v1.0.0-beta3-140-g70eb1e6",
-			"Rev": "70eb1e6f2ca2d4bd81bc178acc8122fd457d3c2b"
+			"Comment": "v1.0.0-36-gbe66518",
+			"Rev": "be665188c99be9e1519a8213fd49abd7573f508b"
 		},
 		{
 			"ImportPath": "github.com/elastic/libbeat/cfgfile",
-			"Comment": "v1.0.0-beta3-140-g70eb1e6",
-			"Rev": "70eb1e6f2ca2d4bd81bc178acc8122fd457d3c2b"
+			"Comment": "v1.0.0-36-gbe66518",
+			"Rev": "be665188c99be9e1519a8213fd49abd7573f508b"
 		},
 		{
 			"ImportPath": "github.com/elastic/libbeat/common",
-			"Comment": "v1.0.0-beta3-140-g70eb1e6",
-			"Rev": "70eb1e6f2ca2d4bd81bc178acc8122fd457d3c2b"
+			"Comment": "v1.0.0-36-gbe66518",
+			"Rev": "be665188c99be9e1519a8213fd49abd7573f508b"
 		},
 		{
 			"ImportPath": "github.com/elastic/libbeat/logp",
-			"Comment": "v1.0.0-beta3-140-g70eb1e6",
-			"Rev": "70eb1e6f2ca2d4bd81bc178acc8122fd457d3c2b"
+			"Comment": "v1.0.0-36-gbe66518",
+			"Rev": "be665188c99be9e1519a8213fd49abd7573f508b"
 		},
 		{
 			"ImportPath": "github.com/elastic/libbeat/outputs",
-			"Comment": "v1.0.0-beta3-140-g70eb1e6",
-			"Rev": "70eb1e6f2ca2d4bd81bc178acc8122fd457d3c2b"
+			"Comment": "v1.0.0-36-gbe66518",
+			"Rev": "be665188c99be9e1519a8213fd49abd7573f508b"
 		},
 		{
 			"ImportPath": "github.com/elastic/libbeat/publisher",
-			"Comment": "v1.0.0-beta3-140-g70eb1e6",
-			"Rev": "70eb1e6f2ca2d4bd81bc178acc8122fd457d3c2b"
+			"Comment": "v1.0.0-36-gbe66518",
+			"Rev": "be665188c99be9e1519a8213fd49abd7573f508b"
 		},
 		{
 			"ImportPath": "github.com/elastic/libbeat/service",
-			"Comment": "v1.0.0-beta3-140-g70eb1e6",
-			"Rev": "70eb1e6f2ca2d4bd81bc178acc8122fd457d3c2b"
+			"Comment": "v1.0.0-36-gbe66518",
+			"Rev": "be665188c99be9e1519a8213fd49abd7573f508b"
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
@@ -43,11 +43,11 @@
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
-			"Rev": "d8dbe4d94f15fe89232e0402c6e8a0ddf21af3ab"
+			"Rev": "764a32c188f6ce0bc2565349f0125b3ad4021ea9"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/redis",
-			"Rev": "d8dbe4d94f15fe89232e0402c6e8a0ddf21af3ab"
+			"Rev": "764a32c188f6ce0bc2565349f0125b3ad4021ea9"
 		},
 		{
 			"ImportPath": "github.com/nranchev/go-libGeoIP",
@@ -55,7 +55,7 @@
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
-			"Rev": "7ad95dd0798a40da1ccdff6dff35fd177b5edf40"
+			"Rev": "53feefa2559fb8dfa8d81baad31be332c97d6c77"
 		}
 	]
 }

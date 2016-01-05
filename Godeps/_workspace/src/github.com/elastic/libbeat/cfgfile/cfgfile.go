@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"runtime"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 )
@@ -16,7 +18,7 @@ func init() {
 	// The default config cannot include the beat name as it is not initialised when this
 	// function is called, but see ChangeDefaultCfgfileFlag
 	configfile = flag.String("c", "/etc/beat/beat.yml", "Configuration file")
-	testConfig = flag.Bool("test", false, "Test configuration and exit.")
+	testConfig = flag.Bool("configtest", false, "Test configuration and exit.")
 }
 
 // ChangeDefaultCfgfileFlag replaces the value and default value for the `-c` flag so that
@@ -26,7 +28,13 @@ func ChangeDefaultCfgfileFlag(beatName string) error {
 	if cliflag == nil {
 		return fmt.Errorf("Flag -c not found")
 	}
-	cliflag.DefValue = fmt.Sprintf("/etc/%s/%s.yml", beatName, beatName)
+
+	if runtime.GOOS == "windows" {
+		cliflag.DefValue = fmt.Sprintf(`C:\Program Files\%s\%s.yml`,
+			strings.Title(beatName), beatName)
+	} else {
+		cliflag.DefValue = fmt.Sprintf("/etc/%s/%s.yml", beatName, beatName)
+	}
 	return cliflag.Value.Set(cliflag.DefValue)
 }
 

@@ -13,9 +13,10 @@ import (
 	"github.com/nranchev/go-libGeoIP"
 
 	// load supported output plugins
+	_ "github.com/elastic/libbeat/outputs/console"
 	_ "github.com/elastic/libbeat/outputs/elasticsearch"
 	_ "github.com/elastic/libbeat/outputs/fileout"
-	_ "github.com/elastic/libbeat/outputs/lumberjack"
+	_ "github.com/elastic/libbeat/outputs/logstash"
 	_ "github.com/elastic/libbeat/outputs/redis"
 )
 
@@ -26,8 +27,18 @@ var debug = logp.MakeDebug("publish")
 
 // EventPublisher provides the interface for beats to publish events.
 type eventPublisher interface {
-	PublishEvent(event common.MapStr) bool
-	PublishEvents(events []common.MapStr) bool
+	PublishEvent(ctx *context, event common.MapStr) bool
+	PublishEvents(ctx *context, events []common.MapStr) bool
+}
+
+type context struct {
+	publishOptions
+	signal outputs.Signaler
+}
+
+type publishOptions struct {
+	confirm bool
+	sync    bool
 }
 
 type TransactionalEventPublisher interface {
@@ -35,7 +46,10 @@ type TransactionalEventPublisher interface {
 }
 
 type PublisherType struct {
-	name           string
+	shipperName    string // Shipper name as set in the configuration file
+	hostname       string // Host name as returned by the operation system
+	name           string // The shipperName if configured, the hostname otherwise
+	ipaddrs        []string
 	tags           []string
 	disabled       bool
 	Index          string
@@ -85,6 +99,16 @@ func PrintPublishEvent(event common.MapStr) {
 	} else {
 		debug("Publish: %s", string(json))
 	}
+}
+
+func (publisher *PublisherType) IsPublisherIP(ip string) bool {
+	for _, myip := range publisher.ipaddrs {
+		if myip == ip {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (publisher *PublisherType) GetServerName(ip string) string {
@@ -142,7 +166,7 @@ func (publisher *PublisherType) PublishTopology(params ...string) error {
 }
 
 func (publisher *PublisherType) Init(
-	beat string,
+	beatName string,
 	configs map[string]outputs.MothershipConfig,
 	shipper ShipperConfig,
 ) error {
@@ -160,7 +184,7 @@ func (publisher *PublisherType) Init(
 	publisher.wsPublisher.Init()
 
 	if !publisher.disabled {
-		plugins, err := outputs.InitOutputs(beat, configs, shipper.Topology_expire)
+		plugins, err := outputs.InitOutputs(beatName, configs, shipper.Topology_expire)
 		if err != nil {
 			return err
 		}
@@ -171,7 +195,7 @@ func (publisher *PublisherType) Init(
 			output := plugin.Output
 			config := plugin.Config
 
-			debug("create output worker: %p, %p", config.Flush_interval, config.Bulk_size)
+			debug("Create output worker")
 
 			outputers = append(outputers,
 				newOutputWorker(config, output, &publisher.wsOutput, 1000))
@@ -208,22 +232,30 @@ func (publisher *PublisherType) Init(
 		}
 
 		if publisher.TopologyOutput == nil {
-			logp.Warn("No output is defined to store the topology. The server fields might not be filled.")
+			logp.Debug("publish", "No output is defined to store the topology. The server fields might not be filled.")
 		}
 	}
 
-	publisher.name = shipper.Name
-	if len(publisher.name) == 0 {
-		// use the hostname
-		publisher.name, err = os.Hostname()
-		if err != nil {
-			return err
-		}
-
-		logp.Info("No shipper name configured, using hostname '%s'", publisher.name)
+	publisher.shipperName = shipper.Name
+	publisher.hostname, err = os.Hostname()
+	if err != nil {
+		return err
 	}
+	if len(publisher.shipperName) > 0 {
+		publisher.name = publisher.shipperName
+	} else {
+		publisher.name = publisher.hostname
+	}
+	logp.Info("Publisher name: %s", publisher.name)
 
 	publisher.tags = shipper.Tags
+
+	//Store the publisher's IP addresses
+	publisher.ipaddrs, err = common.LocalIpAddrsAsStrings(false)
+	if err != nil {
+		logp.Err("Failed to get local IP addresses: %s", err)
+		return err
+	}
 
 	if !publisher.disabled && publisher.TopologyOutput != nil {
 		RefreshTopologyFreq := 10 * time.Second

@@ -8,33 +8,31 @@ import (
 )
 
 type MothershipConfig struct {
-	Enabled            bool
-	Save_topology      bool
-	Host               string
-	Port               int
-	Hosts              []string
-	LoadBalance        *bool
-	Protocol           string
-	Username           string
-	Password           string
-	Index              string
-	Path               string
-	Db                 int
-	Db_topology        int
-	Timeout            int
-	Reconnect_interval int
-	Filename           string
-	Rotate_every_kb    int
-	Number_of_files    int
-	DataType           string
-	Flush_interval     *int
-	Bulk_size          *int
-	Max_retries        *int
-	TLS                *bool
-	Certificate        string
-	CertificateKey     string
-	CAs                []string
-	TLSInsecure        *bool
+	Save_topology     bool
+	Host              string
+	Port              int
+	Hosts             []string
+	LoadBalance       *bool
+	Protocol          string
+	Username          string
+	Password          string
+	ProxyURL          string `yaml:"proxy_url"`
+	Index             string
+	Path              string
+	Db                int
+	Db_topology       int
+	Timeout           int
+	ReconnectInterval int    `yaml:"reconnect_interval"`
+	Filename          string `yaml:"filename"`
+	RotateEveryKb     int    `yaml:"rotate_every_kb"`
+	NumberOfFiles     int    `yaml:"number_of_files"`
+	DataType          string
+	FlushInterval     *int  `yaml:"flush_interval"`
+	BulkMaxSize       *int  `yaml:"bulk_max_size"`
+	MaxRetries        *int  `yaml:"max_retries"`
+	Pretty            *bool `yaml:"pretty"`
+	TLS               *TLSConfig
+	Worker            int
 }
 
 type Outputer interface {
@@ -99,7 +97,7 @@ func InitOutputs(
 	var plugins []OutputPlugin = nil
 	for name, plugin := range enabledOutputPlugins {
 		config, exists := configs[name]
-		if !exists || !config.Enabled {
+		if !exists {
 			continue
 		}
 
@@ -111,6 +109,7 @@ func InitOutputs(
 
 		plugin := OutputPlugin{Name: name, Config: config, Output: output}
 		plugins = append(plugins, plugin)
+		logp.Info("Activated %s as output plugin.", name)
 	}
 	return plugins, nil
 }

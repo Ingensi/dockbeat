@@ -19,12 +19,13 @@ type Logging struct {
 	Files     *FileRotator
 	To_syslog *bool
 	To_files  *bool
+	Level     string
 }
 
 func init() {
 	// Adds logging specific flags: -v, -e and -d.
 	verbose = flag.Bool("v", false, "Log at INFO level")
-	toStderr = flag.Bool("e", false, "Output to stdout and disable syslog/file output")
+	toStderr = flag.Bool("e", false, "Log to stderr and disable syslog/file output")
 	debugSelectorsStr = flag.String("d", "", "Enable certain debug selectors")
 }
 
@@ -34,25 +35,39 @@ func init() {
 // line flag with a later SetStderr call.
 func Init(name string, config *Logging) error {
 
-	logLevel := LOG_ERR
-	if *verbose {
-		logLevel = LOG_INFO
+	logLevel, err := getLogLevel(config)
+	if err != nil {
+		return err
 	}
 
-	debugSelectors := []string{}
+	if *verbose {
+		if LOG_INFO > logLevel {
+			logLevel = LOG_INFO
+		}
+	}
+
+	debugSelectors := config.Selectors
+	if logLevel == LOG_DEBUG {
+		if len(debugSelectors) == 0 {
+			debugSelectors = []string{"*"}
+		}
+	}
 	if len(*debugSelectorsStr) > 0 {
 		debugSelectors = strings.Split(*debugSelectorsStr, ",")
 		logLevel = LOG_DEBUG
 	}
 
 	var defaultToFiles, defaultToSyslog bool
+	var defaultFilePath string
 	if runtime.GOOS == "windows" {
 		// always disabled on windows
 		defaultToSyslog = false
 		defaultToFiles = true
+		defaultFilePath = fmt.Sprintf("C:\\ProgramData\\%s\\Logs", name)
 	} else {
 		defaultToSyslog = true
 		defaultToFiles = false
+		defaultFilePath = fmt.Sprintf("/var/log/%s", name)
 	}
 
 	var toSyslog, toFiles bool
@@ -68,8 +83,10 @@ func Init(name string, config *Logging) error {
 	}
 
 	// toStderr disables logging to syslog/files
-	toSyslog = toSyslog && !*toStderr
-	toFiles = toFiles && !*toStderr
+	if *toStderr {
+		toSyslog = false
+		toFiles = false
+	}
 
 	LogInit(Priority(logLevel), "", toSyslog, true, debugSelectors)
 	if len(debugSelectors) > 0 {
@@ -78,18 +95,20 @@ func Init(name string, config *Logging) error {
 
 	if toFiles {
 		if config.Files == nil {
-			if runtime.GOOS == "windows" {
-				config.Files = &FileRotator{
-					Path: fmt.Sprintf("C:\\ProgramData\\%s\\Logs", name),
-					Name: name,
-				}
-			} else {
-				config.Files = &FileRotator{
-					Path: fmt.Sprintf("/var/log/%s", name),
-					Name: name,
-				}
+			config.Files = &FileRotator{
+				Path: defaultFilePath,
+				Name: name,
+			}
+		} else {
+			if config.Files.Path == "" {
+				config.Files.Path = defaultFilePath
+			}
+
+			if config.Files.Name == "" {
+				config.Files.Name = name
 			}
 		}
+
 		err := SetToFile(true, config.Files)
 		if err != nil {
 			return err
@@ -107,7 +126,27 @@ func Init(name string, config *Logging) error {
 
 func SetStderr() {
 	if !*toStderr {
-		Info("Startup successful, disable stdout logging")
 		SetToStderr(false, "")
+		Debug("log", "Disable stderr logging")
 	}
+}
+
+func getLogLevel(config *Logging) (Priority, error) {
+	if config == nil || config.Level == "" {
+		return LOG_ERR, nil
+	}
+
+	levels := map[string]Priority{
+		"critical": LOG_CRIT,
+		"error":    LOG_ERR,
+		"warning":  LOG_WARNING,
+		"info":     LOG_INFO,
+		"debug":    LOG_DEBUG,
+	}
+
+	level, ok := levels[strings.ToLower(config.Level)]
+	if !ok {
+		return 0, fmt.Errorf("unknown log level: %v", config.Level)
+	}
+	return level, nil
 }

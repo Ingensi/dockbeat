@@ -1,3 +1,6 @@
+//@deprecated: Starting with version 1.0.0-beta4 the Redis Output is deprecated as
+// it's replaced by the Logstash Output that has support for Redis Output plugin.
+
 package redis
 
 import (
@@ -16,6 +19,7 @@ import (
 )
 
 func init() {
+
 	outputs.RegisterOutputPlugin("redis", RedisOutputPlugin{})
 }
 
@@ -66,6 +70,8 @@ type message struct {
 
 func (out *redisOutput) Init(beat string, config outputs.MothershipConfig, topology_expire int) error {
 
+	logp.Warn("Redis Output is deprecated. Please use the Redis Output Plugin from Logstash instead.")
+
 	out.Hostname = fmt.Sprintf("%s:%d", config.Host, config.Port)
 
 	if config.Password != "" {
@@ -93,9 +99,10 @@ func (out *redisOutput) Init(beat string, config outputs.MothershipConfig, topol
 	}
 
 	out.ReconnectInterval = time.Duration(1) * time.Second
-	if config.Reconnect_interval != 0 {
-		out.ReconnectInterval = time.Duration(config.Reconnect_interval) * time.Second
+	if config.ReconnectInterval != 0 {
+		out.ReconnectInterval = time.Duration(config.ReconnectInterval) * time.Second
 	}
+	logp.Info("Reconnect Interval set to: %v", out.ReconnectInterval)
 
 	expSec := 15
 	if topology_expire != 0 {
@@ -294,7 +301,7 @@ func (out *redisOutput) BulkPublish(
 		}
 		err = out.Conn.Send(command, out.Index, string(jsonEvent))
 		if err != nil {
-			outputs.SignalFailed(signal)
+			outputs.SignalFailed(signal, err)
 			out.onFail(err)
 			return err
 		}

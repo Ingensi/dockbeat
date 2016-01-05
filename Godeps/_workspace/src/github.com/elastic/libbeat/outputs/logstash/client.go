@@ -1,4 +1,4 @@
-package lumberjack
+package logstash
 
 import (
 	"bytes"
@@ -24,17 +24,15 @@ type lumberjackClient struct {
 	TransportClient
 	windowSize      int
 	maxOkWindowSize int // max window size sending was successful for
+	maxWindowSize   int
 	timeout         time.Duration
 	countTimeoutErr int
 }
 
-// TODO: make max window size configurable
 const (
 	minWindowSize             int = 1
-	maxWindowSize             int = 1024
 	defaultStartMaxWindowSize int = 10
-
-	maxAllowedTimeoutErr int = 3
+	maxAllowedTimeoutErr      int = 3
 )
 
 // errors
@@ -45,35 +43,62 @@ var (
 )
 
 var (
-	codeWindowSize    = []byte("1W")
-	codeJSONDataFrame = []byte("1J")
-	codeCompressed    = []byte("1C")
+	codeVersion byte = '2'
+
+	codeWindowSize    = []byte{codeVersion, 'W'}
+	codeJSONDataFrame = []byte{codeVersion, 'J'}
+	codeCompressed    = []byte{codeVersion, 'C'}
 )
 
-func newLumberjackClient(conn TransportClient, timeout time.Duration) *lumberjackClient {
+func newLumberjackClient(
+	conn TransportClient,
+	maxWindowSize int,
+	timeout time.Duration,
+) *lumberjackClient {
 	return &lumberjackClient{
 		TransportClient: conn,
 		windowSize:      defaultStartMaxWindowSize,
 		timeout:         timeout,
+		maxWindowSize:   maxWindowSize,
 	}
 }
 
-func (l *lumberjackClient) PublishEvents(events []common.MapStr) (int, error) {
+func (l *lumberjackClient) PublishEvent(event common.MapStr) error {
+	_, err := l.PublishEvents([]common.MapStr{event})
+	return err
+}
+
+// PublishEvents sends all events to logstash. On error a slice with all events
+// not published or confirmed to be processed by logstash will be returned.
+func (l *lumberjackClient) PublishEvents(
+	events []common.MapStr,
+) ([]common.MapStr, error) {
+	for len(events) > 0 {
+		n, err := l.publishWindowed(events)
+
+		logp.Debug("logstash", "%v events out of %v events sent to logstash. Continue sending ...", n, len(events))
+		events = events[n:]
+		if err != nil {
+			return events, err
+		}
+	}
+	return nil, nil
+}
+
+// publishWindowed published events with current maximum window size to logstash
+// returning the total number of events sent (due to window size, or acks until
+// failure).
+func (l *lumberjackClient) publishWindowed(events []common.MapStr) (int, error) {
 	if len(events) == 0 {
 		return 0, nil
 	}
 
+	logp.Debug("logstash", "Try to publish %v events to logstash with window size %v", len(events), l.windowSize)
+
+	// prepare message payload
 	if len(events) > l.windowSize {
 		events = events[:l.windowSize]
 	}
-
-	// Abort if sending request takes longer than the configured
-	// network timeout.
-	conn := l.TransportClient
-	if err := conn.SetDeadline(time.Now().Add(l.timeout)); err != nil {
-		return l.onFail(0, err)
-	}
-
 	count, payload, err := l.compressEvents(events)
 	if err != nil {
 		return 0, err
@@ -102,13 +127,9 @@ func (l *lumberjackClient) PublishEvents(events []common.MapStr) (int, error) {
 	var ackSeq uint32
 	for ackSeq < count {
 		// read until all acks
-		if err := conn.SetDeadline(time.Now().Add(l.timeout)); err != nil {
-			return l.onFail(ackSeq, err)
-		}
-
 		ackSeq, err = l.readACK()
 		if err != nil {
-			return l.onFail(ackSeq, err)
+			return l.onFail(int(ackSeq), err)
 		}
 	}
 
@@ -118,10 +139,10 @@ func (l *lumberjackClient) PublishEvents(events []common.MapStr) (int, error) {
 	if l.maxOkWindowSize < l.windowSize {
 		l.maxOkWindowSize = l.windowSize
 
-		if l.windowSize < maxWindowSize {
+		if l.windowSize < l.maxWindowSize {
 			l.windowSize = l.windowSize + l.windowSize/2
-			if l.windowSize > maxWindowSize {
-				l.windowSize = maxWindowSize
+			if l.windowSize > l.maxWindowSize {
+				l.windowSize = l.maxWindowSize
 			}
 		}
 	} else if l.windowSize < l.maxOkWindowSize {
@@ -134,30 +155,30 @@ func (l *lumberjackClient) PublishEvents(events []common.MapStr) (int, error) {
 	return len(events), nil
 }
 
-func (l *lumberjackClient) onFail(ackSeq uint32, err error) (int, error) {
+func (l *lumberjackClient) onFail(n int, err error) (int, error) {
 	// if timeout error, back off and ignore error
 	nerr, ok := err.(net.Error)
 	if !ok || !nerr.Timeout() {
 		// no timeout error, close connection and return error
 		_ = l.Close()
-		return int(ackSeq), err
+		return n, err
 	}
 
 	// if we've seen 3 consecutive timeout errors, close connection
 	l.countTimeoutErr++
 	if l.countTimeoutErr == maxAllowedTimeoutErr {
 		_ = l.Close()
-		return int(ackSeq), err
+		return n, err
 	}
 
 	// timeout error. reduce window size and return 0 published events. Send
 	// mode might try to publish again with reduce window size or ask another
-	// client to send events (round robin load balancer)
+	// client to send events
 	l.windowSize = l.windowSize / 2
 	if l.windowSize < minWindowSize {
 		l.windowSize = minWindowSize
 	}
-	return int(ackSeq), nil
+	return n, nil
 }
 
 func (l *lumberjackClient) compressEvents(
@@ -186,6 +207,10 @@ func (l *lumberjackClient) compressEvents(
 }
 
 func (l *lumberjackClient) readACK() (uint32, error) {
+	if err := l.SetDeadline(time.Now().Add(l.timeout)); err != nil {
+		return 0, err
+	}
+
 	response := make([]byte, 6)
 	ackbytes := 0
 	for ackbytes < 6 {
@@ -196,7 +221,7 @@ func (l *lumberjackClient) readACK() (uint32, error) {
 		ackbytes += n
 	}
 
-	isACK := response[0] == '1' && response[1] == 'A'
+	isACK := response[0] == codeVersion && response[1] == 'A'
 	if !isACK {
 		return 0, ErrProtocolError
 	}
@@ -205,6 +230,9 @@ func (l *lumberjackClient) readACK() (uint32, error) {
 }
 
 func (l *lumberjackClient) sendWindowSize(window uint32) error {
+	if err := l.SetDeadline(time.Now().Add(l.timeout)); err != nil {
+		return err
+	}
 	if _, err := l.Write(codeWindowSize); err != nil {
 		return err
 	}
@@ -212,6 +240,9 @@ func (l *lumberjackClient) sendWindowSize(window uint32) error {
 }
 
 func (l *lumberjackClient) sendCompressed(payload []byte) error {
+	if err := l.SetDeadline(time.Now().Add(l.timeout)); err != nil {
+		return err
+	}
 	if _, err := l.Write(codeCompressed); err != nil {
 		return err
 	}
@@ -229,7 +260,7 @@ func (l *lumberjackClient) writeDataFrame(
 	out io.Writer,
 ) error {
 	// Write JSON Data Frame:
-	// version: uint8 = '1'
+	// version: uint8 = '2'
 	// code: uint8 = 'J'
 	// seq: uint32
 	// payloadLen (bytes): uint32
