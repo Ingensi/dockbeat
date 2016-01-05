@@ -1,7 +1,7 @@
 package beat
 
 import (
-	"github.com/elastic/libbeat/common"
+	"github.com/elastic/beats/libbeat/common"
 	"strconv"
 )
 

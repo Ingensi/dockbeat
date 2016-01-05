@@ -2,16 +2,16 @@ package beat
 
 import (
 	"time"
-
 	"errors"
-	"github.com/elastic/libbeat/beat"
-	"github.com/elastic/libbeat/cfgfile"
-	"github.com/elastic/libbeat/common"
-	"github.com/elastic/libbeat/logp"
-	"github.com/elastic/libbeat/publisher"
-	"github.com/fsouza/go-dockerclient"
 	"strconv"
 	"strings"
+
+	"github.com/elastic/beats/libbeat/beat"
+	"github.com/elastic/beats/libbeat/cfgfile"
+	"github.com/elastic/beats/libbeat/common"
+	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/publisher"
+	"github.com/fsouza/go-dockerclient"
 )
 
 type SoftwareVersion struct {
@@ -81,7 +81,6 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 	ticker := time.NewTicker(d.period)
 	defer ticker.Stop()
 
-	//main loop
 	for {
 		select {
 		case <-d.done:
@@ -174,8 +173,8 @@ func (d *Dockerbeat) checkPrerequisites() error {
 
 		if !valid {
 			output = errors.New("Docker server is too old (version " +
-				strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
-				" and earlier is required)")
+			strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
+			" and earlier is required)")
 		}
 
 	} else {
@@ -204,7 +203,7 @@ func (d *Dockerbeat) validVersion(version string) (bool, error) {
 	var output bool
 
 	if actualMajorVersion > d.minimalDockerVersion.major ||
-		(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
+	(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
 		output = true
 	} else {
 		output = false

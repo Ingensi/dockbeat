@@ -21,6 +21,9 @@
         }
       ],
       "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
         "blkio": {
           "properties": {}
         },
@@ -216,9 +219,6 @@
               "type": "float"
             }
           }
-        },
-        "timestamp": {
-          "type": "date"
         }
       }
     }

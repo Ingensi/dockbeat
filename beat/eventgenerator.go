@@ -1,7 +1,7 @@
 package beat
 
 import (
-	"github.com/elastic/libbeat/common"
+	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"strings"
 	"time"
@@ -14,7 +14,7 @@ type EventGenerator struct {
 
 func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
-		"timestamp":     common.Time(stats.Read),
+		"@timestamp":     common.Time(stats.Read),
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
@@ -42,7 +42,7 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 	}
 
 	event := common.MapStr{
-		"timestamp":     common.Time(stats.Read),
+		"@timestamp":     common.Time(stats.Read),
 		"type":          "cpu",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
@@ -77,7 +77,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 	if ok {
 		calculator := NetworkCalculator{oldNetworkData, newNetworkData}
 		event = common.MapStr{
-			"timestamp":     common.Time(stats.Read),
+			"@timestamp":     common.Time(stats.Read),
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
@@ -94,7 +94,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 		}
 	} else {
 		event = common.MapStr{
-			"timestamp":     common.Time(stats.Read),
+			"@timestamp":     common.Time(stats.Read),
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
@@ -117,7 +117,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 
 func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
-		"timestamp":     common.Time(stats.Read),
+		"@timestamp":     common.Time(stats.Read),
 		"type":          "memory",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
@@ -143,7 +143,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 	if ok {
 		calculator := BlkioCalculator{oldBlkioStats, blkioStats}
 		event = common.MapStr{
-			"timestamp":      common.Time(stats.Read),
+			"@timestamp":      common.Time(stats.Read),
 			"type":           "blkio",
 			"containerID":    container.ID,
 			"containerNames": container.Names,
@@ -155,7 +155,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 		}
 	} else {
 		event = common.MapStr{
-			"timestamp":      common.Time(stats.Read),
+			"@timestamp":      common.Time(stats.Read),
 			"type":           "blkio",
 			"containerID":    container.ID,
 			"containerNames": container.Names,
