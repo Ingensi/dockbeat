@@ -38,7 +38,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 
 	// expected output
 	expectedEvent := common.MapStr{
-		"timestamp":     common.Time(timestamp),
+		"@timestamp":    common.Time(timestamp),
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": "name1",

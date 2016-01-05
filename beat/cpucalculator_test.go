@@ -18,10 +18,10 @@ func TestCPUperCpuUsage(t *testing.T) {
 	// THEN
 	// value should be 10%, 20%, 30% and 40%
 	assert.Equal(t, common.MapStr{
-		"cpu0": float64 (0.10),
-		"cpu1": float64 (0.20),
-		"cpu2": float64 (0.30),
-		"cpu3": float64 (0.40),
+		"cpu0": float64(0.10),
+		"cpu1": float64(0.20),
+		"cpu2": float64(0.30),
+		"cpu3": float64(0.40),
 	}, value)
 }
 

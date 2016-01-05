@@ -2,7 +2,7 @@ package main
 
 import (
 	dockerbeat "github.com/ingensi/dockerbeat/beat"
-	
+
 	"github.com/elastic/beats/libbeat/beat"
 )
 

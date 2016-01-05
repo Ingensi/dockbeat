@@ -28,7 +28,7 @@ func (c *CPUCalculator) perCpuUsage() common.MapStr {
 	return output
 }
 
-func (c *CPUCalculator) totalUsage() float64  {
+func (c *CPUCalculator) totalUsage() float64 {
 	return c.calculateLoad(c.new.totalUsage - c.old.totalUsage)
 }
 
@@ -36,7 +36,7 @@ func (c *CPUCalculator) usageInKernelmode() float64 {
 	return c.calculateLoad(c.new.usageInKernelmode - c.old.usageInKernelmode)
 }
 
-func (c *CPUCalculator) usageInUsermode() float64  {
+func (c *CPUCalculator) usageInUsermode() float64 {
 	return c.calculateLoad(c.new.usageInUsermode - c.old.usageInUsermode)
 }
 
@@ -45,5 +45,5 @@ func (c *CPUCalculator) calculateLoad(value uint64) float64 {
 	// TODO save the old stat timestamp and reuse here in case of docker read time changes...
 	// 1s = 1000000000 ns
 	// value / 1000000000
-	return float64 (value) / float64 (1000000000)
+	return float64(value) / float64(1000000000)
 }
