@@ -15,6 +15,7 @@ SECTIONS = [
     ("container", "Docker container informations"),
     ("net", "Network container statistics"),
     ("memory", "Memory container statistics"),
+    ("blkio", "Blkio (disk) container statistics"),
     ("cpu", "CPU container statistics")]
 
 

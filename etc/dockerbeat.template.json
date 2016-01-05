@@ -21,6 +21,9 @@
         }
       ],
       "properties": {
+        "blkio": {
+          "properties": {}
+        },
         "container": {
           "properties": {
             "created": {
