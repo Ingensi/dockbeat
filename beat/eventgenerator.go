@@ -8,7 +8,7 @@ import (
 )
 
 type EventGenerator struct {
-	networkStats map[string]NetworkData
+	networkStats map[string]map[string]NetworkData
 	blkioStats   map[string]BlkioStats
 }
 
@@ -56,32 +56,43 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 
 	return event
 }
+func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats *docker.Stats) []common.MapStr {
+	events := []common.MapStr{}
 
-func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
+	for netName, netStats := range stats.Networks {
+		events = append(events, d.getNetworkEvent(container, stats.Read, netName, &netStats))
+	}
+
+	return events
+}
+
+func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time time.Time, network string, networkStats *docker.NetworkStats) common.MapStr {
+
 	newNetworkData := NetworkData{
-		stats.Read,
-		stats.Network.RxBytes,
-		stats.Network.RxDropped,
-		stats.Network.RxErrors,
-		stats.Network.RxPackets,
-		stats.Network.TxBytes,
-		stats.Network.TxDropped,
-		stats.Network.TxErrors,
-		stats.Network.TxPackets,
+		time,
+		networkStats.RxBytes,
+		networkStats.RxDropped,
+		networkStats.RxErrors,
+		networkStats.RxPackets,
+		networkStats.TxBytes,
+		networkStats.TxDropped,
+		networkStats.TxErrors,
+		networkStats.TxPackets,
 	}
 
 	var event common.MapStr
 
-	oldNetworkData, ok := d.networkStats[container.ID]
+	oldNetworkData, ok := d.networkStats[container.ID][network]
 
 	if ok {
 		calculator := NetworkCalculator{oldNetworkData, newNetworkData}
 		event = common.MapStr{
-			"@timestamp":    common.Time(stats.Read),
+			"@timestamp":    common.Time(time),
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
 			"net": common.MapStr{
+				"name": network,
 				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
 				"rxDropped_ps": calculator.getRxDroppedPerSecond(),
 				"rxErrors_ps":  calculator.getRxErrorsPerSecond(),
@@ -94,11 +105,12 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 		}
 	} else {
 		event = common.MapStr{
-			"@timestamp":    common.Time(stats.Read),
+			"@timestamp":    common.Time(time),
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
 			"net": common.MapStr{
+				"name": network,
 				"rxBytes_ps":   0,
 				"rxDropped_ps": 0,
 				"rxErrors_ps":  0,
@@ -111,7 +123,11 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, stats 
 		}
 	}
 
-	d.networkStats[container.ID] = newNetworkData
+	// save status
+	if _, exists := d.networkStats[container.ID]; !exists {
+		d.networkStats[container.ID] = map[string]NetworkData{}
+	}
+	d.networkStats[container.ID][network] = newNetworkData
 	return event
 }
 
