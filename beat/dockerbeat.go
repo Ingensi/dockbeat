@@ -155,7 +155,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 			d.eventGenerator.getBlkioEvent(&container, stats),
 		}
 
-		events = append(events, d.eventGenerator.getNetworksEvent(&container, stats)...)
+		events = append(events, d.eventGenerator.getNetworksEvent(&container, stats, d.period)...)
 
 		d.events.PublishEvents(events)
 	}()

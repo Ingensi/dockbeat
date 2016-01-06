@@ -56,11 +56,29 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 
 	return event
 }
-func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats *docker.Stats) []common.MapStr {
+func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats *docker.Stats, tickPeriod time.Duration) []common.MapStr {
 	events := []common.MapStr{}
 
 	for netName, netStats := range stats.Networks {
 		events = append(events, d.getNetworkEvent(container, stats.Read, netName, &netStats))
+	}
+
+	// purge old saved data
+	for container, networkDataMap := range d.networkStats {
+		useless := true
+		for networkName, networkData := range networkDataMap {
+			// if data older than two ticks, then delete it
+			if !networkData.time.Add(2*tickPeriod).After(time.Now()) {
+				delete(networkDataMap, networkName)
+			} else {
+				useless = false
+			}
+		}
+
+		// if all network data are useless, then delete container entry
+		if useless {
+			delete(d.networkStats, container)
+		}
 	}
 
 	return events
@@ -69,15 +87,15 @@ func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats
 func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time time.Time, network string, networkStats *docker.NetworkStats) common.MapStr {
 
 	newNetworkData := NetworkData{
-		time,
-		networkStats.RxBytes,
-		networkStats.RxDropped,
-		networkStats.RxErrors,
-		networkStats.RxPackets,
-		networkStats.TxBytes,
-		networkStats.TxDropped,
-		networkStats.TxErrors,
-		networkStats.TxPackets,
+		time:      time,
+		rxBytes:   networkStats.RxBytes,
+		rxDropped: networkStats.RxDropped,
+		rxErrors:  networkStats.RxErrors,
+		rxPackets: networkStats.RxPackets,
+		txBytes:   networkStats.TxBytes,
+		txDropped: networkStats.TxDropped,
+		txErrors:  networkStats.TxErrors,
+		txPackets: networkStats.TxPackets,
 	}
 
 	var event common.MapStr
@@ -92,7 +110,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
 			"net": common.MapStr{
-				"name": network,
+				"name":         network,
 				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
 				"rxDropped_ps": calculator.getRxDroppedPerSecond(),
 				"rxErrors_ps":  calculator.getRxErrorsPerSecond(),
@@ -110,7 +128,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
 			"net": common.MapStr{
-				"name": network,
+				"name":         network,
 				"rxBytes_ps":   0,
 				"rxDropped_ps": 0,
 				"rxErrors_ps":  0,

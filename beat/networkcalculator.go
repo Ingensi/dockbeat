@@ -1,6 +1,8 @@
 package beat
 
 import (
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -50,6 +52,10 @@ func (c *NetworkCalculator) getTxErrorsPerSecond() float64 {
 }
 
 func (c *NetworkCalculator) getTxPacketsPerSecond() float64 {
+	os.Stdout.WriteString("\nin")
+	os.Stdout.WriteString("\n" + strconv.FormatUint(c.old.txPackets, 10))
+	os.Stdout.WriteString("\n" + strconv.FormatUint(c.new.txPackets, 10))
+	os.Stdout.WriteString("\nout")
 	return c.calculatePerSecond(c.old.txPackets, c.new.txPackets)
 }
 
