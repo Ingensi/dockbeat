@@ -1,14 +1,14 @@
 package beat
 
-type BlkioStats struct {
+type BlkioData struct {
 	reads  uint64
 	writes uint64
 	totals uint64
 }
 
 type BlkioCalculator struct {
-	old BlkioStats
-	new BlkioStats
+	old BlkioData
+	new BlkioData
 }
 
 func (c *BlkioCalculator) getRead() uint64 {

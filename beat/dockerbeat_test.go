@@ -19,7 +19,7 @@ func getEmptyDockerbeat() Dockerbeat {
 		nil,
 		EventGenerator{
 			map[string]map[string]NetworkData{},
-			map[string]BlkioStats{},
+			map[string]BlkioData{},
 		},
 		SoftwareVersion{1, 5},
 	}

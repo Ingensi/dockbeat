@@ -7,8 +7,8 @@ import (
 
 func TestBlkioRead(t *testing.T) {
 	// GIVEN
-	old := BlkioStats{1000, 2000, 3000}
-	new := BlkioStats{1010, 2020, 3030}
+	old := BlkioData{1000, 2000, 3000}
+	new := BlkioData{1010, 2020, 3030}
 
 	var calculator = BlkioCalculator{old, new}
 
@@ -22,8 +22,8 @@ func TestBlkioRead(t *testing.T) {
 
 func TestBlkioWrite(t *testing.T) {
 	// GIVEN
-	old := BlkioStats{1000, 2000, 3000}
-	new := BlkioStats{1010, 2020, 3030}
+	old := BlkioData{1000, 2000, 3000}
+	new := BlkioData{1010, 2020, 3030}
 
 	var calculator = BlkioCalculator{old, new}
 
@@ -37,8 +37,8 @@ func TestBlkioWrite(t *testing.T) {
 
 func TestBlkioTotal(t *testing.T) {
 	// GIVEN
-	old := BlkioStats{1000, 2000, 3000}
-	new := BlkioStats{1010, 2020, 3030}
+	old := BlkioData{1000, 2000, 3000}
+	new := BlkioData{1010, 2020, 3030}
 
 	var calculator = BlkioCalculator{old, new}
 

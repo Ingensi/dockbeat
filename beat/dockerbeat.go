@@ -70,7 +70,7 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	d.events = b.Events
 	d.done = make(chan struct{})
 	d.dockerClient, _ = docker.NewClient(d.socket)
-	d.eventGenerator = EventGenerator{map[string]map[string]NetworkData{}, map[string]BlkioStats{}}
+	d.eventGenerator = EventGenerator{map[string]map[string]NetworkData{}, map[string]BlkioData{}}
 
 	return d.checkPrerequisites()
 }

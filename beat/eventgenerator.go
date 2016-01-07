@@ -9,7 +9,7 @@ import (
 
 type EventGenerator struct {
 	networkStats map[string]map[string]NetworkData
-	blkioStats   map[string]BlkioStats
+	blkioStats   map[string]BlkioData
 }
 
 func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
@@ -235,8 +235,8 @@ func (d *EventGenerator) cleanOldStats(containers []docker.APIContainers) {
 	}
 }
 
-func (d *EventGenerator) buildStats(entry []docker.BlkioStatsEntry) BlkioStats {
-	var stats = BlkioStats{0, 0, 0}
+func (d *EventGenerator) buildStats(entry []docker.BlkioStatsEntry) BlkioData {
+	var stats = BlkioData{0, 0, 0}
 	for _, s := range entry {
 		if s.Op == "Read" {
 			stats.reads += s.Value
