@@ -5,6 +5,14 @@ import (
 )
 
 type NetworkCalculator interface {
+	getRxBytesPerSecond() float64
+	getRxDroppedPerSecond() float64
+	getRxErrorsPerSecond() float64
+	getRxPacketsPerSecond() float64
+	getTxBytesPerSecond() float64
+	getTxDroppedPerSecond() float64
+	getTxErrorsPerSecond() float64
+	getTxPacketsPerSecond() float64
 }
 
 type NetworkCalculatorImpl struct {

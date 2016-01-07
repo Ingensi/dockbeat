@@ -1,12 +1,12 @@
-package mocks
+package beat
 
 import "github.com/stretchr/testify/mock"
 
-type BlkioCalculator struct {
+type MockedBlkioCalculator struct {
 	mock.Mock
 }
 
-func (_m *BlkioCalculator) getRead() uint64 {
+func (_m *MockedBlkioCalculator) getRead() uint64 {
 	ret := _m.Called()
 
 	var r0 uint64
@@ -18,7 +18,7 @@ func (_m *BlkioCalculator) getRead() uint64 {
 
 	return r0
 }
-func (_m *BlkioCalculator) getWrite() uint64 {
+func (_m *MockedBlkioCalculator) getWrite() uint64 {
 	ret := _m.Called()
 
 	var r0 uint64
@@ -30,7 +30,7 @@ func (_m *BlkioCalculator) getWrite() uint64 {
 
 	return r0
 }
-func (_m *BlkioCalculator) getTotal() uint64 {
+func (_m *MockedBlkioCalculator) getTotal() uint64 {
 	ret := _m.Called()
 
 	var r0 uint64

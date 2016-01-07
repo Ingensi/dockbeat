@@ -1,14 +1,14 @@
-package mocks
+package beat
 
 import "github.com/stretchr/testify/mock"
 
 import "github.com/elastic/beats/libbeat/common"
 
-type CPUCalculator struct {
+type MockedCPUCalculator struct {
 	mock.Mock
 }
 
-func (_m *CPUCalculator) perCpuUsage() common.MapStr {
+func (_m *MockedCPUCalculator) perCpuUsage() common.MapStr {
 	ret := _m.Called()
 
 	var r0 common.MapStr
@@ -20,7 +20,7 @@ func (_m *CPUCalculator) perCpuUsage() common.MapStr {
 
 	return r0
 }
-func (_m *CPUCalculator) totalUsage() float64 {
+func (_m *MockedCPUCalculator) totalUsage() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -32,7 +32,7 @@ func (_m *CPUCalculator) totalUsage() float64 {
 
 	return r0
 }
-func (_m *CPUCalculator) usageInKernelmode() float64 {
+func (_m *MockedCPUCalculator) usageInKernelmode() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -44,7 +44,7 @@ func (_m *CPUCalculator) usageInKernelmode() float64 {
 
 	return r0
 }
-func (_m *CPUCalculator) usageInUsermode() float64 {
+func (_m *MockedCPUCalculator) usageInUsermode() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -56,7 +56,7 @@ func (_m *CPUCalculator) usageInUsermode() float64 {
 
 	return r0
 }
-func (_m *CPUCalculator) calculateLoad(value uint64) float64 {
+func (_m *MockedCPUCalculator) calculateLoad(value uint64) float64 {
 	ret := _m.Called(value)
 
 	var r0 float64

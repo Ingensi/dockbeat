@@ -10,6 +10,11 @@ import (
 
 func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// GIVEN
+	// old and current timestamps
+	oldTimestamp := time.Now()
+	period := time.Second
+	newTimestamp := oldTimestamp.Add(period)
+
 	// a container
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
@@ -28,27 +33,92 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 		labels,
 	}
 
-	oldTimestamp := time.Now()
-	period := time.Second
-	newTimestamp := oldTimestamp.Add(period)
-
-	// network stats
+	// network stats from Docker API
 	networkStatsMap := map[string]docker.NetworkStats{}
-	// /!\ values order: RxDropped, RxBytes, RxErrors, TxPackets, TxDropped, RxPackets, TxErrors, TxBytes
-	networkStatsMap["eth0"] = docker.NetworkStats{20, 10, 30, 80, 60, 40, 70, 50}
-	networkStatsMap["em1"] = docker.NetworkStats{200, 100, 300, 800, 600, 400, 700, 500}
-
-	// saved network status
-	savedNetworkData := map[string]map[string]NetworkData{}
-	savedNetworkData[containerId] = map[string]NetworkData{}
-	savedNetworkData[containerId]["eth0"] = NetworkData{oldTimestamp, 5, 10, 15, 20, 25, 30, 35, 40}
-	savedNetworkData[containerId]["em1"] = NetworkData{oldTimestamp, 10, 20, 30, 40, 50, 60, 70, 80}
+	networkStatsMap["eth0"] = docker.NetworkStats{
+		RxBytes: 10,
+		RxDropped: 20,
+		RxErrors: 30,
+		RxPackets: 40,
+		TxBytes: 50,
+		TxDropped: 60,
+		TxErrors: 70,
+		TxPackets: 80,
+	}
+	networkStatsMap["em1"] = docker.NetworkStats{
+		RxBytes: 90,
+		RxDropped: 100,
+		RxErrors: 110,
+		RxPackets: 120,
+		TxBytes: 130,
+		TxDropped: 140,
+		TxErrors: 150,
+		TxPackets: 160,
+	}
 
 	// main stats object
 	var stats = new(docker.Stats)
 	stats.Read = newTimestamp
 	stats.Networks = networkStatsMap
-	var eventGenerator = EventGenerator{savedNetworkData, nil, CalculatorFactoryImpl{}}
+
+	// saved network status
+	oldNetworkData := map[string]map[string]NetworkData{}
+	oldNetworkData[containerId] = map[string]NetworkData{}
+	oldNetworkData[containerId]["eth0"] = NetworkData{
+		time: oldTimestamp,
+		rxBytes   : 1,
+		rxDropped : 2,
+		rxErrors  : 3,
+		rxPackets : 4,
+		txBytes   : 5,
+		txDropped : 6,
+		txErrors  : 7,
+		txPackets : 8,
+	}
+	oldNetworkData[containerId]["em1"] = NetworkData{
+		time: oldTimestamp,
+		rxBytes   : 9,
+		rxDropped : 10,
+		rxErrors  : 11,
+		rxPackets : 12,
+		txBytes   : 13,
+		txDropped : 14,
+		txErrors  : 15,
+		txPackets : 16,
+	}
+
+	// mocking calculators
+	// first - generate expected calls (NetworkStats to NetworkData conversion)
+	newNetworkData := map[string]NetworkData{}
+	newNetworkData["eth0"] = NetworkData{
+		time: newTimestamp,
+		rxBytes   : 10,
+		rxDropped : 20,
+		rxErrors  : 30,
+		rxPackets : 40,
+		txBytes   : 50,
+		txDropped : 60,
+		txErrors  : 70,
+		txPackets : 80,
+	}
+	newNetworkData["em1"] = NetworkData{
+		time: newTimestamp,
+		rxBytes   : 90,
+		rxDropped : 100,
+		rxErrors  : 110,
+		rxPackets : 120,
+		txBytes   : 130,
+		txDropped : 140,
+		txErrors  : 150,
+		txPackets : 160,
+	}
+
+	// second - instantiate mock
+	mockedCalculatorFactory := new(MockedCalculatorFactory)
+	mockedNetworkCalculatorEth0 := getMockedNetworkCalculator(1.0)
+	mockedNetworkCalculatorEm1 := getMockedNetworkCalculator(2.0)
+	mockedCalculatorFactory.On("newNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
+	mockedCalculatorFactory.On("newNetworkCalculator", oldNetworkData[containerId]["em1"], newNetworkData["em1"]).Return(mockedNetworkCalculatorEm1)
 
 	// expected events
 	expectedEvents := []common.MapStr{}
@@ -59,15 +129,15 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"net": common.MapStr{
-				"name":         "em1",
-				"rxBytes_ps":   90,
-				"rxDropped_ps": 180,
-				"rxErrors_ps":  270,
-				"rxPackets_ps": 360,
-				"txBytes_ps":   450,
-				"txDropped_ps": 540,
-				"txErrors_ps":  630,
-				"txPackets_ps": 720,
+				"name":         "eth0",
+				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
+				"rxDropped_ps": mockedNetworkCalculatorEth0.getRxDroppedPerSecond(),
+				"rxErrors_ps":  mockedNetworkCalculatorEth0.getRxErrorsPerSecond(),
+				"rxPackets_ps": mockedNetworkCalculatorEth0.getRxPacketsPerSecond(),
+				"txBytes_ps":   mockedNetworkCalculatorEth0.getTxBytesPerSecond(),
+				"txDropped_ps": mockedNetworkCalculatorEth0.getTxDroppedPerSecond(),
+				"txErrors_ps":  mockedNetworkCalculatorEth0.getTxErrorsPerSecond(),
+				"txPackets_ps": mockedNetworkCalculatorEth0.getTxPacketsPerSecond(),
 			}},
 		common.MapStr{
 			"@timestamp":    common.Time(newTimestamp),
@@ -75,16 +145,19 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"net": common.MapStr{
-				"name":         "eth0",
-				"rxBytes_ps":   5,
-				"rxDropped_ps": 10,
-				"rxErrors_ps":  15,
-				"rxPackets_ps": 20,
-				"txBytes_ps":   25,
-				"txDropped_ps": 30,
-				"txErrors_ps":  35,
-				"txPackets_ps": 40,
+				"name":         "em1",
+				"rxBytes_ps":   mockedNetworkCalculatorEm1.getRxBytesPerSecond(),
+				"rxDropped_ps": mockedNetworkCalculatorEm1.getRxDroppedPerSecond(),
+				"rxErrors_ps":  mockedNetworkCalculatorEm1.getRxErrorsPerSecond(),
+				"rxPackets_ps": mockedNetworkCalculatorEm1.getRxPacketsPerSecond(),
+				"txBytes_ps":   mockedNetworkCalculatorEm1.getTxBytesPerSecond(),
+				"txDropped_ps": mockedNetworkCalculatorEm1.getTxDroppedPerSecond(),
+				"txErrors_ps":  mockedNetworkCalculatorEm1.getTxErrorsPerSecond(),
+				"txPackets_ps": mockedNetworkCalculatorEm1.getTxPacketsPerSecond(),
 			}})
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats, period)
@@ -92,6 +165,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// THEN
 	// check returned events
 	assert.Equal(t, len(expectedEvents), 2)
+
 	for i, _ := range expectedEvents {
 		checked := false
 		for j, _ := range events {
@@ -106,8 +180,8 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	}
 
 	// check that new stats saved
-	assert.Equal(t, eventGenerator.networkStats[container.ID]["eth0"], NetworkData{newTimestamp, 10, 20, 30, 40, 50, 60, 70, 80})
-	assert.Equal(t, eventGenerator.networkStats[container.ID]["em1"], NetworkData{newTimestamp, 100, 200, 300, 400, 500, 600, 700, 800})
+	assert.Equal(t, eventGenerator.networkStats[container.ID]["eth0"], newNetworkData["eth0"])
+	assert.Equal(t, eventGenerator.networkStats[container.ID]["em1"], newNetworkData["em1"])
 }
 
 func TestEventGeneratorGetContainerEvent(t *testing.T) {
@@ -208,4 +282,19 @@ func TestExtractContainerNameMultiple(t *testing.T) {
 
 	// THEN
 	assert.Equal(t, expectedName, name)
+}
+
+// METHODS
+
+func getMockedNetworkCalculator(number float64) *MockedNetworkCalculator {
+	mock := new(MockedNetworkCalculator)
+	mock.On("getRxBytesPerSecond").Return(number)
+	mock.On("getRxDroppedPerSecond").Return(number * 2)
+	mock.On("getRxErrorsPerSecond").Return(number * 3)
+	mock.On("getRxPacketsPerSecond").Return(number * 4)
+	mock.On("getTxBytesPerSecond").Return(number * 5)
+	mock.On("getTxDroppedPerSecond").Return(number * 6)
+	mock.On("getTxErrorsPerSecond").Return(number * 7)
+	mock.On("getTxPacketsPerSecond").Return(number * 8)
+	return mock
 }

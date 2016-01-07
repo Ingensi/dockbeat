@@ -8,8 +8,8 @@ import (
 )
 
 type EventGenerator struct {
-	networkStats map[string]map[string]NetworkData
-	blkioStats   map[string]BlkioData
+	networkStats      map[string]map[string]NetworkData
+	blkioStats        map[string]BlkioData
 	calculatorFactory CalculatorFactory
 }
 
@@ -104,7 +104,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 	oldNetworkData, ok := d.networkStats[container.ID][network]
 
 	if ok {
-		calculator := NetworkCalculatorImpl{oldNetworkData, newNetworkData}
+		calculator := d.calculatorFactory.newNetworkCalculator(oldNetworkData, newNetworkData)
 		event = common.MapStr{
 			"@timestamp":    common.Time(time),
 			"type":          "net",
