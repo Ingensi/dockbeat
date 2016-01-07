@@ -8,7 +8,7 @@ import (
 func TestNewBlkioCalculator(t *testing.T) {
 	// GIVEN
 	// a factory
-	factory := CalculatorFactory{}
+	factory := CalculatorFactoryImpl{}
 	new := BlkioData{}
 	old := BlkioData{}
 
@@ -17,14 +17,14 @@ func TestNewBlkioCalculator(t *testing.T) {
 
 	// THEN
 	// calculator is not null and data stored are correct
-	assert.Equal(t, new, calculator.new)
-	assert.Equal(t, old, calculator.old)
+	assert.Equal(t, new, calculator.(BlkioCalculatorImpl).new)
+	assert.Equal(t, old, calculator.(BlkioCalculatorImpl).old)
 }
 
 func TestNewCPUCalculator(t *testing.T) {
 	// GIVEN
 	// a factory
-	factory := CalculatorFactory{}
+	factory := CalculatorFactoryImpl{}
 	new := CPUData{}
 	old := CPUData{}
 
@@ -33,14 +33,14 @@ func TestNewCPUCalculator(t *testing.T) {
 
 	// THEN
 	// calculator is not null and data stored are correct
-	assert.Equal(t, new, calculator.new)
-	assert.Equal(t, old, calculator.old)
+	assert.Equal(t, new, calculator.(CPUCalculatorImpl).new)
+	assert.Equal(t, old, calculator.(CPUCalculatorImpl).old)
 }
 
 func TestNewNetworkCalculator(t *testing.T) {
 	// GIVEN
 	// a factory
-	factory := CalculatorFactory{}
+	factory := CalculatorFactoryImpl{}
 	new := NetworkData{}
 	old := NetworkData{}
 
@@ -49,6 +49,6 @@ func TestNewNetworkCalculator(t *testing.T) {
 
 	// THEN
 	// calculator is not null and data stored are correct
-	assert.Equal(t, new, calculator.new)
-	assert.Equal(t, old, calculator.old)
+	assert.Equal(t, new, calculator.(NetworkCalculatorImpl).new)
+	assert.Equal(t, old, calculator.(NetworkCalculatorImpl).old)
 }

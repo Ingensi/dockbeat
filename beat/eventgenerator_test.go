@@ -48,7 +48,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	var stats = new(docker.Stats)
 	stats.Read = newTimestamp
 	stats.Networks = networkStatsMap
-	var eventGenerator = EventGenerator{savedNetworkData, nil}
+	var eventGenerator = EventGenerator{savedNetworkData, nil, CalculatorFactoryImpl{}}
 
 	// expected events
 	expectedEvents := []common.MapStr{}
@@ -131,7 +131,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{nil, nil}
+	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
 
 	// expected output
 	expectedEvent := common.MapStr{
@@ -167,7 +167,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 
 func TestBuildStats(t *testing.T) {
 	//GIVEN
-	var eventGenerator = EventGenerator{nil, nil}
+	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
 	var data []docker.BlkioStatsEntry
 	data = make([]docker.BlkioStatsEntry, 20, 20)
 	data[0] = docker.BlkioStatsEntry{0, 0, "Read", 1000}
@@ -188,7 +188,7 @@ func TestBuildStats(t *testing.T) {
 
 func TestExtractContainerNameAlone(t *testing.T) {
 	// GIVEN
-	var eventGenerator = EventGenerator{nil, nil}
+	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
 	expectedName := "containerName"
 
 	// WHEN
@@ -200,7 +200,7 @@ func TestExtractContainerNameAlone(t *testing.T) {
 
 func TestExtractContainerNameMultiple(t *testing.T) {
 	// GIVEN
-	var eventGenerator = EventGenerator{nil, nil}
+	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
 	expectedName := "containerName"
 
 	// WHEN

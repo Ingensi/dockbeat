@@ -16,7 +16,7 @@ func TestNetworkGetRxBytesPerSecond(t *testing.T) {
 	var oldData = NetworkData{oldDate, 10, 0, 0, 0, 0, 0, 0, 0}
 	// new rxBytes = 110
 	var newData = NetworkData{newDate, 110, 0, 0, 0, 0, 0, 0, 0}
-	var calculator = NetworkCalculator{oldData, newData}
+	var calculator = NetworkCalculatorImpl{oldData, newData}
 
 	// WHEN
 	value := calculator.getRxBytesPerSecond()
@@ -36,7 +36,7 @@ func TestNetworkGetRxDroppedPerSecond(t *testing.T) {
 	var oldData = NetworkData{oldDate, 0, 20, 0, 0, 0, 0, 0, 0}
 	// new rxDropped = 120
 	var newData = NetworkData{newDate, 0, 120, 0, 0, 0, 0, 0, 0}
-	var calculator = NetworkCalculator{oldData, newData}
+	var calculator = NetworkCalculatorImpl{oldData, newData}
 
 	// WHEN
 	value := calculator.getRxDroppedPerSecond()
@@ -56,7 +56,7 @@ func TestNetworkGetRxErrorsPerSecond(t *testing.T) {
 	var oldData = NetworkData{oldDate, 0, 0, 30, 0, 0, 0, 0, 0}
 	// new rxErrors = 31
 	var newData = NetworkData{newDate, 0, 0, 31, 0, 0, 0, 0, 0}
-	var calculator = NetworkCalculator{oldData, newData}
+	var calculator = NetworkCalculatorImpl{oldData, newData}
 
 	// WHEN
 	value := calculator.getRxErrorsPerSecond()
@@ -76,7 +76,7 @@ func TestNetworkGetRxPacketsPerSecond(t *testing.T) {
 	var oldData = NetworkData{oldDate, 0, 0, 0, 40, 0, 0, 0, 0}
 	// new rxErrors = 140
 	var newData = NetworkData{newDate, 0, 0, 0, 140, 0, 0, 0, 0}
-	var calculator = NetworkCalculator{oldData, newData}
+	var calculator = NetworkCalculatorImpl{oldData, newData}
 
 	// WHEN
 	value := calculator.getRxPacketsPerSecond()
@@ -96,7 +96,7 @@ func TestNetworkGetTxBytesPerSecond(t *testing.T) {
 	var oldData = NetworkData{oldDate, 0, 0, 0, 0, 10, 0, 0, 0}
 	// new txBytes = 10
 	var newData = NetworkData{newDate, 0, 0, 0, 0, 10, 0, 0, 0}
-	var calculator = NetworkCalculator{oldData, newData}
+	var calculator = NetworkCalculatorImpl{oldData, newData}
 
 	// WHEN
 	value := calculator.getTxBytesPerSecond()
@@ -116,7 +116,7 @@ func TestNetworkGetTxDroppedPerSecond(t *testing.T) {
 	var oldData = NetworkData{oldDate, 0, 0, 0, 0, 0, 0, 0, 0}
 	// new txDropped = 0
 	var newData = NetworkData{newDate, 0, 0, 0, 0, 0, 0, 0, 0}
-	var calculator = NetworkCalculator{oldData, newData}
+	var calculator = NetworkCalculatorImpl{oldData, newData}
 
 	// WHEN
 	value := calculator.getTxDroppedPerSecond()
@@ -136,7 +136,7 @@ func TestNetworkGetTxErrorsPerSecond(t *testing.T) {
 	var oldData = NetworkData{oldDate, 0, 0, 0, 0, 0, 0, 70, 0}
 	// new txErrors = 170
 	var newData = NetworkData{newDate, 0, 0, 0, 0, 0, 0, 170, 0}
-	var calculator = NetworkCalculator{oldData, newData}
+	var calculator = NetworkCalculatorImpl{oldData, newData}
 
 	// WHEN
 	value := calculator.getTxErrorsPerSecond()
@@ -156,7 +156,7 @@ func TestNetworkGetTxPacketsPerSecond(t *testing.T) {
 	var oldData = NetworkData{oldDate, 0, 0, 0, 0, 0, 0, 0, 80}
 	// new txErrors = 92
 	var newData = NetworkData{newDate, 0, 0, 0, 0, 0, 0, 0, 92}
-	var calculator = NetworkCalculator{oldData, newData}
+	var calculator = NetworkCalculatorImpl{oldData, newData}
 
 	// WHEN
 	value := calculator.getTxPacketsPerSecond()

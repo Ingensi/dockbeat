@@ -10,6 +10,7 @@ import (
 type EventGenerator struct {
 	networkStats map[string]map[string]NetworkData
 	blkioStats   map[string]BlkioData
+	calculatorFactory CalculatorFactory
 }
 
 func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
@@ -36,7 +37,7 @@ func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stat
 
 func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 
-	calculator := CPUCalculator{
+	calculator := CPUCalculatorImpl{
 		CPUData{stats.PreCPUStats.CPUUsage.PercpuUsage, stats.PreCPUStats.CPUUsage.TotalUsage, stats.PreCPUStats.CPUUsage.UsageInKernelmode, stats.PreCPUStats.CPUUsage.UsageInUsermode},
 		CPUData{stats.CPUStats.CPUUsage.PercpuUsage, stats.CPUStats.CPUUsage.TotalUsage, stats.CPUStats.CPUUsage.UsageInKernelmode, stats.CPUStats.CPUUsage.UsageInUsermode},
 	}
@@ -103,7 +104,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 	oldNetworkData, ok := d.networkStats[container.ID][network]
 
 	if ok {
-		calculator := NetworkCalculator{oldNetworkData, newNetworkData}
+		calculator := NetworkCalculatorImpl{oldNetworkData, newNetworkData}
 		event = common.MapStr{
 			"@timestamp":    common.Time(time),
 			"type":          "net",
@@ -175,7 +176,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 	oldBlkioStats, ok := d.blkioStats[container.ID]
 
 	if ok {
-		calculator := BlkioCalculator{oldBlkioStats, blkioStats}
+		calculator := BlkioCalculatorImpl{oldBlkioStats, blkioStats}
 		event = common.MapStr{
 			"@timestamp":     common.Time(stats.Read),
 			"type":           "blkio",

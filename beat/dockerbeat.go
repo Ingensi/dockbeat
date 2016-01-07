@@ -70,7 +70,7 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	d.events = b.Events
 	d.done = make(chan struct{})
 	d.dockerClient, _ = docker.NewClient(d.socket)
-	d.eventGenerator = EventGenerator{map[string]map[string]NetworkData{}, map[string]BlkioData{}}
+	d.eventGenerator = EventGenerator{map[string]map[string]NetworkData{}, map[string]BlkioData{}, CalculatorFactoryImpl{}}
 
 	return d.checkPrerequisites()
 }
@@ -174,8 +174,8 @@ func (d *Dockerbeat) checkPrerequisites() error {
 
 		if !valid {
 			output = errors.New("Docker server is too old (version " +
-				strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
-				" and earlier is required)")
+			strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
+			" and earlier is required)")
 		}
 
 	} else {
@@ -204,7 +204,7 @@ func (d *Dockerbeat) validVersion(version string) (bool, error) {
 	var output bool
 
 	if actualMajorVersion > d.minimalDockerVersion.major ||
-		(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
+	(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
 		output = true
 	} else {
 		output = false

@@ -10,7 +10,7 @@ func TestBlkioRead(t *testing.T) {
 	old := BlkioData{1000, 2000, 3000}
 	new := BlkioData{1010, 2020, 3030}
 
-	var calculator = BlkioCalculator{old, new}
+	var calculator = BlkioCalculatorImpl{old, new}
 
 	// WHEN
 	value := calculator.getRead()
@@ -25,7 +25,7 @@ func TestBlkioWrite(t *testing.T) {
 	old := BlkioData{1000, 2000, 3000}
 	new := BlkioData{1010, 2020, 3030}
 
-	var calculator = BlkioCalculator{old, new}
+	var calculator = BlkioCalculatorImpl{old, new}
 
 	// WHEN
 	value := calculator.getWrite()
@@ -40,7 +40,7 @@ func TestBlkioTotal(t *testing.T) {
 	old := BlkioData{1000, 2000, 3000}
 	new := BlkioData{1010, 2020, 3030}
 
-	var calculator = BlkioCalculator{old, new}
+	var calculator = BlkioCalculatorImpl{old, new}
 
 	// WHEN
 	value := calculator.getTotal()

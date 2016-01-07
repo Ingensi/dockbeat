@@ -1,24 +1,30 @@
 package beat
 
+type BlkioCalculator interface {
+	getRead() uint64
+	getWrite() uint64
+	getTotal() uint64
+}
+
+type BlkioCalculatorImpl struct {
+	old BlkioData
+	new BlkioData
+}
+
 type BlkioData struct {
 	reads  uint64
 	writes uint64
 	totals uint64
 }
 
-type BlkioCalculator struct {
-	old BlkioData
-	new BlkioData
-}
-
-func (c *BlkioCalculator) getRead() uint64 {
+func (c BlkioCalculatorImpl) getRead() uint64 {
 	return c.new.reads - c.old.reads
 }
 
-func (c *BlkioCalculator) getWrite() uint64 {
+func (c BlkioCalculatorImpl) getWrite() uint64 {
 	return c.new.writes - c.old.writes
 }
 
-func (c *BlkioCalculator) getTotal() uint64 {
+func (c BlkioCalculatorImpl) getTotal() uint64 {
 	return c.new.totals - c.old.totals
 }
