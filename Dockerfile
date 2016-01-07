@@ -5,9 +5,8 @@ COPY . /go/src/github.com/ingensi/dockerbeat
 RUN cd /go/src/github.com/ingensi/dockerbeat && make
 
 RUN mkdir -p /etc/dockerbeat/ \
-    && cp /usr/src/dockerbeat/dockerbeat /etc/dockerbeat/ \
-    && cp /usr/src/dockerbeat/etc/dockerbeat-docker.yml /etc/dockerbeat/dockerbeat.yml \
-    && rm -rf /usr/src/dockerbeat
+    && cp /go/src/github.com/ingensi/dockerbeat/dockerbeat /etc/dockerbeat/ \
+    && cp /go/src/github.com/ingensi/dockerbeat/dockerbeat-docker.yml /etc/dockerbeat/dockerbeat.yml
 
 WORKDIR /etc/dockerbeat
 
