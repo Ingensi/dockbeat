@@ -4,13 +4,110 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 )
 
-type MockedStats struct {
-	mock.Mock
+func TestEventGeneratorGetNetworksEvent(t *testing.T) {
+	// GIVEN
+	// a container
+	labels := make(map[string]string)
+	labels["label1"] = "value1"
+	labels["label2"] = "value2"
+	containerId := "container_id"
+	var container = docker.APIContainers{
+		containerId,
+		"container_image",
+		"container command",
+		9876543210,
+		"Up",
+		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		123,
+		456,
+		[]string{"/name1", "name1/fake"},
+		labels,
+	}
+
+	oldTimestamp := time.Now()
+	period := time.Second
+	newTimestamp := oldTimestamp.Add(period)
+
+	// network stats
+	networkStatsMap := map[string]docker.NetworkStats{}
+	// /!\ values order: RxDropped, RxBytes, RxErrors, TxPackets, TxDropped, RxPackets, TxErrors, TxBytes
+	networkStatsMap["eth0"] = docker.NetworkStats{20, 10, 30, 80, 60, 40, 70, 50}
+	networkStatsMap["em1"] = docker.NetworkStats{200, 100, 300, 800, 600, 400, 700, 500}
+
+	// saved network status
+	savedNetworkData := map[string]map[string]NetworkData{}
+	savedNetworkData[containerId] = map[string]NetworkData{}
+	savedNetworkData[containerId]["eth0"] = NetworkData{oldTimestamp, 5, 10, 15, 20, 25, 30, 35, 40}
+	savedNetworkData[containerId]["em1"] = NetworkData{oldTimestamp, 10, 20, 30, 40, 50, 60, 70, 80}
+
+	// main stats object
+	var stats = new(docker.Stats)
+	stats.Read = newTimestamp
+	stats.Networks = networkStatsMap
+	var eventGenerator = EventGenerator{savedNetworkData, nil}
+
+	// expected events
+	expectedEvents := []common.MapStr{}
+	expectedEvents = append(expectedEvents,
+		common.MapStr{
+			"@timestamp":    common.Time(newTimestamp),
+			"type":          "net",
+			"containerID":   container.ID,
+			"containerName": "name1",
+			"net": common.MapStr{
+				"name":         "em1",
+				"rxBytes_ps":   90,
+				"rxDropped_ps": 180,
+				"rxErrors_ps":  270,
+				"rxPackets_ps": 360,
+				"txBytes_ps":   450,
+				"txDropped_ps": 540,
+				"txErrors_ps":  630,
+				"txPackets_ps": 720,
+			}},
+		common.MapStr{
+			"@timestamp":    common.Time(newTimestamp),
+			"type":          "net",
+			"containerID":   container.ID,
+			"containerName": "name1",
+			"net": common.MapStr{
+				"name":         "eth0",
+				"rxBytes_ps":   5,
+				"rxDropped_ps": 10,
+				"rxErrors_ps":  15,
+				"rxPackets_ps": 20,
+				"txBytes_ps":   25,
+				"txDropped_ps": 30,
+				"txErrors_ps":  35,
+				"txPackets_ps": 40,
+			}})
+
+	// WHEN
+	events := eventGenerator.getNetworksEvent(&container, stats, period)
+
+	// THEN
+	// check returned events
+	assert.Equal(t, len(expectedEvents), 2)
+	for i, _ := range expectedEvents {
+		checked := false
+		for j, _ := range events {
+			if expectedEvents[i].String() == events[j].String() {
+				checked = true
+				break
+			}
+		}
+		if !checked {
+			assert.Fail(t, "unable to find network in events: %s", expectedEvents[i].String())
+		}
+	}
+
+	// check that new stats saved
+	assert.Equal(t, eventGenerator.networkStats[container.ID]["eth0"], NetworkData{newTimestamp, 10, 20, 30, 40, 50, 60, 70, 80})
+	assert.Equal(t, eventGenerator.networkStats[container.ID]["em1"], NetworkData{newTimestamp, 100, 200, 300, 400, 500, 600, 700, 800})
 }
 
 func TestEventGeneratorGetContainerEvent(t *testing.T) {

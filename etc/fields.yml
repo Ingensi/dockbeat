@@ -141,6 +141,10 @@ net:
     - name: net
       type: group
       fields:
+        - name: name
+          type: string
+          description: >
+            Name of the network interface.
         - name: rxBytes_ps
           type: float
           description: >
