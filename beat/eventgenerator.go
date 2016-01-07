@@ -68,7 +68,7 @@ func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats
 		useless := true
 		for networkName, networkData := range networkDataMap {
 			// if data older than two ticks, then delete it
-			if !networkData.time.Add(2*tickPeriod).After(time.Now()) {
+			if !networkData.time.Add(2 * tickPeriod).After(time.Now()) {
 				delete(networkDataMap, networkName)
 			} else {
 				useless = false

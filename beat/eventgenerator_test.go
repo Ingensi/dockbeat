@@ -4,14 +4,9 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"testing"
 	"time"
 )
-
-type MockedStats struct {
-	mock.Mock
-}
 
 func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// GIVEN
