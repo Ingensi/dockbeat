@@ -1,8 +1,8 @@
 FROM golang:1.5.1
 MAINTAINER Ingensi labs <contact@ingensi.com>
 
-COPY . /usr/src/dockerbeat
-RUN cd /usr/src/dockerbeat && make
+COPY . /go/src/github.com/ingensi/dockerbeat
+RUN cd /go/src/github.com/ingensi/dockerbeat && make
 
 RUN mkdir -p /etc/dockerbeat/ \
     && cp /usr/src/dockerbeat/dockerbeat /etc/dockerbeat/ \
