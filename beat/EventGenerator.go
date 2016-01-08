@@ -37,10 +37,10 @@ func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stat
 
 func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 
-	calculator := CPUCalculatorImpl{
+	calculator := d.calculatorFactory.newCPUCalculator(
 		CPUData{stats.PreCPUStats.CPUUsage.PercpuUsage, stats.PreCPUStats.CPUUsage.TotalUsage, stats.PreCPUStats.CPUUsage.UsageInKernelmode, stats.PreCPUStats.CPUUsage.UsageInUsermode},
 		CPUData{stats.CPUStats.CPUUsage.PercpuUsage, stats.CPUStats.CPUUsage.TotalUsage, stats.CPUStats.CPUUsage.UsageInKernelmode, stats.CPUStats.CPUUsage.UsageInUsermode},
-	}
+	)
 
 	event := common.MapStr{
 		"@timestamp":    common.Time(stats.Read),
@@ -57,6 +57,7 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 
 	return event
 }
+
 func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats *docker.Stats, tickPeriod time.Duration) []common.MapStr {
 	events := []common.MapStr{}
 

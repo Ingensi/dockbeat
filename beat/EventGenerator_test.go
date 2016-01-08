@@ -8,6 +8,198 @@ import (
 	"time"
 )
 
+// NETWORK EVENT GENERATION
+
+/*
+TestEventGeneratorGetNetworksEventFirstPass simulates the case when a new network event should be generated
+
+It simulates following status:
+  - a common container
+  - network stats with two networks "eth0" and "em1"
+
+The network "eth0" already have an saved status from previous tick.
+
+This test checks that it generate two network events:
+  - an event for "eth0" with calculated data from saved stats (+ new stats saved)
+  - an event for "em1" with zeros values (+ new stats saved)
+*/
+func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
+	// GIVEN
+	// old and current timestamps
+	oldTimestamp := time.Now()
+	period := time.Second
+	newTimestamp := oldTimestamp.Add(period)
+
+	// a container
+	labels := make(map[string]string)
+	labels["label1"] = "value1"
+	labels["label2"] = "value2"
+	containerId := "container_id"
+	var container = docker.APIContainers{
+		containerId,
+		"container_image",
+		"container command",
+		9876543210,
+		"Up",
+		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		123,
+		456,
+		[]string{"/name1", "name1/fake"},
+		labels,
+	}
+
+	// network stats from Docker API
+	networkStatsMap := map[string]docker.NetworkStats{}
+	networkStatsMap["eth0"] = docker.NetworkStats{
+		RxBytes: 10,
+		RxDropped: 20,
+		RxErrors: 30,
+		RxPackets: 40,
+		TxBytes: 50,
+		TxDropped: 60,
+		TxErrors: 70,
+		TxPackets: 80,
+	}
+	networkStatsMap["em1"] = docker.NetworkStats{
+		RxBytes: 90,
+		RxDropped: 100,
+		RxErrors: 110,
+		RxPackets: 120,
+		TxBytes: 130,
+		TxDropped: 140,
+		TxErrors: 150,
+		TxPackets: 160,
+	}
+
+	// main stats object
+	var stats = new(docker.Stats)
+	stats.Read = newTimestamp
+	stats.Networks = networkStatsMap
+
+	// saved network status (em1 does not already exists)
+	oldNetworkData := map[string]map[string]NetworkData{}
+	oldNetworkData[containerId] = map[string]NetworkData{}
+	oldNetworkData[containerId]["eth0"] = NetworkData{
+		time: oldTimestamp,
+		rxBytes   : 1,
+		rxDropped : 2,
+		rxErrors  : 3,
+		rxPackets : 4,
+		txBytes   : 5,
+		txDropped : 6,
+		txErrors  : 7,
+		txPackets : 8,
+	}
+
+	// mocking calculators
+	// first - generate expected calls (NetworkStats to NetworkData conversion)
+	newNetworkData := map[string]NetworkData{}
+	newNetworkData["eth0"] = NetworkData{
+		time: newTimestamp,
+		rxBytes   : 10,
+		rxDropped : 20,
+		rxErrors  : 30,
+		rxPackets : 40,
+		txBytes   : 50,
+		txDropped : 60,
+		txErrors  : 70,
+		txPackets : 80,
+	}
+	newNetworkData["em1"] = NetworkData{
+		time: newTimestamp,
+		rxBytes   : 90,
+		rxDropped : 100,
+		rxErrors  : 110,
+		rxPackets : 120,
+		txBytes   : 130,
+		txDropped : 140,
+		txErrors  : 150,
+		txPackets : 160,
+	}
+
+	// second - instantiate mock
+	// calculator will no be called for em1 network, it will generate zero-values event for em1
+	mockedCalculatorFactory := new(MockedCalculatorFactory)
+	mockedNetworkCalculatorEth0 := getMockedNetworkCalculator(1.0)
+	mockedCalculatorFactory.On("newNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
+
+	// expected events
+	expectedEvents := []common.MapStr{}
+	expectedEvents = append(expectedEvents,
+		common.MapStr{
+			"@timestamp":    common.Time(newTimestamp),
+			"type":          "net",
+			"containerID":   container.ID,
+			"containerName": "name1",
+			"net": common.MapStr{
+				"name":         "eth0",
+				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
+				"rxDropped_ps": mockedNetworkCalculatorEth0.getRxDroppedPerSecond(),
+				"rxErrors_ps":  mockedNetworkCalculatorEth0.getRxErrorsPerSecond(),
+				"rxPackets_ps": mockedNetworkCalculatorEth0.getRxPacketsPerSecond(),
+				"txBytes_ps":   mockedNetworkCalculatorEth0.getTxBytesPerSecond(),
+				"txDropped_ps": mockedNetworkCalculatorEth0.getTxDroppedPerSecond(),
+				"txErrors_ps":  mockedNetworkCalculatorEth0.getTxErrorsPerSecond(),
+				"txPackets_ps": mockedNetworkCalculatorEth0.getTxPacketsPerSecond(),
+			}},
+		common.MapStr{
+			"@timestamp":    common.Time(newTimestamp),
+			"type":          "net",
+			"containerID":   container.ID,
+			"containerName": "name1",
+			"net": common.MapStr{
+				"name":         "em1",
+				"rxBytes_ps":   0,
+				"rxDropped_ps": 0,
+				"rxErrors_ps":  0,
+				"rxPackets_ps": 0,
+				"txBytes_ps":   0,
+				"txDropped_ps": 0,
+				"txErrors_ps":  0,
+				"txPackets_ps": 0,
+			}})
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory}
+
+	// WHEN
+	events := eventGenerator.getNetworksEvent(&container, stats, period)
+
+	// THEN
+	// check returned events
+	assert.Equal(t, len(expectedEvents), 2)
+
+	for i, _ := range expectedEvents {
+		checked := false
+		for j, _ := range events {
+			if expectedEvents[i].String() == events[j].String() {
+				checked = true
+				break
+			}
+		}
+		if !checked {
+			assert.Fail(t, "unable to find network in events: %s", expectedEvents[i].String())
+		}
+	}
+
+	// check that new stats saved
+	assert.Equal(t, eventGenerator.networkStats[container.ID]["eth0"], newNetworkData["eth0"])
+	assert.Equal(t, eventGenerator.networkStats[container.ID]["em1"], newNetworkData["em1"])
+}
+
+/*
+TestEventGeneratorGetNetworksEvent simulates the case when all networks are already in saved status
+
+It simulates following status:
+  - a common container
+  - network stats with two networks "eth0" and "em1"
+
+Networks "eth0" and "em1" already have an saved status from previous tick.
+
+This test checks that it generate two network events:
+  - an event for "eth0" with calculated data from saved stats (+ new stats saved)
+  - an event for "em1" with calculated data from saved stats (+ new stats saved)
+*/
 func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// GIVEN
 	// old and current timestamps
@@ -184,6 +376,159 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	assert.Equal(t, eventGenerator.networkStats[container.ID]["em1"], newNetworkData["em1"])
 }
 
+/*
+TestEventGeneratorGetNetworksEvent simulates the case when a saved network should be cleaned from saved status
+
+It simulates following status:
+  - a common container
+  - network stats with one network "eth0"
+
+Networks "eth0" have an saved status from previous tick.
+An existing saved status for "em1" network is too old and should be removed.
+
+This test checks that it generate one network event:
+  - an event for "eth0" with calculated data from saved stats (+ new stats saved)
+  - the "em1" saved network status should be removed
+*/
+func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
+	// GIVEN
+	// old and current timestamps
+	oldTimestamp := time.Now()
+	veryOldTimestamp := oldTimestamp.AddDate(0, -1, 0)
+	period := time.Second
+	newTimestamp := oldTimestamp.Add(period)
+
+	// a container
+	labels := make(map[string]string)
+	labels["label1"] = "value1"
+	labels["label2"] = "value2"
+	containerId := "container_id"
+	var container = docker.APIContainers{
+		containerId,
+		"container_image",
+		"container command",
+		9876543210,
+		"Up",
+		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		123,
+		456,
+		[]string{"/name1", "name1/fake"},
+		labels,
+	}
+
+	// network stats from Docker API
+	networkStatsMap := map[string]docker.NetworkStats{}
+	networkStatsMap["eth0"] = docker.NetworkStats{
+		RxBytes: 10,
+		RxDropped: 20,
+		RxErrors: 30,
+		RxPackets: 40,
+		TxBytes: 50,
+		TxDropped: 60,
+		TxErrors: 70,
+		TxPackets: 80,
+	}
+
+	// main stats object
+	var stats = new(docker.Stats)
+	stats.Read = newTimestamp
+	stats.Networks = networkStatsMap
+
+	// saved network status
+	oldNetworkData := map[string]map[string]NetworkData{}
+	oldNetworkData[containerId] = map[string]NetworkData{}
+	oldNetworkData[containerId]["eth0"] = NetworkData{
+		time: oldTimestamp,
+		rxBytes   : 1,
+		rxDropped : 2,
+		rxErrors  : 3,
+		rxPackets : 4,
+		txBytes   : 5,
+		txDropped : 6,
+		txErrors  : 7,
+		txPackets : 8,
+	}
+	// em1 has a very old timestamp, and should be removed because no em1 event come from stats API
+	oldNetworkData[containerId]["em1"] = NetworkData{
+		time: veryOldTimestamp,
+		rxBytes   : 9,
+		rxDropped : 10,
+		rxErrors  : 11,
+		rxPackets : 12,
+		txBytes   : 13,
+		txDropped : 14,
+		txErrors  : 15,
+		txPackets : 16,
+	}
+
+	// mocking calculators
+	// first - generate expected calls (NetworkStats to NetworkData conversion)
+	newNetworkData := map[string]NetworkData{}
+	newNetworkData["eth0"] = NetworkData{
+		time: newTimestamp,
+		rxBytes   : 10,
+		rxDropped : 20,
+		rxErrors  : 30,
+		rxPackets : 40,
+		txBytes   : 50,
+		txDropped : 60,
+		txErrors  : 70,
+		txPackets : 80,
+	}
+
+	// second - instantiate mock
+	mockedCalculatorFactory := new(MockedCalculatorFactory)
+	mockedNetworkCalculatorEth0 := getMockedNetworkCalculator(1.0)
+	mockedCalculatorFactory.On("newNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
+
+	// expected events
+	expectedEvents := []common.MapStr{}
+	expectedEvents = append(expectedEvents,
+		common.MapStr{
+			"@timestamp":    common.Time(newTimestamp),
+			"type":          "net",
+			"containerID":   container.ID,
+			"containerName": "name1",
+			"net": common.MapStr{
+				"name":         "eth0",
+				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
+				"rxDropped_ps": mockedNetworkCalculatorEth0.getRxDroppedPerSecond(),
+				"rxErrors_ps":  mockedNetworkCalculatorEth0.getRxErrorsPerSecond(),
+				"rxPackets_ps": mockedNetworkCalculatorEth0.getRxPacketsPerSecond(),
+				"txBytes_ps":   mockedNetworkCalculatorEth0.getTxBytesPerSecond(),
+				"txDropped_ps": mockedNetworkCalculatorEth0.getTxDroppedPerSecond(),
+				"txErrors_ps":  mockedNetworkCalculatorEth0.getTxErrorsPerSecond(),
+				"txPackets_ps": mockedNetworkCalculatorEth0.getTxPacketsPerSecond(),
+			}})
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory}
+
+	// WHEN
+	events := eventGenerator.getNetworksEvent(&container, stats, period)
+
+	// THEN
+	// check returned events
+	assert.Equal(t, expectedEvents, events)
+
+	// check that new stats saved
+	assert.Equal(t, eventGenerator.networkStats[container.ID]["eth0"], newNetworkData["eth0"])
+
+	// check that expired state has been deleted
+	_, ok := eventGenerator.networkStats[container.ID]["em1"]
+	if (ok) {
+		assert.Fail(t, "Expired event has not been deleted")
+	}
+}
+
+// CONTAINER EVENT GENERATION
+
+/*
+TestEventGeneratorGetContainerEvent simulates the case when a container event is generated
+
+This test checks that the generated event is well formatted according to the incoming container stats.
+*/
+
 func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	// GIVEN
 	labels := make(map[string]string)
@@ -239,6 +584,102 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	assert.Equal(t, expectedEvent, event)
 }
 
+// CPU EVENT GENERATION
+
+/*
+TestEventGeneratorGetCpuEventFirstPass simulates the case when a cpu event should be generated
+
+It simulates following status:
+  - a common container
+  - a common CPU stats
+
+This test checks parameters passed to the calculator and checks that the event generated is well formatted.
+*/
+func TestEventGeneratorGetCpuEvent(t *testing.T) {
+	// GIVEN
+	// a container
+	labels := make(map[string]string)
+	labels["label1"] = "value1"
+	labels["label2"] = "value2"
+	containerId := "container_id"
+	var container = docker.APIContainers{
+		containerId,
+		"container_image",
+		"container command",
+		9876543210,
+		"Up",
+		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		123,
+		456,
+		[]string{"/name1", "name1/fake"},
+		labels,
+	}
+
+	// CPU stats from Docker API
+	preCPUStats := getCPUStats(1)
+	cpuStats := getCPUStats(2)
+
+	// main stats object
+	var stats = new(docker.Stats)
+	stats.Read = time.Now()
+	stats.CPUStats = cpuStats
+	stats.PreCPUStats = preCPUStats
+
+	// mocking calculator
+	// first - generate expected calls (CPUStats to CPUData conversion)
+	cpuData := CPUData{
+		perCpuUsage: cpuStats.CPUUsage.PercpuUsage,
+		totalUsage: cpuStats.CPUUsage.TotalUsage,
+		usageInKernelmode: cpuStats.CPUUsage.UsageInKernelmode,
+		usageInUsermode: cpuStats.CPUUsage.UsageInUsermode,
+	}
+
+	preCPUData := CPUData{
+		perCpuUsage: preCPUStats.CPUUsage.PercpuUsage,
+		totalUsage: preCPUStats.CPUUsage.TotalUsage,
+		usageInKernelmode: preCPUStats.CPUUsage.UsageInKernelmode,
+		usageInUsermode: preCPUStats.CPUUsage.UsageInUsermode,
+	}
+
+	// second - instantiate mock
+	// calculator will no be called for em1 network, it will generate zero-values event for em1
+	mockedCalculatorFactory := new(MockedCalculatorFactory)
+	mockedCPUCalculator := getMockedCPUCalculator(1.0)
+	mockedCalculatorFactory.On("newCPUCalculator", preCPUData, cpuData).Return(mockedCPUCalculator)
+
+	// expected events
+	expectedEvent := common.MapStr{
+		"@timestamp":    common.Time(stats.Read),
+		"type":          "cpu",
+		"containerID":   container.ID,
+		"containerName": "name1",
+		"cpu": common.MapStr{
+			"percpuUsage":       mockedCPUCalculator.perCpuUsage(),
+			"totalUsage":        mockedCPUCalculator.totalUsage(),
+			"usageInKernelmode": mockedCPUCalculator.usageInKernelmode(),
+			"usageInUsermode":   mockedCPUCalculator.usageInUsermode(),
+		},
+	}
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{nil, nil, mockedCalculatorFactory}
+
+	// WHEN
+	event := eventGenerator.getCpuEvent(&container, stats)
+
+	// THEN
+	// check returned events
+	assert.Equal(t, expectedEvent, event)
+}
+
+// TODO BLKIO EVENT GENERATION
+
+
+
+// TODO MEMORY EVENT GENERATION
+
+// TODO DELETE THIS TESTS
+
 func TestBuildStats(t *testing.T) {
 	//GIVEN
 	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
@@ -284,7 +725,7 @@ func TestExtractContainerNameMultiple(t *testing.T) {
 	assert.Equal(t, expectedName, name)
 }
 
-// METHODS
+// UTILITY METHODS
 
 func getMockedNetworkCalculator(number float64) *MockedNetworkCalculator {
 	mock := new(MockedNetworkCalculator)
@@ -296,5 +737,48 @@ func getMockedNetworkCalculator(number float64) *MockedNetworkCalculator {
 	mock.On("getTxDroppedPerSecond").Return(number * 6)
 	mock.On("getTxErrorsPerSecond").Return(number * 7)
 	mock.On("getTxPacketsPerSecond").Return(number * 8)
+	return mock
+}
+
+func getCPUStats(number uint64) docker.CPUStats {
+	return docker.CPUStats{
+		CPUUsage: struct {
+			PercpuUsage       []uint64 `json:"percpu_usage,omitempty" yaml:"percpu_usage,omitempty"`
+			UsageInUsermode   uint64   `json:"usage_in_usermode,omitempty" yaml:"usage_in_usermode,omitempty"`
+			TotalUsage        uint64   `json:"total_usage,omitempty" yaml:"total_usage,omitempty"`
+			UsageInKernelmode uint64   `json:"usage_in_kernelmode,omitempty" yaml:"usage_in_kernelmode,omitempty"`
+		}{
+			PercpuUsage: []uint64{number, number * 2, number * 3, number * 4},
+			UsageInUsermode: number * 5,
+			TotalUsage: number * 6,
+			UsageInKernelmode: number * 7,
+		},
+		SystemCPUUsage: number * 8,
+		ThrottlingData: struct {
+			Periods          uint64 `json:"periods,omitempty"`
+			ThrottledPeriods uint64 `json:"throttled_periods,omitempty"`
+			ThrottledTime    uint64 `json:"throttled_time,omitempty"`
+		}{
+			Periods: number * 9,
+			ThrottledPeriods: number * 10,
+			ThrottledTime: number * 11,
+		},
+	}
+}
+
+func getMockedCPUCalculator(number float64) CPUCalculator {
+	mock := new(MockedCPUCalculator)
+	perCPUUsage := common.MapStr{
+		"cpu0": number,
+		"cpu1": number,
+		"cpu2": number,
+		"cpu3": number,
+	}
+	mock.On("perCpuUsage").Return(perCPUUsage)
+	mock.On("totalUsage").Return(number * 2)
+	mock.On("usageInKernelmode").Return(number * 3)
+	mock.On("usageInUsermode").Return(number * 4)
+	mock.On("calculateLoad").Return(number * 5)
+
 	return mock
 }
