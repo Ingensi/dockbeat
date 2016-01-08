@@ -672,11 +672,115 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	assert.Equal(t, expectedEvent, event)
 }
 
+// TODO MEMORY EVENT GENERATION
+
+/* TestEventGeneratorGetMemoryEvent simulates the case when a memory event should be generated
+
+It checks the event format, according to the incoming memory stats
+ */
+
+func getMemoryStats(number uint64) struct{} {
+	return struct {
+		Stats    struct {
+				 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+				 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+				 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+				 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+				 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+				 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+				 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+				 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+				 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+				 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+				 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+				 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+				 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+				 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+				 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+				 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+				 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+				 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+				 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+				 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+				 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+				 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+				 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+				 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+				 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+				 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+				 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+				 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+				 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+			 } `json:"stats,omitempty" yaml:"stats,omitempty"`
+		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
+		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
+		Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
+		Limit    uint64 `json:"limit,omitempty" yaml:"limit,omitempty"`
+	}{
+		Stats: nil,
+		MaxUsage: number,
+		Usage: number * 2,
+		Failcnt: number * 3,
+		Limit: number * 4,
+	}
+}
+
+func TestEventGeneratorGetMemoryEvent(t *testing.T) {
+	// GIVEN
+	// a container
+	labels := make(map[string]string)
+	labels["label1"] = "value1"
+	labels["label2"] = "value2"
+	containerId := "container_id"
+	var container = docker.APIContainers{
+		containerId,
+		"container_image",
+		"container command",
+		9876543210,
+		"Up",
+		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		123,
+		456,
+		[]string{"/name1", "name1/fake"},
+		labels,
+	}
+
+	// Memory stats from Docker API
+	memoryStats := getMemoryStats(2)
+
+	// main stats object
+	var stats = new(docker.Stats)
+	stats.Read = time.Now()
+	stats.MemoryStats = memoryStats
+
+	// expected events
+	expectedEvent := common.MapStr{
+		"@timestamp":    common.Time(stats.Read),
+		"type":          "memory",
+		"containerID":   container.ID,
+		"containerName": "name1",
+		"memory": common.MapStr{
+			"failcnt":  stats.MemoryStats.Failcnt,
+			"limit":    stats.MemoryStats.Limit,
+			"maxUsage": stats.MemoryStats.MaxUsage,
+			"usage":    stats.MemoryStats.Usage,
+			"usage_p":  (float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit)) * 100,
+		},
+	}
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{nil, nil, nil}
+
+	// WHEN
+	event := eventGenerator.getMemoryEvent(&container, stats)
+
+	// THEN
+	// check returned events
+	assert.Equal(t, expectedEvent, event)
+}
+
 // TODO BLKIO EVENT GENERATION
 
-
-
-// TODO MEMORY EVENT GENERATION
 
 // TODO DELETE THIS TESTS
 
