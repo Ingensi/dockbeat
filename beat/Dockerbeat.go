@@ -37,7 +37,7 @@ func New() *Dockerbeat {
 func (d *Dockerbeat) Config(b *beat.Beat) error {
 
 	// Requires Docker 1.5 minimum
-	d.minimalDockerVersion = SoftwareVersion{1, 5}
+	d.minimalDockerVersion = SoftwareVersion{major: 1, minor: 5}
 
 	err := cfgfile.Read(&d.TbConfig, "")
 	if err != nil {
@@ -70,7 +70,12 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	d.events = b.Events
 	d.done = make(chan struct{})
 	d.dockerClient, _ = docker.NewClient(d.socket)
-	d.eventGenerator = EventGenerator{map[string]map[string]NetworkData{}, map[string]BlkioData{}, CalculatorFactoryImpl{}, d.period}
+	d.eventGenerator = EventGenerator{
+		networkStats:      map[string]map[string]NetworkData{},
+		blkioStats:        map[string]BlkioData{},
+		calculatorFactory: CalculatorFactoryImpl{},
+		period:            d.period,
+	}
 
 	return d.checkPrerequisites()
 }
@@ -138,7 +143,13 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 	done := make(chan bool)
 	errC := make(chan error, 1)
 	// the stream bool is set to false to only listen the first stats
-	statsOptions := docker.StatsOptions{container.ID, statsC, false, done, -1}
+	statsOptions := docker.StatsOptions{
+		ID:      container.ID,
+		Stats:   statsC,
+		Stream:  false,
+		Done:    done,
+		Timeout: -1,
+	}
 	// goroutine to listen to the stats
 	go func() {
 		errC <- d.dockerClient.Stats(statsOptions)

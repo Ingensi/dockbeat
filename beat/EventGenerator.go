@@ -39,8 +39,18 @@ func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stat
 func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 
 	calculator := d.calculatorFactory.newCPUCalculator(
-		CPUData{stats.PreCPUStats.CPUUsage.PercpuUsage, stats.PreCPUStats.CPUUsage.TotalUsage, stats.PreCPUStats.CPUUsage.UsageInKernelmode, stats.PreCPUStats.CPUUsage.UsageInUsermode},
-		CPUData{stats.CPUStats.CPUUsage.PercpuUsage, stats.CPUStats.CPUUsage.TotalUsage, stats.CPUStats.CPUUsage.UsageInKernelmode, stats.CPUStats.CPUUsage.UsageInUsermode},
+		CPUData{
+			perCpuUsage:       stats.PreCPUStats.CPUUsage.PercpuUsage,
+			totalUsage:        stats.PreCPUStats.CPUUsage.TotalUsage,
+			usageInKernelmode: stats.PreCPUStats.CPUUsage.UsageInKernelmode,
+			usageInUsermode:   stats.PreCPUStats.CPUUsage.UsageInUsermode,
+		},
+		CPUData{
+			perCpuUsage:       stats.CPUStats.CPUUsage.PercpuUsage,
+			totalUsage:        stats.CPUStats.CPUUsage.TotalUsage,
+			usageInKernelmode: stats.CPUStats.CPUUsage.UsageInKernelmode,
+			usageInUsermode:   stats.CPUStats.CPUUsage.UsageInUsermode,
+		},
 	)
 
 	event := common.MapStr{

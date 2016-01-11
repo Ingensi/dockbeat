@@ -9,21 +9,21 @@ import (
 // helper method
 func getEmptyDockerbeat() Dockerbeat {
 	return Dockerbeat{
-		make(chan struct{}),
-		time.Duration(10),
-		"/fake/path/to/socket.sock",
-		ConfigSettings{
-			DockerConfig{nil, nil},
+		done:   make(chan struct{}),
+		period: time.Duration(10),
+		socket: "/fake/path/to/socket.sock",
+		TbConfig: ConfigSettings{
+			Input: DockerConfig{Period: nil, Socket: nil},
 		},
-		nil,
-		nil,
-		EventGenerator{
-			map[string]map[string]NetworkData{},
-			map[string]BlkioData{},
-			CalculatorFactoryImpl{},
-			time.Second,
+		dockerClient: nil,
+		events:       nil,
+		eventGenerator: EventGenerator{
+			networkStats:      map[string]map[string]NetworkData{},
+			blkioStats:        map[string]BlkioData{},
+			calculatorFactory: CalculatorFactoryImpl{},
+			period:            time.Second,
 		},
-		SoftwareVersion{1, 5},
+		minimalDockerVersion: SoftwareVersion{major: 1, minor: 5},
 	}
 }
 
