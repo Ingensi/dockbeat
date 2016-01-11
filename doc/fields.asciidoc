@@ -24,7 +24,7 @@ Contains common fields available in all event types.
 
 
 
-==== timestamp
+==== @timestamp
 
 type: date
 
@@ -41,7 +41,7 @@ The timestamp when the measurements were taken. The precision is in milliseconds
 
 required: True
 
-Can be one of *container*, *cpu*, *net*, *memory* to specify metric type.
+Can be one of *container*, *cpu*, *net*, *memory*, *blkio* to specify metric type.
 
 
 ==== count
@@ -71,11 +71,14 @@ required: True
 Name of the Docker container related to the current metric event.
 
 
-==== shipper
+==== beat.name
 
-type: string
+Name of the Beat sending the events. If the shipper name is set in the configuration file, then that value is used. If it is not set, the hostname is used.
 
-Name of the shipper sending the statistics.
+
+==== beat.hostname
+
+The hostname as returned by the operating system on which the Beat is running.
 
 
 [[exported-fields-container]]
@@ -104,7 +107,7 @@ example: 2015-01-24 14:06:05
 
 format: YYYY-MM-DDTHH:MM:SSZ
 
-Command used to run the Docker container.
+Date of the Docker container creation.
 
 
 ==== id
@@ -198,6 +201,13 @@ Gather container metrics about network (rx/tx)
 
 [[exported-fields-net]]
 === Network container statistics fields
+
+
+==== name
+
+type: string
+
+Name of the network interface.
 
 
 ==== rxBytes_ps
@@ -299,7 +309,7 @@ Current memory consumption in Bytes.
 
 type: float
 
-Amount of memory used by the container in percents between 0.0 and 100.0.
+Amount of memory used by the container in percents between 0.0 and 1.0.
 
 
 [[exported-fields-blkio]]
@@ -313,25 +323,25 @@ Gather disk usage of the current container.
 === Blkio (disk) container statistics fields
 
 
-==== read
+==== read_ps
 
 type: int
 
-Difference between the last read stat and the current read stat given by Docker. It represent the amount of byte read by the container on the disk(s) during the duration.
+It represents average amount of bytes read per second by the container on disk(s) during the period.
 
 
-==== write
-
-type: int
-
-Difference between the last write stat and the current write stat given by Docker. It represent the amount of byte written by the container on the disk(s) during the duration.
-
-
-==== total
+==== write_ps
 
 type: int
 
-Difference between the last total stat and the current total stat given by Docker. It represent the amount of byte read and written by the container on the disk(s) during the duration.
+It represents average amount of bytes written per second by the container on disk(s) during the period.
+
+
+==== total_ps
+
+type: int
+
+It represents average amount of bytes read and written per second by the container on disk(s) during the period.
 
 
 [[exported-fields-cpu]]
