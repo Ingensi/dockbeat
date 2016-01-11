@@ -6,38 +6,38 @@ type MockedBlkioCalculator struct {
 	mock.Mock
 }
 
-func (_m *MockedBlkioCalculator) getRead() uint64 {
+func (_m *MockedBlkioCalculator) getRead() float64 {
 	ret := _m.Called()
 
-	var r0 uint64
-	if rf, ok := ret.Get(0).(func() uint64); ok {
+	var r0 float64
+	if rf, ok := ret.Get(0).(func() float64); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(uint64)
+		r0 = ret.Get(0).(float64)
 	}
 
 	return r0
 }
-func (_m *MockedBlkioCalculator) getWrite() uint64 {
+func (_m *MockedBlkioCalculator) getWrite() float64 {
 	ret := _m.Called()
 
-	var r0 uint64
-	if rf, ok := ret.Get(0).(func() uint64); ok {
+	var r0 float64
+	if rf, ok := ret.Get(0).(func() float64); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(uint64)
+		r0 = ret.Get(0).(float64)
 	}
 
 	return r0
 }
-func (_m *MockedBlkioCalculator) getTotal() uint64 {
+func (_m *MockedBlkioCalculator) getTotal() float64 {
 	ret := _m.Called()
 
-	var r0 uint64
-	if rf, ok := ret.Get(0).(func() uint64); ok {
+	var r0 float64
+	if rf, ok := ret.Get(0).(func() float64); ok {
 		r0 = rf()
 	} else {
-		r0 = ret.Get(0).(uint64)
+		r0 = ret.Get(0).(float64)
 	}
 
 	return r0

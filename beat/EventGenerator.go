@@ -11,6 +11,7 @@ type EventGenerator struct {
 	networkStats      map[string]map[string]NetworkData
 	blkioStats        map[string]BlkioData
 	calculatorFactory CalculatorFactory
+	period            time.Duration
 }
 
 func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
@@ -58,7 +59,7 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 	return event
 }
 
-func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats *docker.Stats, tickPeriod time.Duration) []common.MapStr {
+func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats *docker.Stats) []common.MapStr {
 	events := []common.MapStr{}
 
 	for netName, netStats := range stats.Networks {
@@ -70,7 +71,7 @@ func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats
 		useless := true
 		for networkName, networkData := range networkDataMap {
 			// if data older than two ticks, then delete it
-			if !networkData.time.Add(2 * tickPeriod).After(time.Now()) {
+			if d.expiredSavedData(networkData.time) {
 				delete(networkDataMap, networkName)
 			} else {
 				useless = false
@@ -170,14 +171,14 @@ func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *
 }
 
 func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
-	blkioStats := d.buildStats(stats.BlkioStats.IOServicedRecursive)
+	blkioStats := d.buildStats(stats.Read, stats.BlkioStats.IOServicedRecursive)
 
 	var event common.MapStr
 
 	oldBlkioStats, ok := d.blkioStats[container.ID]
 
 	if ok {
-		calculator := BlkioCalculatorImpl{oldBlkioStats, blkioStats}
+		calculator := d.calculatorFactory.newBlkioCalculator(oldBlkioStats, blkioStats)
 		event = common.MapStr{
 			"@timestamp":     common.Time(stats.Read),
 			"type":           "blkio",
@@ -196,14 +197,22 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 			"containerID":    container.ID,
 			"containerNames": container.Names,
 			"blkio": common.MapStr{
-				"read":  uint64(0),
-				"write": uint64(0),
-				"total": uint64(0),
+				"read":  float64(0),
+				"write": float64(0),
+				"total": float64(0),
 			},
 		}
 	}
 
 	d.blkioStats[container.ID] = blkioStats
+
+	// purge old saved data
+	for containerId, blkioStat := range d.blkioStats {
+		// if data older than two ticks, then delete it
+		if d.expiredSavedData(blkioStat.time) {
+			delete(d.blkioStats, containerId)
+		}
+	}
 	return event
 }
 
@@ -237,8 +246,8 @@ func (d *EventGenerator) cleanOldStats(containers []docker.APIContainers) {
 	}
 }
 
-func (d *EventGenerator) buildStats(entry []docker.BlkioStatsEntry) BlkioData {
-	var stats = BlkioData{0, 0, 0}
+func (d *EventGenerator) buildStats(time time.Time, entry []docker.BlkioStatsEntry) BlkioData {
+	var stats = BlkioData{time, 0, 0, 0}
 	for _, s := range entry {
 		if s.Op == "Read" {
 			stats.reads += s.Value
@@ -262,4 +271,8 @@ func (d *EventGenerator) extractContainerName(names []string) string {
 		}
 	}
 	return strings.Trim(output, "/")
+}
+
+func (d *EventGenerator) expiredSavedData(date time.Time) bool {
+	return !date.Add(2 * d.period).After(time.Now())
 }

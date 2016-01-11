@@ -51,23 +51,23 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	// network stats from Docker API
 	networkStatsMap := map[string]docker.NetworkStats{}
 	networkStatsMap["eth0"] = docker.NetworkStats{
-		RxBytes: 10,
+		RxBytes:   10,
 		RxDropped: 20,
-		RxErrors: 30,
+		RxErrors:  30,
 		RxPackets: 40,
-		TxBytes: 50,
+		TxBytes:   50,
 		TxDropped: 60,
-		TxErrors: 70,
+		TxErrors:  70,
 		TxPackets: 80,
 	}
 	networkStatsMap["em1"] = docker.NetworkStats{
-		RxBytes: 90,
+		RxBytes:   90,
 		RxDropped: 100,
-		RxErrors: 110,
+		RxErrors:  110,
 		RxPackets: 120,
-		TxBytes: 130,
+		TxBytes:   130,
 		TxDropped: 140,
-		TxErrors: 150,
+		TxErrors:  150,
 		TxPackets: 160,
 	}
 
@@ -80,41 +80,41 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	oldNetworkData := map[string]map[string]NetworkData{}
 	oldNetworkData[containerId] = map[string]NetworkData{}
 	oldNetworkData[containerId]["eth0"] = NetworkData{
-		time: oldTimestamp,
-		rxBytes   : 1,
-		rxDropped : 2,
-		rxErrors  : 3,
-		rxPackets : 4,
-		txBytes   : 5,
-		txDropped : 6,
-		txErrors  : 7,
-		txPackets : 8,
+		time:      oldTimestamp,
+		rxBytes:   1,
+		rxDropped: 2,
+		rxErrors:  3,
+		rxPackets: 4,
+		txBytes:   5,
+		txDropped: 6,
+		txErrors:  7,
+		txPackets: 8,
 	}
 
 	// mocking calculators
 	// first - generate expected calls (NetworkStats to NetworkData conversion)
 	newNetworkData := map[string]NetworkData{}
 	newNetworkData["eth0"] = NetworkData{
-		time: newTimestamp,
-		rxBytes   : 10,
-		rxDropped : 20,
-		rxErrors  : 30,
-		rxPackets : 40,
-		txBytes   : 50,
-		txDropped : 60,
-		txErrors  : 70,
-		txPackets : 80,
+		time:      newTimestamp,
+		rxBytes:   10,
+		rxDropped: 20,
+		rxErrors:  30,
+		rxPackets: 40,
+		txBytes:   50,
+		txDropped: 60,
+		txErrors:  70,
+		txPackets: 80,
 	}
 	newNetworkData["em1"] = NetworkData{
-		time: newTimestamp,
-		rxBytes   : 90,
-		rxDropped : 100,
-		rxErrors  : 110,
-		rxPackets : 120,
-		txBytes   : 130,
-		txDropped : 140,
-		txErrors  : 150,
-		txPackets : 160,
+		time:      newTimestamp,
+		rxBytes:   90,
+		rxDropped: 100,
+		rxErrors:  110,
+		rxPackets: 120,
+		txBytes:   130,
+		txDropped: 140,
+		txErrors:  150,
+		txPackets: 160,
 	}
 
 	// second - instantiate mock
@@ -160,10 +160,10 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory}
+	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
-	events := eventGenerator.getNetworksEvent(&container, stats, period)
+	events := eventGenerator.getNetworksEvent(&container, stats)
 
 	// THEN
 	// check returned events
@@ -228,23 +228,23 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// network stats from Docker API
 	networkStatsMap := map[string]docker.NetworkStats{}
 	networkStatsMap["eth0"] = docker.NetworkStats{
-		RxBytes: 10,
+		RxBytes:   10,
 		RxDropped: 20,
-		RxErrors: 30,
+		RxErrors:  30,
 		RxPackets: 40,
-		TxBytes: 50,
+		TxBytes:   50,
 		TxDropped: 60,
-		TxErrors: 70,
+		TxErrors:  70,
 		TxPackets: 80,
 	}
 	networkStatsMap["em1"] = docker.NetworkStats{
-		RxBytes: 90,
+		RxBytes:   90,
 		RxDropped: 100,
-		RxErrors: 110,
+		RxErrors:  110,
 		RxPackets: 120,
-		TxBytes: 130,
+		TxBytes:   130,
 		TxDropped: 140,
-		TxErrors: 150,
+		TxErrors:  150,
 		TxPackets: 160,
 	}
 
@@ -257,52 +257,52 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	oldNetworkData := map[string]map[string]NetworkData{}
 	oldNetworkData[containerId] = map[string]NetworkData{}
 	oldNetworkData[containerId]["eth0"] = NetworkData{
-		time: oldTimestamp,
-		rxBytes   : 1,
-		rxDropped : 2,
-		rxErrors  : 3,
-		rxPackets : 4,
-		txBytes   : 5,
-		txDropped : 6,
-		txErrors  : 7,
-		txPackets : 8,
+		time:      oldTimestamp,
+		rxBytes:   1,
+		rxDropped: 2,
+		rxErrors:  3,
+		rxPackets: 4,
+		txBytes:   5,
+		txDropped: 6,
+		txErrors:  7,
+		txPackets: 8,
 	}
 	oldNetworkData[containerId]["em1"] = NetworkData{
-		time: oldTimestamp,
-		rxBytes   : 9,
-		rxDropped : 10,
-		rxErrors  : 11,
-		rxPackets : 12,
-		txBytes   : 13,
-		txDropped : 14,
-		txErrors  : 15,
-		txPackets : 16,
+		time:      oldTimestamp,
+		rxBytes:   9,
+		rxDropped: 10,
+		rxErrors:  11,
+		rxPackets: 12,
+		txBytes:   13,
+		txDropped: 14,
+		txErrors:  15,
+		txPackets: 16,
 	}
 
 	// mocking calculators
 	// first - generate expected calls (NetworkStats to NetworkData conversion)
 	newNetworkData := map[string]NetworkData{}
 	newNetworkData["eth0"] = NetworkData{
-		time: newTimestamp,
-		rxBytes   : 10,
-		rxDropped : 20,
-		rxErrors  : 30,
-		rxPackets : 40,
-		txBytes   : 50,
-		txDropped : 60,
-		txErrors  : 70,
-		txPackets : 80,
+		time:      newTimestamp,
+		rxBytes:   10,
+		rxDropped: 20,
+		rxErrors:  30,
+		rxPackets: 40,
+		txBytes:   50,
+		txDropped: 60,
+		txErrors:  70,
+		txPackets: 80,
 	}
 	newNetworkData["em1"] = NetworkData{
-		time: newTimestamp,
-		rxBytes   : 90,
-		rxDropped : 100,
-		rxErrors  : 110,
-		rxPackets : 120,
-		txBytes   : 130,
-		txDropped : 140,
-		txErrors  : 150,
-		txPackets : 160,
+		time:      newTimestamp,
+		rxBytes:   90,
+		rxDropped: 100,
+		rxErrors:  110,
+		rxPackets: 120,
+		txBytes:   130,
+		txDropped: 140,
+		txErrors:  150,
+		txPackets: 160,
 	}
 
 	// second - instantiate mock
@@ -349,10 +349,10 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory}
+	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
-	events := eventGenerator.getNetworksEvent(&container, stats, period)
+	events := eventGenerator.getNetworksEvent(&container, stats)
 
 	// THEN
 	// check returned events
@@ -419,13 +419,13 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	// network stats from Docker API
 	networkStatsMap := map[string]docker.NetworkStats{}
 	networkStatsMap["eth0"] = docker.NetworkStats{
-		RxBytes: 10,
+		RxBytes:   10,
 		RxDropped: 20,
-		RxErrors: 30,
+		RxErrors:  30,
 		RxPackets: 40,
-		TxBytes: 50,
+		TxBytes:   50,
 		TxDropped: 60,
-		TxErrors: 70,
+		TxErrors:  70,
 		TxPackets: 80,
 	}
 
@@ -438,42 +438,42 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	oldNetworkData := map[string]map[string]NetworkData{}
 	oldNetworkData[containerId] = map[string]NetworkData{}
 	oldNetworkData[containerId]["eth0"] = NetworkData{
-		time: oldTimestamp,
-		rxBytes   : 1,
-		rxDropped : 2,
-		rxErrors  : 3,
-		rxPackets : 4,
-		txBytes   : 5,
-		txDropped : 6,
-		txErrors  : 7,
-		txPackets : 8,
+		time:      oldTimestamp,
+		rxBytes:   1,
+		rxDropped: 2,
+		rxErrors:  3,
+		rxPackets: 4,
+		txBytes:   5,
+		txDropped: 6,
+		txErrors:  7,
+		txPackets: 8,
 	}
 	// em1 has a very old timestamp, and should be removed because no em1 event come from stats API
 	oldNetworkData[containerId]["em1"] = NetworkData{
-		time: veryOldTimestamp,
-		rxBytes   : 9,
-		rxDropped : 10,
-		rxErrors  : 11,
-		rxPackets : 12,
-		txBytes   : 13,
-		txDropped : 14,
-		txErrors  : 15,
-		txPackets : 16,
+		time:      veryOldTimestamp,
+		rxBytes:   9,
+		rxDropped: 10,
+		rxErrors:  11,
+		rxPackets: 12,
+		txBytes:   13,
+		txDropped: 14,
+		txErrors:  15,
+		txPackets: 16,
 	}
 
 	// mocking calculators
 	// first - generate expected calls (NetworkStats to NetworkData conversion)
 	newNetworkData := map[string]NetworkData{}
 	newNetworkData["eth0"] = NetworkData{
-		time: newTimestamp,
-		rxBytes   : 10,
-		rxDropped : 20,
-		rxErrors  : 30,
-		rxPackets : 40,
-		txBytes   : 50,
-		txDropped : 60,
-		txErrors  : 70,
-		txPackets : 80,
+		time:      newTimestamp,
+		rxBytes:   10,
+		rxDropped: 20,
+		rxErrors:  30,
+		rxPackets: 40,
+		txBytes:   50,
+		txDropped: 60,
+		txErrors:  70,
+		txPackets: 80,
 	}
 
 	// second - instantiate mock
@@ -502,10 +502,10 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory}
+	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
-	events := eventGenerator.getNetworksEvent(&container, stats, period)
+	events := eventGenerator.getNetworksEvent(&container, stats)
 
 	// THEN
 	// check returned events
@@ -516,7 +516,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 
 	// check that expired state has been deleted
 	_, ok := eventGenerator.networkStats[container.ID]["em1"]
-	if (ok) {
+	if ok {
 		assert.Fail(t, "Expired event has not been deleted")
 	}
 }
@@ -550,7 +550,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
+	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	expectedEvent := common.MapStr{
@@ -628,17 +628,17 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	// mocking calculator
 	// first - generate expected calls (CPUStats to CPUData conversion)
 	cpuData := CPUData{
-		perCpuUsage: cpuStats.CPUUsage.PercpuUsage,
-		totalUsage: cpuStats.CPUUsage.TotalUsage,
+		perCpuUsage:       cpuStats.CPUUsage.PercpuUsage,
+		totalUsage:        cpuStats.CPUUsage.TotalUsage,
 		usageInKernelmode: cpuStats.CPUUsage.UsageInKernelmode,
-		usageInUsermode: cpuStats.CPUUsage.UsageInUsermode,
+		usageInUsermode:   cpuStats.CPUUsage.UsageInUsermode,
 	}
 
 	preCPUData := CPUData{
-		perCpuUsage: preCPUStats.CPUUsage.PercpuUsage,
-		totalUsage: preCPUStats.CPUUsage.TotalUsage,
+		perCpuUsage:       preCPUStats.CPUUsage.PercpuUsage,
+		totalUsage:        preCPUStats.CPUUsage.TotalUsage,
 		usageInKernelmode: preCPUStats.CPUUsage.UsageInKernelmode,
-		usageInUsermode: preCPUStats.CPUUsage.UsageInUsermode,
+		usageInUsermode:   preCPUStats.CPUUsage.UsageInUsermode,
 	}
 
 	// second - instantiate mock
@@ -662,7 +662,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, nil, mockedCalculatorFactory}
+	var eventGenerator = EventGenerator{nil, nil, mockedCalculatorFactory, time.Second}
 
 	// WHEN
 	event := eventGenerator.getCpuEvent(&container, stats)
@@ -672,58 +672,12 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	assert.Equal(t, expectedEvent, event)
 }
 
-// TODO MEMORY EVENT GENERATION
+// MEMORY EVENT GENERATION
 
 /* TestEventGeneratorGetMemoryEvent simulates the case when a memory event should be generated
 
 It checks the event format, according to the incoming memory stats
- */
-
-func getMemoryStats(number uint64) struct{} {
-	return struct {
-		Stats    struct {
-				 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-				 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-				 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-				 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-				 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-				 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-				 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-				 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-				 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-				 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-				 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-				 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-				 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-				 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-				 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-				 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-				 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-				 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-				 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-				 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-				 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-				 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-				 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-				 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-				 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-				 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-				 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-				 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-				 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-			 } `json:"stats,omitempty" yaml:"stats,omitempty"`
-		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
-		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
-		Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
-		Limit    uint64 `json:"limit,omitempty" yaml:"limit,omitempty"`
-	}{
-		Stats: nil,
-		MaxUsage: number,
-		Usage: number * 2,
-		Failcnt: number * 3,
-		Limit: number * 4,
-	}
-}
+*/
 
 func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	// GIVEN
@@ -745,13 +699,8 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		labels,
 	}
 
-	// Memory stats from Docker API
-	memoryStats := getMemoryStats(2)
-
 	// main stats object
-	var stats = new(docker.Stats)
-	stats.Read = time.Now()
-	stats.MemoryStats = memoryStats
+	var stats = getMemoryStats(time.Now(), 1)
 
 	// expected events
 	expectedEvent := common.MapStr{
@@ -769,64 +718,326 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, nil, nil}
+	var eventGenerator = EventGenerator{nil, nil, nil, time.Second}
 
 	// WHEN
-	event := eventGenerator.getMemoryEvent(&container, stats)
+	event := eventGenerator.getMemoryEvent(&container, &stats)
 
 	// THEN
 	// check returned events
 	assert.Equal(t, expectedEvent, event)
 }
 
-// TODO BLKIO EVENT GENERATION
+// BLKIO EVENT GENERATION
 
+/*
+TestEventGeneratorGetBlkioEventFirstPass simulates the case when a new blkio event should be generated
 
-// TODO DELETE THIS TESTS
+It simulates following status:
+  - a common container
+  - blkio stats without saved status
 
-func TestBuildStats(t *testing.T) {
-	//GIVEN
-	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
-	var data []docker.BlkioStatsEntry
-	data = make([]docker.BlkioStatsEntry, 20, 20)
-	data[0] = docker.BlkioStatsEntry{0, 0, "Read", 1000}
-	data[1] = docker.BlkioStatsEntry{0, 0, "Write", 2000}
-	data[2] = docker.BlkioStatsEntry{0, 0, "Total", 3000}
-	data[3] = docker.BlkioStatsEntry{0, 1, "Read", 10}
-	data[4] = docker.BlkioStatsEntry{0, 1, "Write", 20}
-	data[5] = docker.BlkioStatsEntry{0, 1, "Total", 30}
+The blkio stats for this container already have an saved status from previous tick.
 
-	//WHEN
-	value := eventGenerator.buildStats(data)
-
-	//THEN
-	assert.Equal(t, uint64(1010), value.reads)
-	assert.Equal(t, uint64(2020), value.writes)
-	assert.Equal(t, uint64(3030), value.totals)
-}
-
-func TestExtractContainerNameAlone(t *testing.T) {
+This test checks that it generate a well formatted Blkio stats event.
+*/
+func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	// GIVEN
-	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
-	expectedName := "containerName"
+	// old and current timestamps
+	newTimestamp := time.Now()
+
+	// a container
+	labels := make(map[string]string)
+	labels["label1"] = "value1"
+	labels["label2"] = "value2"
+	containerId := "container_id"
+	var container = docker.APIContainers{
+		containerId,
+		"container_image",
+		"container command",
+		9876543210,
+		"Up",
+		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		123,
+		456,
+		[]string{"/name1", "name1/fake"},
+		labels,
+	}
+
+	// main stats object
+	var stats = getBlkioStats(newTimestamp, 10, 20, 30)
+
+	// saved network status (blkio stats does not exist for this container)
+	oldBlkioData := map[string]BlkioData{}
+
+	// mocking calculators
+	// first - generate expected calls (NetworkStats to NetworkData conversion)
+	newBlkioData := BlkioData{
+		time:   newTimestamp,
+		reads:  10,
+		writes: 20,
+		totals: 30,
+	}
+
+	// second - instantiate mock
+	// calculator will no be called, it will generate zero-values event
+
+	// expected events
+	expectedEvent := common.MapStr{
+		"@timestamp":     common.Time(stats.Read),
+		"type":           "blkio",
+		"containerID":    container.ID,
+		"containerNames": container.Names,
+		"blkio": common.MapStr{
+			"read":  float64(0),
+			"write": float64(0),
+			"total": float64(0),
+		},
+	}
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{nil, oldBlkioData, nil, time.Second}
 
 	// WHEN
-	name := eventGenerator.extractContainerName([]string{"/" + expectedName})
+	event := eventGenerator.getBlkioEvent(&container, &stats)
 
 	// THEN
-	assert.Equal(t, expectedName, name)
+	// check returned events
+	assert.Equal(t, expectedEvent, event)
+
+	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
 }
 
-func TestExtractContainerNameMultiple(t *testing.T) {
+/*
+TestEventGeneratorGetBlkioEventFirstPass simulates the case when a new blkio event should be generated
+
+It simulates following status:
+  - a common container
+  - blkio stats
+
+The blkio stats for this container already have an saved status from previous tick.
+
+This test checks that it generate a well formatted Blkio stats event.
+*/
+func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	// GIVEN
-	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}}
-	expectedName := "containerName"
+	// old and current timestamps
+	oldTimestamp := time.Now()
+	period := time.Second
+	newTimestamp := oldTimestamp.Add(period)
+
+	// a container
+	labels := make(map[string]string)
+	labels["label1"] = "value1"
+	labels["label2"] = "value2"
+	containerId := "container_id"
+	var container = docker.APIContainers{
+		containerId,
+		"container_image",
+		"container command",
+		9876543210,
+		"Up",
+		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		123,
+		456,
+		[]string{"/name1", "name1/fake"},
+		labels,
+	}
+
+	// main stats object
+	var stats = getBlkioStats(newTimestamp, 10, 20, 30)
+
+	// saved network status
+	oldBlkioData := map[string]BlkioData{}
+	oldBlkioData[containerId] = BlkioData{
+		time:   oldTimestamp,
+		reads:  1,
+		writes: 2,
+		totals: 3,
+	}
+
+	// mocking calculators
+	// first - generate expected calls (NetworkStats to NetworkData conversion)
+	newBlkioData := BlkioData{
+		time:   newTimestamp,
+		reads:  10,
+		writes: 20,
+		totals: 30,
+	}
+
+	// second - instantiate mock
+	mockedCalculatorFactory := new(MockedCalculatorFactory)
+	mockedBlkioCalculator := getMockedBlkioCalculator(1)
+	mockedCalculatorFactory.On("newBlkioCalculator", oldBlkioData[containerId], newBlkioData).Return(mockedBlkioCalculator)
+
+	// expected events
+	expectedEvent := common.MapStr{
+		"@timestamp":     common.Time(stats.Read),
+		"type":           "blkio",
+		"containerID":    container.ID,
+		"containerNames": container.Names,
+		"blkio": common.MapStr{
+			"read":  mockedBlkioCalculator.getRead(),
+			"write": mockedBlkioCalculator.getWrite(),
+			"total": mockedBlkioCalculator.getTotal(),
+		},
+	}
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{nil, oldBlkioData, mockedCalculatorFactory, time.Second}
 
 	// WHEN
-	name := eventGenerator.extractContainerName([]string{"/name1/fake", "/" + expectedName, "/name3/fake"})
+	event := eventGenerator.getBlkioEvent(&container, &stats)
 
 	// THEN
-	assert.Equal(t, expectedName, name)
+	// check returned events
+	assert.Equal(t, expectedEvent, event)
+
+	// check that new stats saved
+	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
+}
+
+/*
+TestEventGeneratorGetBlkioEventCleanSavedEvents simulates the case when method should clean old blkio stats
+
+It simulates following status:
+  - a common container
+  - blkio stats with saved status
+
+The blkio stats for this container already have an saved status from previous tick.
+A saved event is too old and should be remove from saved stats.
+*/
+func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
+	// GIVEN
+	// old and current timestamps
+	oldTimestamp := time.Now()
+	veryOldTimestamp := oldTimestamp.AddDate(0, -1, 0)
+	period := time.Second
+	newTimestamp := oldTimestamp.Add(period)
+
+	// a container
+	labels := make(map[string]string)
+	labels["label1"] = "value1"
+	labels["label2"] = "value2"
+	containerId := "container_id"
+	anotherContainerId := "container_id2"
+	var container = docker.APIContainers{
+		containerId,
+		"container_image",
+		"container command",
+		9876543210,
+		"Up",
+		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		123,
+		456,
+		[]string{"/name1", "name1/fake"},
+		labels,
+	}
+
+	// main stats object
+	var stats = getBlkioStats(newTimestamp, 10, 20, 30)
+
+	// saved blkio stats
+	oldBlkioData := map[string]BlkioData{}
+	oldBlkioData[containerId] = BlkioData{
+		time:   oldTimestamp,
+		reads:  1,
+		writes: 2,
+		totals: 3,
+	}
+	// another container has a very old blkio stats
+	oldBlkioData[anotherContainerId] = BlkioData{
+		time:   veryOldTimestamp,
+		reads:  4,
+		writes: 5,
+		totals: 6,
+	}
+
+	// mocking calculators
+	// first - generate expected calls (BlkioStats to BlkioData conversion)
+	newBlkioData := BlkioData{
+		time:   newTimestamp,
+		reads:  10,
+		writes: 20,
+		totals: 30,
+	}
+
+	// second - instantiate mock
+	mockedCalculatorFactory := new(MockedCalculatorFactory)
+	mockedBlkioCalculator := getMockedBlkioCalculator(1)
+	mockedCalculatorFactory.On("newBlkioCalculator", oldBlkioData[containerId], newBlkioData).Return(mockedBlkioCalculator)
+
+	// expected events
+	expectedEvent := common.MapStr{
+		"@timestamp":     common.Time(newTimestamp),
+		"type":           "blkio",
+		"containerID":    container.ID,
+		"containerNames": container.Names,
+		"blkio": common.MapStr{
+			"read":  mockedBlkioCalculator.getRead(),
+			"write": mockedBlkioCalculator.getWrite(),
+			"total": mockedBlkioCalculator.getTotal(),
+		},
+	}
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{nil, oldBlkioData, mockedCalculatorFactory, period}
+
+	// WHEN
+	event := eventGenerator.getBlkioEvent(&container, &stats)
+
+	// THEN
+	// check returned events
+	assert.Equal(t, expectedEvent, event)
+
+	// check that new stats saved
+	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
+
+	// check that expired state has been deleted
+	_, ok := eventGenerator.blkioStats[anotherContainerId]
+	if ok {
+		assert.Fail(t, "Expired event has not been deleted")
+	}
+}
+
+// NEEDED TYPES
+
+type MemoryStats struct {
+	Stats struct {
+		TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+		Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+		MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+		TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+		Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+		Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+		TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+		Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+		Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+		Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+		TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+		Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+		TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+		TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+		TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+		TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+		RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+		HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+		TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+		TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+		ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+		TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+		TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+		TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+		InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+		ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+		Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+		InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+		TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+	} `json:"stats,omitempty" yaml:"stats,omitempty"`
+	MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
+	Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
+	Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
+	Limit    uint64 `json:"limit,omitempty" yaml:"limit,omitempty"`
 }
 
 // UTILITY METHODS
@@ -852,9 +1063,9 @@ func getCPUStats(number uint64) docker.CPUStats {
 			TotalUsage        uint64   `json:"total_usage,omitempty" yaml:"total_usage,omitempty"`
 			UsageInKernelmode uint64   `json:"usage_in_kernelmode,omitempty" yaml:"usage_in_kernelmode,omitempty"`
 		}{
-			PercpuUsage: []uint64{number, number * 2, number * 3, number * 4},
-			UsageInUsermode: number * 5,
-			TotalUsage: number * 6,
+			PercpuUsage:       []uint64{number, number * 2, number * 3, number * 4},
+			UsageInUsermode:   number * 5,
+			TotalUsage:        number * 6,
 			UsageInKernelmode: number * 7,
 		},
 		SystemCPUUsage: number * 8,
@@ -863,9 +1074,9 @@ func getCPUStats(number uint64) docker.CPUStats {
 			ThrottledPeriods uint64 `json:"throttled_periods,omitempty"`
 			ThrottledTime    uint64 `json:"throttled_time,omitempty"`
 		}{
-			Periods: number * 9,
+			Periods:          number * 9,
 			ThrottledPeriods: number * 10,
-			ThrottledTime: number * 11,
+			ThrottledTime:    number * 11,
 		},
 	}
 }
@@ -885,4 +1096,85 @@ func getMockedCPUCalculator(number float64) CPUCalculator {
 	mock.On("calculateLoad").Return(number * 5)
 
 	return mock
+}
+
+func getMemoryStats(read time.Time, number uint64) docker.Stats {
+	type memoryStats struct {
+		Stats struct {
+			TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+			Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+			MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+			TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+			Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+			Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+			TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+			Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+			Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+			Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+			TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+			Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+			TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+			TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+			TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+			TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+			RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+			HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+			TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+			TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+			ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+			TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+			TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+			TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+			InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+			ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+			Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+			InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+			TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+		} `json:"stats,omitempty" yaml:"stats,omitempty"`
+		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
+		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
+		Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
+		Limit    uint64 `json:"limit,omitempty" yaml:"limit,omitempty"`
+	}
+
+	return docker.Stats{
+		Read: read,
+		MemoryStats: memoryStats{
+			MaxUsage: number,
+			Usage:    number * 2,
+			Failcnt:  number * 3,
+			Limit:    number * 4,
+		},
+	}
+}
+
+func getMockedBlkioCalculator(number float64) *MockedBlkioCalculator {
+	mock := new(MockedBlkioCalculator)
+	mock.On("getRead").Return(number)
+	mock.On("getWrite").Return(number * 2)
+	mock.On("getTotal").Return(number * 3)
+	return mock
+}
+
+func getBlkioStats(read time.Time, reads uint64, writes uint64, total uint64) docker.Stats {
+	type blkioStats struct {
+		IOServiceBytesRecursive []docker.BlkioStatsEntry `json:"io_service_bytes_recursive,omitempty" yaml:"io_service_bytes_recursive,omitempty"`
+		IOServicedRecursive     []docker.BlkioStatsEntry `json:"io_serviced_recursive,omitempty" yaml:"io_serviced_recursive,omitempty"`
+		IOQueueRecursive        []docker.BlkioStatsEntry `json:"io_queue_recursive,omitempty" yaml:"io_queue_recursive,omitempty"`
+		IOServiceTimeRecursive  []docker.BlkioStatsEntry `json:"io_service_time_recursive,omitempty" yaml:"io_service_time_recursive,omitempty"`
+		IOWaitTimeRecursive     []docker.BlkioStatsEntry `json:"io_wait_time_recursive,omitempty" yaml:"io_wait_time_recursive,omitempty"`
+		IOMergedRecursive       []docker.BlkioStatsEntry `json:"io_merged_recursive,omitempty" yaml:"io_merged_recursive,omitempty"`
+		IOTimeRecursive         []docker.BlkioStatsEntry `json:"io_time_recursive,omitempty" yaml:"io_time_recursive,omitempty"`
+		SectorsRecursive        []docker.BlkioStatsEntry `json:"sectors_recursive,omitempty" yaml:"sectors_recursive,omitempty"`
+	}
+	return docker.Stats{
+		Read: read,
+		BlkioStats: blkioStats{
+			IOServicedRecursive: []docker.BlkioStatsEntry{
+				docker.BlkioStatsEntry{0, 0, "Read", reads},
+				docker.BlkioStatsEntry{0, 0, "Write", writes},
+				docker.BlkioStatsEntry{0, 0, "Total", total},
+			},
+		},
+	}
 }

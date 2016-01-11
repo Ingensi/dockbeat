@@ -3,12 +3,16 @@ package beat
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestBlkioRead(t *testing.T) {
 	// GIVEN
-	old := BlkioData{1000, 2000, 3000}
-	new := BlkioData{1010, 2020, 3030}
+	oldTimestamp := time.Now()
+	newTimestamp := oldTimestamp.Add(2 * time.Second)
+
+	old := BlkioData{oldTimestamp, 1000, 2000, 3000}
+	new := BlkioData{newTimestamp, 1010, 2020, 3030}
 
 	var calculator = BlkioCalculatorImpl{old, new}
 
@@ -16,14 +20,17 @@ func TestBlkioRead(t *testing.T) {
 	value := calculator.getRead()
 
 	// THEN
-	// value should be 1010-1000
-	assert.Equal(t, uint64(10), value)
+	// value should be (1010-1000)/2
+	assert.Equal(t, float64(5), value)
 }
 
 func TestBlkioWrite(t *testing.T) {
 	// GIVEN
-	old := BlkioData{1000, 2000, 3000}
-	new := BlkioData{1010, 2020, 3030}
+	oldTimestamp := time.Now()
+	newTimestamp := oldTimestamp.Add(2 * time.Second)
+
+	old := BlkioData{oldTimestamp, 1000, 2000, 3000}
+	new := BlkioData{newTimestamp, 1010, 2020, 3030}
 
 	var calculator = BlkioCalculatorImpl{old, new}
 
@@ -31,14 +38,17 @@ func TestBlkioWrite(t *testing.T) {
 	value := calculator.getWrite()
 
 	// THEN
-	// value should be 2020-2000
-	assert.Equal(t, uint64(20), value)
+	// value should be (2020-2000)/2
+	assert.Equal(t, float64(10), value)
 }
 
 func TestBlkioTotal(t *testing.T) {
 	// GIVEN
-	old := BlkioData{1000, 2000, 3000}
-	new := BlkioData{1010, 2020, 3030}
+	oldTimestamp := time.Now()
+	newTimestamp := oldTimestamp.Add(2 * time.Second)
+
+	old := BlkioData{oldTimestamp, 1000, 2000, 3000}
+	new := BlkioData{newTimestamp, 1010, 2020, 3030}
 
 	var calculator = BlkioCalculatorImpl{old, new}
 
@@ -46,6 +56,6 @@ func TestBlkioTotal(t *testing.T) {
 	value := calculator.getTotal()
 
 	// THEN
-	// value should be 3030-3000
-	assert.Equal(t, uint64(30), value)
+	// value should be (3030-3000)/2
+	assert.Equal(t, float64(15), value)
 }

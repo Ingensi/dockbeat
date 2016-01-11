@@ -21,6 +21,7 @@ func getEmptyDockerbeat() Dockerbeat {
 			map[string]map[string]NetworkData{},
 			map[string]BlkioData{},
 			CalculatorFactoryImpl{},
+			time.Second,
 		},
 		SoftwareVersion{1, 5},
 	}
