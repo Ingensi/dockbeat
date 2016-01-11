@@ -6,7 +6,7 @@ type MockedBlkioCalculator struct {
 	mock.Mock
 }
 
-func (_m *MockedBlkioCalculator) getRead() float64 {
+func (_m *MockedBlkioCalculator) getReadPs() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -18,7 +18,7 @@ func (_m *MockedBlkioCalculator) getRead() float64 {
 
 	return r0
 }
-func (_m *MockedBlkioCalculator) getWrite() float64 {
+func (_m *MockedBlkioCalculator) getWritePs() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -30,7 +30,7 @@ func (_m *MockedBlkioCalculator) getWrite() float64 {
 
 	return r0
 }
-func (_m *MockedBlkioCalculator) getTotal() float64 {
+func (_m *MockedBlkioCalculator) getTotalPs() float64 {
 	ret := _m.Called()
 
 	var r0 float64

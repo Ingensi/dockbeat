@@ -173,7 +173,7 @@ func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *
 			"limit":    stats.MemoryStats.Limit,
 			"maxUsage": stats.MemoryStats.MaxUsage,
 			"usage":    stats.MemoryStats.Usage,
-			"usage_p":  (float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit)) * 100,
+			"usage_p":  float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit),
 		},
 	}
 
@@ -195,9 +195,9 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 			"containerID":    container.ID,
 			"containerNames": container.Names,
 			"blkio": common.MapStr{
-				"read":  calculator.getRead(),
-				"write": calculator.getWrite(),
-				"total": calculator.getTotal(),
+				"read":  calculator.getReadPs(),
+				"write": calculator.getWritePs(),
+				"total": calculator.getTotalPs(),
 			},
 		}
 	} else {

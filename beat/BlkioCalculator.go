@@ -5,9 +5,9 @@ import (
 )
 
 type BlkioCalculator interface {
-	getRead() float64
-	getWrite() float64
-	getTotal() float64
+	getReadPs() float64
+	getWritePs() float64
+	getTotalPs() float64
 }
 
 type BlkioCalculatorImpl struct {
@@ -22,15 +22,15 @@ type BlkioData struct {
 	totals uint64
 }
 
-func (c BlkioCalculatorImpl) getRead() float64 {
+func (c BlkioCalculatorImpl) getReadPs() float64 {
 	return c.calculatePerSecond(c.old.reads, c.new.reads)
 }
 
-func (c BlkioCalculatorImpl) getWrite() float64 {
+func (c BlkioCalculatorImpl) getWritePs() float64 {
 	return c.calculatePerSecond(c.old.writes, c.new.writes)
 }
 
-func (c BlkioCalculatorImpl) getTotal() float64 {
+func (c BlkioCalculatorImpl) getTotalPs() float64 {
 	return c.calculatePerSecond(c.old.totals, c.new.totals)
 }
 

@@ -11,13 +11,23 @@ func TestBlkioRead(t *testing.T) {
 	oldTimestamp := time.Now()
 	newTimestamp := oldTimestamp.Add(2 * time.Second)
 
-	old := BlkioData{oldTimestamp, 1000, 2000, 3000}
-	new := BlkioData{newTimestamp, 1010, 2020, 3030}
+	old := BlkioData{
+		time:   oldTimestamp,
+		reads:  1000,
+		writes: 2000,
+		totals: 3000,
+	}
+	new := BlkioData{
+		time:   newTimestamp,
+		reads:  1010,
+		writes: 2020,
+		totals: 3030,
+	}
 
 	var calculator = BlkioCalculatorImpl{old, new}
 
 	// WHEN
-	value := calculator.getRead()
+	value := calculator.getReadPs()
 
 	// THEN
 	// value should be (1010-1000)/2
@@ -45,7 +55,7 @@ func TestBlkioWrite(t *testing.T) {
 	var calculator = BlkioCalculatorImpl{old, new}
 
 	// WHEN
-	value := calculator.getWrite()
+	value := calculator.getWritePs()
 
 	// THEN
 	// value should be (2020-2000)/2
@@ -73,7 +83,7 @@ func TestBlkioTotal(t *testing.T) {
 	var calculator = BlkioCalculatorImpl{old, new}
 
 	// WHEN
-	value := calculator.getTotal()
+	value := calculator.getTotalPs()
 
 	// THEN
 	// value should be (3030-3000)/2

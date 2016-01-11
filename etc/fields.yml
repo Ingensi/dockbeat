@@ -223,7 +223,7 @@ memory:
         - name: usage_p
           type: float
           description: >
-            Amount of memory used by the container in percents between 0.0 and 100.0.
+            Amount of memory used by the container in percents between 0.0 and 1.0.
 
 blkio:
   type: group
