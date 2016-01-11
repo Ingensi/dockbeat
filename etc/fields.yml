@@ -23,7 +23,7 @@ env:
 
     - name: type
       description: >
-        Can be one of *container*, *cpu*, *net*, *memory* to specify metric type.
+        Can be one of *container*, *cpu*, *net*, *memory*, *blkio* to specify metric type.
       required: true
 
     - name: count
@@ -47,10 +47,16 @@ env:
         Name of the Docker container related to the current metric event.
       required: true
 
-    - name: shipper
-      type: string
+    - name: beat.name
       description: >
-        Name of the shipper sending the statistics.
+        Name of the Beat sending the events. If the shipper name is set
+        in the configuration file, then that value is used. If it is not set,
+        the hostname is used.
+
+    - name: beat.hostname
+      description: >
+        The hostname as returned by the operating system on which the Beat is
+        running.
 
 container:
   type: group
@@ -70,7 +76,7 @@ container:
           format: YYYY-MM-DDTHH:MM:SSZ
           example: 2015-01-24T14:06:05Z
           description: >
-            Command used to run the Docker container.
+            Date of the Docker container creation.
 
         - name: id
           type: string
@@ -145,6 +151,7 @@ net:
           type: string
           description: >
             Name of the network interface.
+
         - name: rxBytes_ps
           type: float
           description: >
@@ -226,21 +233,18 @@ blkio:
     - name: blkio
       type: group
       fields:
-        - name: read
+        - name: read_ps
           type: int
           description: >
-            Difference between the last read stat and the current read stat given by Docker.
-            It represent the amount of byte read by the container on the disk(s) during the duration.
-        - name: write
+            It represents average amount of bytes read per second by the container on disk(s) during the period.
+        - name: write_ps
           type: int
           description: >
-            Difference between the last write stat and the current write stat given by Docker.
-            It represent the amount of byte written by the container on the disk(s) during the duration.
-        - name: total
+            It represents average amount of bytes written per second by the container on disk(s) during the period.
+        - name: total_ps
           type: int
           description: >
-            Difference between the last total stat and the current total stat given by Docker.
-            It represent the amount of byte read and written by the container on the disk(s) during the duration.
+            It represents average amount of bytes read and written per second by the container on disk(s) during the period.
 cpu:
   type: group
   description: >
