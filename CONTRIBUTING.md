@@ -8,7 +8,7 @@ You can contribute to Dockerbeat by many ways:
 * submit bug reports, new github issues for bugs or new features
 * implement new feature
 
-Docker is based on the [Libbeat](https://github.com/elastic/libbeathttps://github.com/elastic/libbeat), an open source
+Docker is based on the [Libbeat](https://github.com/elastic/libbeat), an open source
 project managed by [Elastic](http://elastic.co).
 
 # Setup a development environment
