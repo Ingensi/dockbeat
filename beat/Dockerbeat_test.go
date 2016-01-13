@@ -1,11 +1,11 @@
 package beat
 
 import (
+	"github.com/elastic/beats/libbeat/beat"
+	"github.com/elastic/beats/libbeat/publisher"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"github.com/elastic/beats/libbeat/beat"
-	"github.com/elastic/beats/libbeat/publisher"
 )
 
 // DOCKERBEAT TYPE IS CURRENTLY NOT REALLY TESTABLE BECAUSE OF THE DOCKER GO CLIENT WICH DOES NOT DEFINE INTERFACE
@@ -18,7 +18,7 @@ func TestDockerbeatSetupMethod(t *testing.T) {
 	// a dockerbeat instance
 	var dockerbeat = getEmptyDockerbeat()
 	events := publisher.ChanClient{}
-	fakeBeat := beat.Beat{Events:events}
+	fakeBeat := beat.Beat{Events: events}
 
 	// WHEN
 	dockerbeat.Setup(&fakeBeat)
