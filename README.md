@@ -20,6 +20,8 @@ There are five types of documents exported:
 - `type: memory` for container memory statistics. One document per container is generated.
 - `type: blkio` for container io access statistics. One document per container is generated.
 
+To get a detailled list of all generated fields, please read the [fields documentation page](doc/fields.asciidoc).
+
 ### Container type
 
 <pre>
@@ -277,4 +279,8 @@ The easiest way to launch dockerbeat is to run it in a container. To achieve thi
  
  ```
   docker run -d -v /var/run/docker.sock:/var/run/docker.sock -v /your/custom/conf.yml:/etc/dockerbeat/dockerbeat.yml --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta1
-  ```
+ ```
+ 
+ # Contribute to the project
+ 
+ All contribs are welcome! Read the [CONTRIBUTING](CONTRIBUTING.md) documentation to get more information.
