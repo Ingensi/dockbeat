@@ -190,9 +190,9 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 	if ok {
 		calculator := d.calculatorFactory.newBlkioCalculator(oldBlkioStats, blkioStats)
 		event = common.MapStr{
-			"@timestamp":     common.Time(stats.Read),
-			"type":           "blkio",
-			"containerID":    container.ID,
+			"@timestamp":    common.Time(stats.Read),
+			"type":          "blkio",
+			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
 			"blkio": common.MapStr{
 				"read_ps":  calculator.getReadPs(),
@@ -202,14 +202,14 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 		}
 	} else {
 		event = common.MapStr{
-			"@timestamp":     common.Time(stats.Read),
-			"type":           "blkio",
-			"containerID":    container.ID,
-			"containerNames": container.Names,
+			"@timestamp":    common.Time(stats.Read),
+			"type":          "blkio",
+			"containerID":   container.ID,
+			"containerName": d.extractContainerName(container.Names),
 			"blkio": common.MapStr{
-				"read":  float64(0),
-				"write": float64(0),
-				"total": float64(0),
+				"read_ps":  float64(0),
+				"write_ps": float64(0),
+				"total_ps": float64(0),
 			},
 		}
 	}

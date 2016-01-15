@@ -760,7 +760,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
 		123,
 		456,
-		[]string{"/name1", "name1/fake"},
+		[]string{"name1", "name1/fake"},
 		labels,
 	}
 
@@ -784,14 +784,14 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 
 	// expected events
 	expectedEvent := common.MapStr{
-		"@timestamp":     common.Time(stats.Read),
-		"type":           "blkio",
-		"containerID":    container.ID,
-		"containerNames": container.Names,
+		"@timestamp":    common.Time(stats.Read),
+		"type":          "blkio",
+		"containerID":   container.ID,
+		"containerName": "name1",
 		"blkio": common.MapStr{
-			"read":  float64(0),
-			"write": float64(0),
-			"total": float64(0),
+			"read_ps":  float64(0),
+			"write_ps": float64(0),
+			"total_ps": float64(0),
 		},
 	}
 
@@ -872,14 +872,14 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 
 	// expected events
 	expectedEvent := common.MapStr{
-		"@timestamp":     common.Time(stats.Read),
-		"type":           "blkio",
-		"containerID":    container.ID,
-		"containerNames": container.Names,
+		"@timestamp":    common.Time(stats.Read),
+		"type":          "blkio",
+		"containerID":   container.ID,
+		"containerName": "name1",
 		"blkio": common.MapStr{
-			"read":  mockedBlkioCalculator.getReadPs(),
-			"write": mockedBlkioCalculator.getWritePs(),
-			"total": mockedBlkioCalculator.getTotalPs(),
+			"read_ps":  mockedBlkioCalculator.getReadPs(),
+			"write_ps": mockedBlkioCalculator.getWritePs(),
+			"total_ps": mockedBlkioCalculator.getTotalPs(),
 		},
 	}
 
@@ -969,14 +969,14 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 
 	// expected events
 	expectedEvent := common.MapStr{
-		"@timestamp":     common.Time(newTimestamp),
-		"type":           "blkio",
-		"containerID":    container.ID,
-		"containerNames": container.Names,
+		"@timestamp":    common.Time(newTimestamp),
+		"type":          "blkio",
+		"containerID":   container.ID,
+		"containerName": "name1",
 		"blkio": common.MapStr{
-			"read":  mockedBlkioCalculator.getReadPs(),
-			"write": mockedBlkioCalculator.getWritePs(),
-			"total": mockedBlkioCalculator.getTotalPs(),
+			"read_ps":  mockedBlkioCalculator.getReadPs(),
+			"write_ps": mockedBlkioCalculator.getWritePs(),
+			"total_ps": mockedBlkioCalculator.getTotalPs(),
 		},
 	}
 
