@@ -193,11 +193,11 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 			"@timestamp":     common.Time(stats.Read),
 			"type":           "blkio",
 			"containerID":    container.ID,
-			"containerNames": container.Names,
+			"containerName": d.extractContainerName(container.Names),
 			"blkio": common.MapStr{
-				"read":  calculator.getReadPs(),
-				"write": calculator.getWritePs(),
-				"total": calculator.getTotalPs(),
+				"read_ps":  calculator.getReadPs(),
+				"write_ps": calculator.getWritePs(),
+				"total_ps": calculator.getTotalPs(),
 			},
 		}
 	} else {
