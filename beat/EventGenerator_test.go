@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"strings"
 )
 
 // NETWORK EVENT GENERATION
@@ -557,9 +556,9 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	// expected output
  	// sanitized lables expected
 	labels_expected := make(map[string]string)
-        for k, v := range labels {
-                labels_expected[strings.Replace(k, ".", "_", -1)] = v
-        }
+	labels_expected["label1"] = "value1"        
+    	labels_expected["label2"] = "value2"
+	labels_expected["label3_with_dots"] = "value3"
 
 	expectedEvent := common.MapStr{
 		"@timestamp":    common.Time(timestamp),
