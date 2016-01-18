@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+	"strings"
 )
 
 // NETWORK EVENT GENERATION
@@ -534,6 +535,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
+	labels["label3.with.dots"] = "value3"
 	var container = docker.APIContainers{
 		"container_id",
 		"container_image",
@@ -553,6 +555,12 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
+ 	// sanitized lables expected
+	labels_expected := make(map[string]string)
+        for k, v := range labels {
+                labels_expected[strings.Replace(k, ".", "_", -1)] = v
+        }
+
 	expectedEvent := common.MapStr{
 		"@timestamp":    common.Time(timestamp),
 		"type":          "container",
@@ -563,7 +571,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 			"command": container.Command,
 			"created": time.Unix(container.Created, 0),
 			"image":   container.Image,
-			"labels":  container.Labels,
+			"labels":  labels_expected,
 			"names":   container.Names,
 			"ports": []map[string]interface{}{common.MapStr{
 				"ip":          container.Ports[0].IP,
