@@ -25,7 +25,7 @@ func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stat
 			"command":    container.Command,
 			"created":    time.Unix(container.Created, 0),
 			"image":      container.Image,
-			"labels":     container.Labels,
+			"labels":     d.sanitizeLabelNames(container.Labels),
 			"names":      container.Names,
 			"ports":      d.convertContainerPorts(&container.Ports),
 			"sizeRootFs": container.SizeRootFs,
@@ -286,3 +286,14 @@ func (d *EventGenerator) extractContainerName(names []string) string {
 func (d *EventGenerator) expiredSavedData(date time.Time) bool {
 	return !date.Add(2 * d.period).After(time.Now())
 }
+
+func (d *EventGenerator) sanitizeLabelNames(labels map[string]string) map[string]string {
+        
+	labels_sanitized := make(map[string]string)
+        for k, v := range labels {
+                labels_sanitized[strings.Replace(k, ".", "_", -1)] = v
+        }
+
+        return labels_sanitized
+}
+
