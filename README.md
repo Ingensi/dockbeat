@@ -272,13 +272,13 @@ The easiest way to launch dockerbeat is to run it in a container. To achieve thi
  Example:
 
  ```
- docker run -d -v /var/run/docker.sock:/var/run/docker.sock --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta1
+ docker run -d -v /var/run/docker.sock:/var/run/docker.sock --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta2
  ```
  
  To override the default configuration, just link yours to `/etc/dockerbeat/dockerbeat.yml`:
  
  ```
-  docker run -d -v /var/run/docker.sock:/var/run/docker.sock -v /your/custom/conf.yml:/etc/dockerbeat/dockerbeat.yml --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta1
+  docker run -d -v /var/run/docker.sock:/var/run/docker.sock -v /your/custom/conf.yml:/etc/dockerbeat/dockerbeat.yml --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta2
  ```
  
  # Contribute to the project
