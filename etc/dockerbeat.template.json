@@ -21,9 +21,24 @@
         }
       ],
       "properties": {
-        "memory": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "blkio": {
+          "properties": {}
+        },
+        "container": {
           "properties": {
-            "usage_p": {
+            "created": {
+              "type": "date"
+            },
+            "labels": {
+              "properties": {}
+            },
+            "ports": {
+              "properties": {}
+            },
+            "sizeRootFs": {
               "doc_values": "true",
               "type": "float"
             }
@@ -38,38 +53,6 @@
                   "type": "float"
                 },
                 "cpu1": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "cpu2": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "cpu3": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "cpu4": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "cpu5": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "cpu6": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "cpu7": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "cpu8": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "cpu9": {
                   "doc_values": "true",
                   "type": "float"
                 },
@@ -113,6 +96,10 @@
                   "doc_values": "true",
                   "type": "float"
                 },
+                "cpu2": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
                 "cpu20": {
                   "doc_values": "true",
                   "type": "float"
@@ -128,6 +115,34 @@
                 "cpu23": {
                   "doc_values": "true",
                   "type": "float"
+                },
+                "cpu3": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu4": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu5": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu6": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu7": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu8": {
+                  "doc_values": "true",
+                  "type": "float"
+                },
+                "cpu9": {
+                  "doc_values": "true",
+                  "type": "float"
                 }
               }
             },
@@ -140,6 +155,30 @@
               "type": "float"
             },
             "usageInUsermode": {
+              "doc_values": "true",
+              "type": "float"
+            }
+          }
+        },
+        "memory": {
+          "properties": {
+            "failcnt": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "limit": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "maxUsage": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "usage": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "usage_p": {
               "doc_values": "true",
               "type": "float"
             }
@@ -180,13 +219,6 @@
               "type": "float"
             }
           }
-        },
-        "timestamp": {
-          "type": "date"
-        },
-        "containerID": {
-          "index": "not_analyzed",
-          "type": "string"
         }
       }
     }
