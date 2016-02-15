@@ -8,42 +8,42 @@
 		},
 		{
 			"ImportPath": "github.com/elastic/beats/libbeat/beat",
-			"Comment": "v1.0.0-1859-gadffd8d",
-			"Rev": "adffd8d72409cb1a4b14be25b7d1ae578e622e56"
+			"Comment": "v1.0.0-2180-g5a4e1a2",
+			"Rev": "5a4e1a2c083d2990b356a9e96dea119b50583e8c"
 		},
 		{
 			"ImportPath": "github.com/elastic/beats/libbeat/cfgfile",
-			"Comment": "v1.0.0-1859-gadffd8d",
-			"Rev": "adffd8d72409cb1a4b14be25b7d1ae578e622e56"
+			"Comment": "v1.0.0-2180-g5a4e1a2",
+			"Rev": "5a4e1a2c083d2990b356a9e96dea119b50583e8c"
 		},
 		{
 			"ImportPath": "github.com/elastic/beats/libbeat/common",
-			"Comment": "v1.0.0-1859-gadffd8d",
-			"Rev": "adffd8d72409cb1a4b14be25b7d1ae578e622e56"
+			"Comment": "v1.0.0-2180-g5a4e1a2",
+			"Rev": "5a4e1a2c083d2990b356a9e96dea119b50583e8c"
 		},
 		{
 			"ImportPath": "github.com/elastic/beats/libbeat/logp",
-			"Comment": "v1.0.0-1859-gadffd8d",
-			"Rev": "adffd8d72409cb1a4b14be25b7d1ae578e622e56"
+			"Comment": "v1.0.0-2180-g5a4e1a2",
+			"Rev": "5a4e1a2c083d2990b356a9e96dea119b50583e8c"
 		},
 		{
 			"ImportPath": "github.com/elastic/beats/libbeat/outputs",
-			"Comment": "v1.0.0-1859-gadffd8d",
-			"Rev": "adffd8d72409cb1a4b14be25b7d1ae578e622e56"
+			"Comment": "v1.0.0-2180-g5a4e1a2",
+			"Rev": "5a4e1a2c083d2990b356a9e96dea119b50583e8c"
 		},
 		{
 			"ImportPath": "github.com/elastic/beats/libbeat/publisher",
-			"Comment": "v1.0.0-1859-gadffd8d",
-			"Rev": "adffd8d72409cb1a4b14be25b7d1ae578e622e56"
+			"Comment": "v1.0.0-2180-g5a4e1a2",
+			"Rev": "5a4e1a2c083d2990b356a9e96dea119b50583e8c"
 		},
 		{
 			"ImportPath": "github.com/elastic/beats/libbeat/service",
-			"Comment": "v1.0.0-1859-gadffd8d",
-			"Rev": "adffd8d72409cb1a4b14be25b7d1ae578e622e56"
+			"Comment": "v1.0.0-2180-g5a4e1a2",
+			"Rev": "5a4e1a2c083d2990b356a9e96dea119b50583e8c"
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "299d728486342c894e7fafd68e3a4b89623bef1d"
+			"Rev": "f7ec39a98d505deac0b5ef561589f0f273161773"
 		},
 		{
 			"ImportPath": "github.com/garyburd/redigo/internal",

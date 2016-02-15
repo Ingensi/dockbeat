@@ -4,6 +4,8 @@ import (
 	"expvar"
 
 	"github.com/elastic/beats/libbeat/common"
+	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/outputs"
 )
 
 // Metrics that can retrieved through the expvar web interface.
@@ -13,12 +15,12 @@ var (
 
 // Client is used by beats to publish new events.
 type Client interface {
-	// PublishEvent publishes one event with given options. If Confirm option is set,
+	// PublishEvent publishes one event with given options. If Sync option is set,
 	// PublishEvent will block until output plugins report success or failure state
 	// being returned by this method.
 	PublishEvent(event common.MapStr, opts ...ClientOption) bool
 
-	// PublishEvents publishes multiple events with given options. If Confirm
+	// PublishEvents publishes multiple events with given options. If Guaranteed
 	// option is set, PublishEvent will block until output plugins report
 	// success or failure state being returned by this method.
 	PublishEvents(events []common.MapStr, opts ...ClientOption) bool
@@ -31,49 +33,89 @@ type ChanClient struct {
 
 type client struct {
 	publisher *PublisherType
+
+	beatMeta common.MapStr
+	tags     []string
 }
 
 // ClientOption allows API users to set additional options when publishing events.
-type ClientOption func(option publishOptions) publishOptions
+type ClientOption func(option context) context
 
-// Confirm option will block the event publisher until event has been send and ACKed
-// by output plugin or fail is reported.
-func Confirm(o publishOptions) publishOptions {
-	o.confirm = true
+// Guaranteed option will retry publishing the event, until send attempt have
+// been ACKed by output plugin.
+func Guaranteed(o context) context {
+	o.guaranteed = true
 	return o
 }
 
 // Sync option will block the event publisher until an event has been ACKed by
-// the output plugin. If output plugin signals failure, the client will retry
-// until success is signaled.
-func Sync(o publishOptions) publishOptions {
-	o.confirm = true
+// the output plugin or failed.
+func Sync(o context) context {
 	o.sync = true
 	return o
 }
 
+func Signal(signaler outputs.Signaler) ClientOption {
+	return func(ctx context) context {
+		if ctx.signal == nil {
+			ctx.signal = signaler
+		} else {
+			ctx.signal = outputs.NewCompositeSignaler(ctx.signal, signaler)
+		}
+		return ctx
+	}
+}
+
+func newClient(pub *PublisherType) *client {
+	return &client{
+		publisher: pub,
+		beatMeta: common.MapStr{
+			"name":     pub.name,
+			"hostname": pub.hostname,
+		},
+		tags: pub.tags,
+	}
+}
+
 func (c *client) PublishEvent(event common.MapStr, opts ...ClientOption) bool {
-	options, client := c.getClient(opts)
+	c.annotateEvent(event)
+
+	ctx, client := c.getClient(opts)
 	publishedEvents.Add(1)
-	return client.PublishEvent(context{publishOptions: options}, event)
+	return client.PublishEvent(ctx, event)
 }
 
 func (c *client) PublishEvents(events []common.MapStr, opts ...ClientOption) bool {
-	options, client := c.getClient(opts)
+	for _, event := range events {
+		c.annotateEvent(event)
+	}
+
+	ctx, client := c.getClient(opts)
 	publishedEvents.Add(int64(len(events)))
-	return client.PublishEvents(context{publishOptions: options}, events)
+	return client.PublishEvents(ctx, events)
 }
 
-func (c *client) getClient(opts []ClientOption) (publishOptions, eventPublisher) {
-	var options publishOptions
-	for _, opt := range opts {
-		options = opt(options)
+func (c *client) annotateEvent(event common.MapStr) {
+	event["beat"] = c.beatMeta
+	if len(c.tags) > 0 {
+		event["tags"] = c.tags
 	}
 
-	if options.confirm {
-		return options, c.publisher.syncPublisher.client()
+	if logp.IsDebug("publish") {
+		PrintPublishEvent(event)
 	}
-	return options, c.publisher.asyncPublisher.client()
+}
+
+func (c *client) getClient(opts []ClientOption) (context, eventPublisher) {
+	var ctx context
+	for _, opt := range opts {
+		ctx = opt(ctx)
+	}
+
+	if ctx.sync {
+		return ctx, c.publisher.syncPublisher.client()
+	}
+	return ctx, c.publisher.asyncPublisher.client()
 }
 
 // PublishEvent will publish the event on the channel. Options will be ignored.

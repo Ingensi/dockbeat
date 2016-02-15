@@ -45,6 +45,7 @@ const (
 	logstasDefaultMaxTimeout = 90 * time.Second
 	defaultSendRetries       = 3
 	defaultMaxWindowSize     = 1024
+	defaultCompressionLevel  = 3
 )
 
 var waitRetry = time.Duration(1) * time.Second
@@ -72,6 +73,11 @@ func (lj *logstash) init(
 		maxWindowSize = *config.BulkMaxSize
 	}
 
+	compressLevel := defaultCompressionLevel
+	if config.CompressionLevel != nil {
+		compressLevel = *config.CompressionLevel
+	}
+
 	var clients []mode.ProtocolClient
 	var err error
 	if useTLS {
@@ -82,16 +88,12 @@ func (lj *logstash) init(
 		}
 
 		clients, err = mode.MakeClients(config,
-			makeClientFactory(maxWindowSize, timeout,
-				func(host string) (TransportClient, error) {
-					return newTLSClient(host, defaultPort, tlsConfig)
-				}))
+			makeClientFactory(maxWindowSize, compressLevel, timeout,
+				makeTLSClient(defaultPort, tlsConfig)))
 	} else {
 		clients, err = mode.MakeClients(config,
-			makeClientFactory(maxWindowSize, timeout,
-				func(host string) (TransportClient, error) {
-					return newTCPClient(host, defaultPort)
-				}))
+			makeClientFactory(maxWindowSize, compressLevel, timeout,
+				makeTCPClient(defaultPort)))
 	}
 	if err != nil {
 		return err
@@ -133,6 +135,7 @@ func (lj *logstash) init(
 
 func makeClientFactory(
 	maxWindowSize int,
+	compressLevel int,
 	timeout time.Duration,
 	makeTransp func(string) (TransportClient, error),
 ) func(string) (mode.ProtocolClient, error) {
@@ -141,7 +144,19 @@ func makeClientFactory(
 		if err != nil {
 			return nil, err
 		}
-		return newLumberjackClient(transp, maxWindowSize, timeout), nil
+		return newLumberjackClient(transp, compressLevel, maxWindowSize, timeout)
+	}
+}
+
+func makeTCPClient(port int) func(string) (TransportClient, error) {
+	return func(host string) (TransportClient, error) {
+		return newTCPClient(host, port)
+	}
+}
+
+func makeTLSClient(port int, tls *tls.Config) func(string) (TransportClient, error) {
+	return func(host string) (TransportClient, error) {
+		return newTLSClient(host, port, tls)
 	}
 }
 
@@ -150,24 +165,24 @@ func makeClientFactory(
 //       send/receive overhead per event for other implementors too.
 func (lj *logstash) PublishEvent(
 	signaler outputs.Signaler,
-	ts time.Time,
+	opts outputs.Options,
 	event common.MapStr,
 ) error {
 	lj.addMeta(event)
-	return lj.mode.PublishEvent(signaler, event)
+	return lj.mode.PublishEvent(signaler, opts, event)
 }
 
 // BulkPublish implements the BulkOutputer interface pushing a bulk of events
 // via lumberjack.
 func (lj *logstash) BulkPublish(
 	trans outputs.Signaler,
-	ts time.Time,
+	opts outputs.Options,
 	events []common.MapStr,
 ) error {
 	for _, event := range events {
 		lj.addMeta(event)
 	}
-	return lj.mode.PublishEvents(trans, events)
+	return lj.mode.PublishEvents(trans, opts, events)
 }
 
 // addMeta adapts events to be compatible with logstash forwarer messages by renaming
