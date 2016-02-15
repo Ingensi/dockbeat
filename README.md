@@ -281,7 +281,7 @@ The easiest way to launch dockerbeat is to run it in a container. To achieve thi
   docker run -d -v /var/run/docker.sock:/var/run/docker.sock -v /your/custom/conf.yml:/etc/dockerbeat/dockerbeat.yml --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-beta2
  ```
 
-# Configuration Dockerbeat
+# Configuring Dockerbeat
 
 Dockerbeat configuration file is located at `etc/dockerbeat.yml`. This default template provides the following environment variable mapping:
 
