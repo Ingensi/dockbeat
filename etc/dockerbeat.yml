@@ -26,7 +26,7 @@ output:
     # Scheme and port can be left out and will be set to the default (http and 9200)
     # In case you specify and additional path, the scheme is required: http://localhost:9200/path
     # IPv6 addresses should always be defined as: https://[2001:db8::1]:9200
-    hosts: ["${ES_HOSTS:localhost:9200}"]
+    hosts: ${ES_HOSTS:["localhost:9200"]}
 
     # Optional protocol and basic auth credentials.
     #protocol: "https"
@@ -176,7 +176,7 @@ shipper:
   # The tags of the shipper are included in their own field with each
   # transaction published. Tags make it easy to group servers by different
   # logical properties.
-  tags: ["${SHIPPER_TAGS}"]
+  tags: ${SHIPPER_TAGS}
 
   # Uncomment the following if you want to ignore transactions created
   # by the server on which the shipper is installed. This option is useful
