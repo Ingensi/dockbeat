@@ -227,7 +227,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 }
 
 func (d *EventGenerator) convertContainerPorts(ports *[]docker.APIPort) []map[string]interface{} {
-	var outputPorts []map[string]interface{}
+	var outputPorts = []map[string]interface{}{}
 	for _, port := range *ports {
 		outputPort := common.MapStr{
 			"ip":          port.IP,
@@ -288,12 +288,12 @@ func (d *EventGenerator) expiredSavedData(date time.Time) bool {
 }
 
 func (d *EventGenerator) sanitizeLabelNames(labels map[string]string) map[string]string {
-        
-	labels_sanitized := make(map[string]string)
-        for k, v := range labels {
-                labels_sanitized[strings.Replace(k, ".", "_", -1)] = v
-        }
 
-        return labels_sanitized
+	labels_sanitized := make(map[string]string)
+	for k, v := range labels {
+		labels_sanitized[strings.Replace(k, ".", "_", -1)] = v
+	}
+
+	return labels_sanitized
 }
 
