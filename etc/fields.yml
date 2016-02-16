@@ -47,6 +47,12 @@ env:
         Name of the Docker container related to the current metric event.
       required: true
 
+    - name: dockerSocket
+      type: string
+      description: >
+        URI to the monitored docker daemon.
+      required: true
+
     - name: beat.name
       description: >
         Name of the Beat sending the events. If the shipper name is set
