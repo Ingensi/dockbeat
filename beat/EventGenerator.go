@@ -8,7 +8,7 @@ import (
 )
 
 type EventGenerator struct {
-	socket            string
+	socket            *string
 	networkStats      map[string]map[string]NetworkData
 	blkioStats        map[string]BlkioData
 	calculatorFactory CalculatorFactory
@@ -21,7 +21,7 @@ func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stat
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
-		"dockerSocket": d.socket,
+		"dockerSocket":  d.socket,
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
@@ -60,7 +60,7 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 		"type":          "cpu",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
-		"dockerSocket": d.socket,
+		"dockerSocket":  d.socket,
 		"cpu": common.MapStr{
 			"percpuUsage":       calculator.perCpuUsage(),
 			"totalUsage":        calculator.totalUsage(),
@@ -125,7 +125,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
-			"dockerSocket": d.socket,
+			"dockerSocket":  d.socket,
 			"net": common.MapStr{
 				"name":         network,
 				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
@@ -144,7 +144,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
-			"dockerSocket": d.socket,
+			"dockerSocket":  d.socket,
 			"net": common.MapStr{
 				"name":         network,
 				"rxBytes_ps":   0,
@@ -173,7 +173,7 @@ func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *
 		"type":          "memory",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
-		"dockerSocket": d.socket,
+		"dockerSocket":  d.socket,
 		"memory": common.MapStr{
 			"failcnt":  stats.MemoryStats.Failcnt,
 			"limit":    stats.MemoryStats.Limit,
@@ -200,7 +200,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 			"type":          "blkio",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
-			"dockerSocket": d.socket,
+			"dockerSocket":  d.socket,
 			"blkio": common.MapStr{
 				"read_ps":  calculator.getReadPs(),
 				"write_ps": calculator.getWritePs(),
@@ -213,7 +213,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 			"type":          "blkio",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
-			"dockerSocket": d.socket,
+			"dockerSocket":  d.socket,
 			"blkio": common.MapStr{
 				"read_ps":  float64(0),
 				"write_ps": float64(0),
@@ -304,4 +304,3 @@ func (d *EventGenerator) sanitizeLabelNames(labels map[string]string) map[string
 
 	return labels_sanitized
 }
-
