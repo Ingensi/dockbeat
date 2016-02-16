@@ -37,8 +37,8 @@ type context struct {
 }
 
 type publishOptions struct {
-	confirm bool
-	sync    bool
+	guaranteed bool
+	sync       bool
 }
 
 type TransactionalEventPublisher interface {
@@ -49,7 +49,7 @@ type PublisherType struct {
 	shipperName    string // Shipper name as set in the configuration file
 	hostname       string // Host name as returned by the operation system
 	name           string // The shipperName if configured, the hostname otherwise
-	ipaddrs        []string
+	IpAddrs        []string
 	tags           []string
 	disabled       bool
 	Index          string
@@ -70,6 +70,8 @@ type PublisherType struct {
 
 	syncPublisher  *syncPublisher
 	asyncPublisher *asyncPublisher
+
+	client *client
 }
 
 type ShipperConfig struct {
@@ -79,6 +81,10 @@ type ShipperConfig struct {
 	Topology_expire       int
 	Tags                  []string
 	Geoip                 common.Geoip
+
+	// internal publisher queue sizes
+	QueueSize     *int `yaml:"queue_size"`
+	BulkQueueSize *int `yaml:"bulk_queue_size"`
 }
 
 type Topology struct {
@@ -87,7 +93,8 @@ type Topology struct {
 }
 
 const (
-	defaultChanSize = 1000
+	defaultChanSize     = 1000
+	defaultBulkChanSize = 0
 )
 
 func init() {
@@ -104,7 +111,7 @@ func PrintPublishEvent(event common.MapStr) {
 }
 
 func (publisher *PublisherType) IsPublisherIP(ip string) bool {
-	for _, myip := range publisher.ipaddrs {
+	for _, myip := range publisher.IpAddrs {
 		if myip == ip {
 			return true
 		}
@@ -134,7 +141,7 @@ func (publisher *PublisherType) GetServerName(ip string) string {
 }
 
 func (publisher *PublisherType) Client() Client {
-	return &client{publisher}
+	return publisher.client
 }
 
 func (publisher *PublisherType) UpdateTopologyPeriodically() {
@@ -195,6 +202,16 @@ func (publisher *PublisherType) init(
 		logp.Info("Dry run mode. All output types except the file based one are disabled.")
 	}
 
+	hwm := defaultChanSize
+	if shipper.QueueSize != nil && *shipper.QueueSize > 0 {
+		hwm = *shipper.QueueSize
+	}
+
+	bulkHWM := defaultBulkChanSize
+	if shipper.BulkQueueSize != nil && *shipper.BulkQueueSize >= 0 {
+		bulkHWM = *shipper.BulkQueueSize
+	}
+
 	publisher.GeoLite = common.LoadGeoIPData(shipper.Geoip)
 
 	publisher.wsOutput.Init()
@@ -215,7 +232,12 @@ func (publisher *PublisherType) init(
 			debug("Create output worker")
 
 			outputers = append(outputers,
-				newOutputWorker(config, output, &publisher.wsOutput, defaultChanSize))
+				newOutputWorker(
+					config,
+					output,
+					&publisher.wsOutput,
+					hwm,
+					bulkHWM))
 
 			if !config.Save_topology {
 				continue
@@ -268,7 +290,7 @@ func (publisher *PublisherType) init(
 	publisher.tags = shipper.Tags
 
 	//Store the publisher's IP addresses
-	publisher.ipaddrs, err = common.LocalIpAddrsAsStrings(false)
+	publisher.IpAddrs, err = common.LocalIpAddrsAsStrings(false)
 	if err != nil {
 		logp.Err("Failed to get local IP addresses: %s", err)
 		return err
@@ -293,8 +315,9 @@ func (publisher *PublisherType) init(
 		go publisher.UpdateTopologyPeriodically()
 	}
 
-	publisher.asyncPublisher = newAsyncPublisher(publisher)
-	publisher.syncPublisher = newSyncPublisher(publisher)
+	publisher.asyncPublisher = newAsyncPublisher(publisher, hwm, bulkHWM)
+	publisher.syncPublisher = newSyncPublisher(publisher, hwm, bulkHWM)
 
+	publisher.client = newClient(publisher)
 	return nil
 }

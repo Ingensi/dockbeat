@@ -9,7 +9,6 @@ import (
 )
 
 type asyncPublisher struct {
-	messageWorker
 	outputs []worker
 	pub     *PublisherType
 	ws      workerSignal
@@ -17,41 +16,24 @@ type asyncPublisher struct {
 
 const (
 	defaultFlushInterval = 1000 * time.Millisecond // 1s
-	defaultBulkSize      = 200
+	defaultBulkSize      = 2048
 )
 
-func newAsyncPublisher(pub *PublisherType) *asyncPublisher {
-
+func newAsyncPublisher(pub *PublisherType, hwm, bulkHWM int) *asyncPublisher {
 	p := &asyncPublisher{pub: pub}
 	p.ws.Init()
 
 	var outputs []worker
 	for _, out := range pub.Output {
-		outputs = append(outputs, asyncOutputer(&p.ws, out))
+		outputs = append(outputs, asyncOutputer(&p.ws, hwm, bulkHWM, out))
 	}
 
 	p.outputs = outputs
-	p.messageWorker.init(&pub.wsPublisher, defaultChanSize, newPreprocessor(pub, p))
 	return p
 }
 
 // onStop will send stop signal to message batching workers
 func (p *asyncPublisher) onStop() { p.ws.stop() }
-
-func (p *asyncPublisher) onMessage(m message) {
-	debug("async forward to outputers (%v)", len(p.outputs))
-
-	// m.signal is not set yet. But a async client type supporting signals might
-	// be implemented in the furute.
-	// If m.signal is nil, NewSplitSignaler will return nil -> signaler will
-	// only set if client did send one
-	if m.context.signal != nil && len(p.outputs) > 1 {
-		m.context.signal = outputs.NewSplitSignaler(m.context.signal, len(p.outputs))
-	}
-	for _, o := range p.outputs {
-		o.send(m)
-	}
-}
 
 func (p *asyncPublisher) client() eventPublisher {
 	return p
@@ -67,7 +49,26 @@ func (p *asyncPublisher) PublishEvents(ctx context, events []common.MapStr) bool
 	return true
 }
 
-func asyncOutputer(ws *workerSignal, worker *outputWorker) worker {
+func (p *asyncPublisher) send(m message) {
+	if p.pub.disabled {
+		debug("publisher disabled")
+		outputs.SignalCompleted(m.context.signal)
+		return
+	}
+
+	// m.signal is not set yet. But a async client type supporting signals might
+	// be implemented in the future.
+	// If m.signal is nil, NewSplitSignaler will return nil -> signaler will
+	// only set if client did send one
+	if m.context.signal != nil && len(p.outputs) > 1 {
+		m.context.signal = outputs.NewSplitSignaler(m.context.signal, len(p.outputs))
+	}
+	for _, o := range p.outputs {
+		o.send(m)
+	}
+}
+
+func asyncOutputer(ws *workerSignal, hwm, bulkHWM int, worker *outputWorker) worker {
 	config := worker.config
 
 	flushInterval := defaultFlushInterval
@@ -89,5 +90,5 @@ func asyncOutputer(ws *workerSignal, worker *outputWorker) worker {
 
 	debug("create bulk processing worker (interval=%v, bulk size=%v)",
 		flushInterval, maxBulkSize)
-	return newBulkWorker(ws, defaultChanSize, worker, flushInterval, maxBulkSize)
+	return newBulkWorker(ws, hwm, bulkHWM, worker, flushInterval, maxBulkSize)
 }
