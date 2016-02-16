@@ -25,6 +25,8 @@ This test checks that it generate two network events:
 */
 func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	period := time.Second
@@ -131,6 +133,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket": socket,
 			"net": common.MapStr{
 				"name":         "eth0",
 				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
@@ -147,6 +150,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket": socket,
 			"net": common.MapStr{
 				"name":         "em1",
 				"rxBytes_ps":   0,
@@ -160,7 +164,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{socket, oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -202,6 +206,9 @@ This test checks that it generate two network events:
 */
 func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	period := time.Second
@@ -320,6 +327,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket": socket,
 			"net": common.MapStr{
 				"name":         "eth0",
 				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
@@ -336,6 +344,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket": socket,
 			"net": common.MapStr{
 				"name":         "em1",
 				"rxBytes_ps":   mockedNetworkCalculatorEm1.getRxBytesPerSecond(),
@@ -349,7 +358,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{socket, oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -392,6 +401,9 @@ This test checks that it generate one network event:
 */
 func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	veryOldTimestamp := oldTimestamp.AddDate(0, -1, 0)
@@ -489,6 +501,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket": socket,
 			"net": common.MapStr{
 				"name":         "eth0",
 				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
@@ -502,7 +515,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{socket, oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -531,6 +544,9 @@ This test checks that the generated event is well formatted according to the inc
 
 func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
@@ -551,7 +567,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}, time.Second}
+	var eventGenerator = EventGenerator{socket, nil, nil, CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	// sanitized lables expected
@@ -565,6 +581,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket": socket,
 		"container": common.MapStr{
 			"id":      container.ID,
 			"command": container.Command,
@@ -593,6 +610,9 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 
 func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
@@ -613,7 +633,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}, time.Second}
+	var eventGenerator = EventGenerator{socket, nil, nil, CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	// sanitized lables expected
@@ -627,6 +647,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket": socket,
 		"container": common.MapStr{
 			"id":      container.ID,
 			"command": container.Command,
@@ -661,6 +682,9 @@ This test checks parameters passed to the calculator and checks that the event g
 */
 func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// a container
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
@@ -717,6 +741,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		"type":          "cpu",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket": socket,
 		"cpu": common.MapStr{
 			"percpuUsage":       mockedCPUCalculator.perCpuUsage(),
 			"totalUsage":        mockedCPUCalculator.totalUsage(),
@@ -726,7 +751,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, nil, mockedCalculatorFactory, time.Second}
+	var eventGenerator = EventGenerator{socket, nil, nil, mockedCalculatorFactory, time.Second}
 
 	// WHEN
 	event := eventGenerator.getCpuEvent(&container, stats)
@@ -745,6 +770,9 @@ It checks the event format, according to the incoming memory stats
 
 func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// a container
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
@@ -772,6 +800,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"type":          "memory",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket": socket,
 		"memory": common.MapStr{
 			"failcnt":  stats.MemoryStats.Failcnt,
 			"limit":    stats.MemoryStats.Limit,
@@ -782,7 +811,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, nil, nil, time.Second}
+	var eventGenerator = EventGenerator{socket, nil, nil, nil, time.Second}
 
 	// WHEN
 	event := eventGenerator.getMemoryEvent(&container, &stats)
@@ -807,6 +836,9 @@ This test checks that it generate a well formatted Blkio stats event.
 */
 func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	newTimestamp := time.Now()
 
@@ -852,6 +884,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket": socket,
 		"blkio": common.MapStr{
 			"read_ps":  float64(0),
 			"write_ps": float64(0),
@@ -860,7 +893,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, oldBlkioData, nil, time.Second}
+	var eventGenerator = EventGenerator{socket, nil, oldBlkioData, nil, time.Second}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)
@@ -885,6 +918,9 @@ This test checks that it generate a well formatted Blkio stats event.
 */
 func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	period := time.Second
@@ -940,6 +976,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket": socket,
 		"blkio": common.MapStr{
 			"read_ps":  mockedBlkioCalculator.getReadPs(),
 			"write_ps": mockedBlkioCalculator.getWritePs(),
@@ -948,7 +985,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, oldBlkioData, mockedCalculatorFactory, time.Second}
+	var eventGenerator = EventGenerator{socket, nil, oldBlkioData, mockedCalculatorFactory, time.Second}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)
@@ -973,6 +1010,9 @@ A saved event is too old and should be remove from saved stats.
 */
 func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	veryOldTimestamp := oldTimestamp.AddDate(0, -1, 0)
@@ -1037,6 +1077,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket": socket,
 		"blkio": common.MapStr{
 			"read_ps":  mockedBlkioCalculator.getReadPs(),
 			"write_ps": mockedBlkioCalculator.getWritePs(),
@@ -1045,7 +1086,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, oldBlkioData, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{socket, nil, oldBlkioData, mockedCalculatorFactory, period}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)
@@ -1067,37 +1108,37 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 // NEEDED TYPES
 
 type MemoryStats struct {
-	Stats struct {
-		TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-		Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-		MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-		TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-		Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-		Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-		TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-		Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-		Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-		Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-		TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-		Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-		TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-		TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-		TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-		TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-		RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-		HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-		TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-		TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-		ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-		TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-		TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-		TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-		InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-		ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-		Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-		InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-		TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-	} `json:"stats,omitempty" yaml:"stats,omitempty"`
+	Stats    struct {
+			 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+			 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+			 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+			 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+			 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+			 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+			 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+			 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+			 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+			 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+			 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+			 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+			 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+			 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+			 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+			 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+			 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+			 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+			 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+			 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+			 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+			 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+			 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+			 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+			 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+			 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+			 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+			 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+			 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+		 } `json:"stats,omitempty" yaml:"stats,omitempty"`
 	MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 	Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
 	Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
@@ -1164,37 +1205,37 @@ func getMockedCPUCalculator(number float64) CPUCalculator {
 
 func getMemoryStats(read time.Time, number uint64) docker.Stats {
 	type memoryStats struct {
-		Stats struct {
-			TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-			Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-			MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-			TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-			Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-			Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-			TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-			Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-			Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-			Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-			TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-			Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-			TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-			TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-			TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-			TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-			RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-			HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-			TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-			TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-			ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-			TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-			TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-			TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-			InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-			ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-			Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-			InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-			TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-		} `json:"stats,omitempty" yaml:"stats,omitempty"`
+		Stats    struct {
+				 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+				 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+				 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+				 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+				 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+				 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+				 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+				 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+				 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+				 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+				 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+				 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+				 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+				 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+				 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+				 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+				 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+				 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+				 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+				 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+				 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+				 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+				 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+				 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+				 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+				 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+				 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+				 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+				 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+			 } `json:"stats,omitempty" yaml:"stats,omitempty"`
 		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
 		Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
