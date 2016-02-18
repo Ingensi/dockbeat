@@ -59,6 +59,7 @@ To get a detailled list of all generated fields, please read the [fields documen
     },
     "containerID": "7e91fbb0c7885f55ef8bf9402bbe4b366f88224c8baf31d36265061aa5ba2735",
     "containerName": "kibana",
+    "dockerSocket": "unix:///var/run/docker.sock",
     "count": 1,
     "type": "container"
   },
@@ -92,6 +93,7 @@ To get a detailled list of all generated fields, please read the [fields documen
     },
     "containerID": "7e91fbb0c7885f55ef8bf9402bbe4b366f88224c8baf31d36265061aa5ba2735",
     "containerName": "kibana",
+    "dockerSocket": "unix:///var/run/docker.sock",
     "count": 1,
     "cpu": {
       "percpuUsage": {
@@ -133,6 +135,7 @@ To get a detailled list of all generated fields, please read the [fields documen
     },
     "containerID": "7e91fbb0c7885f55ef8bf9402bbe4b366f88224c8baf31d36265061aa5ba2735",
     "containerName": "kibana",
+    "dockerSocket": "unix:///var/run/docker.sock",
     "count": 1,
     "net": {
       "name": "eth0",
@@ -174,6 +177,7 @@ To get a detailled list of all generated fields, please read the [fields documen
     },
     "containerID": "7e91fbb0c7885f55ef8bf9402bbe4b366f88224c8baf31d36265061aa5ba2735",
     "containerName": "kibana",
+    "dockerSocket": "unix:///var/run/docker.sock",
     "count": 1,
     "memory": {
       "failcnt": 0,
@@ -215,9 +219,8 @@ To get a detailled list of all generated fields, please read the [fields documen
       "write": 0
     },
     "containerID": "7e91fbb0c7885f55ef8bf9402bbe4b366f88224c8baf31d36265061aa5ba2735",
-    "containerNames": [
-      "/kibana"
-    ],
+    "containerName": "kibana",
+    "dockerSocket": "unix:///var/run/docker.sock",
     "count": 1,
     "type": "blkio"
   },

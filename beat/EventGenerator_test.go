@@ -25,6 +25,8 @@ This test checks that it generate two network events:
 */
 func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	period := time.Second
@@ -131,6 +133,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "eth0",
 				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
@@ -147,6 +150,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "em1",
 				"rxBytes_ps":   0,
@@ -160,7 +164,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{&socket, oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -202,6 +206,9 @@ This test checks that it generate two network events:
 */
 func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	period := time.Second
@@ -320,6 +327,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "eth0",
 				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
@@ -336,6 +344,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "em1",
 				"rxBytes_ps":   mockedNetworkCalculatorEm1.getRxBytesPerSecond(),
@@ -349,7 +358,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{&socket, oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -392,6 +401,9 @@ This test checks that it generate one network event:
 */
 func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	veryOldTimestamp := oldTimestamp.AddDate(0, -1, 0)
@@ -489,6 +501,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "eth0",
 				"rxBytes_ps":   mockedNetworkCalculatorEth0.getRxBytesPerSecond(),
@@ -502,7 +515,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{&socket, oldNetworkData, nil, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -531,6 +544,9 @@ This test checks that the generated event is well formatted according to the inc
 
 func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
@@ -551,7 +567,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}, time.Second}
+	var eventGenerator = EventGenerator{&socket, nil, nil, CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	// sanitized lables expected
@@ -565,6 +581,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket":  &socket,
 		"container": common.MapStr{
 			"id":      container.ID,
 			"command": container.Command,
@@ -593,6 +610,9 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 
 func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
@@ -613,7 +633,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{nil, nil, CalculatorFactoryImpl{}, time.Second}
+	var eventGenerator = EventGenerator{&socket, nil, nil, CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	// sanitized lables expected
@@ -627,14 +647,15 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket":  &socket,
 		"container": common.MapStr{
-			"id":      container.ID,
-			"command": container.Command,
-			"created": time.Unix(container.Created, 0),
-			"image":   container.Image,
-			"labels":  labels_expected,
-			"names":   container.Names,
-			"ports": []map[string]interface{}{},
+			"id":         container.ID,
+			"command":    container.Command,
+			"created":    time.Unix(container.Created, 0),
+			"image":      container.Image,
+			"labels":     labels_expected,
+			"names":      container.Names,
+			"ports":      []map[string]interface{}{},
 			"sizeRootFs": container.SizeRootFs,
 			"sizeRw":     container.SizeRw,
 			"status":     container.Status,
@@ -661,6 +682,9 @@ This test checks parameters passed to the calculator and checks that the event g
 */
 func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// a container
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
@@ -717,6 +741,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		"type":          "cpu",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket":  &socket,
 		"cpu": common.MapStr{
 			"percpuUsage":       mockedCPUCalculator.perCpuUsage(),
 			"totalUsage":        mockedCPUCalculator.totalUsage(),
@@ -726,7 +751,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, nil, mockedCalculatorFactory, time.Second}
+	var eventGenerator = EventGenerator{&socket, nil, nil, mockedCalculatorFactory, time.Second}
 
 	// WHEN
 	event := eventGenerator.getCpuEvent(&container, stats)
@@ -745,6 +770,9 @@ It checks the event format, according to the incoming memory stats
 
 func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// a container
 	labels := make(map[string]string)
 	labels["label1"] = "value1"
@@ -772,6 +800,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"type":          "memory",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket":  &socket,
 		"memory": common.MapStr{
 			"failcnt":  stats.MemoryStats.Failcnt,
 			"limit":    stats.MemoryStats.Limit,
@@ -782,7 +811,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, nil, nil, time.Second}
+	var eventGenerator = EventGenerator{&socket, nil, nil, nil, time.Second}
 
 	// WHEN
 	event := eventGenerator.getMemoryEvent(&container, &stats)
@@ -807,6 +836,9 @@ This test checks that it generate a well formatted Blkio stats event.
 */
 func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	newTimestamp := time.Now()
 
@@ -852,6 +884,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket":  &socket,
 		"blkio": common.MapStr{
 			"read_ps":  float64(0),
 			"write_ps": float64(0),
@@ -860,7 +893,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, oldBlkioData, nil, time.Second}
+	var eventGenerator = EventGenerator{&socket, nil, oldBlkioData, nil, time.Second}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)
@@ -885,6 +918,9 @@ This test checks that it generate a well formatted Blkio stats event.
 */
 func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	period := time.Second
@@ -940,6 +976,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket":  &socket,
 		"blkio": common.MapStr{
 			"read_ps":  mockedBlkioCalculator.getReadPs(),
 			"write_ps": mockedBlkioCalculator.getWritePs(),
@@ -948,7 +985,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, oldBlkioData, mockedCalculatorFactory, time.Second}
+	var eventGenerator = EventGenerator{&socket, nil, oldBlkioData, mockedCalculatorFactory, time.Second}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)
@@ -973,6 +1010,9 @@ A saved event is too old and should be remove from saved stats.
 */
 func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	// GIVEN
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
 	// old and current timestamps
 	oldTimestamp := time.Now()
 	veryOldTimestamp := oldTimestamp.AddDate(0, -1, 0)
@@ -1037,6 +1077,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"dockerSocket":  &socket,
 		"blkio": common.MapStr{
 			"read_ps":  mockedBlkioCalculator.getReadPs(),
 			"write_ps": mockedBlkioCalculator.getWritePs(),
@@ -1045,7 +1086,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{nil, oldBlkioData, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{&socket, nil, oldBlkioData, mockedCalculatorFactory, period}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)

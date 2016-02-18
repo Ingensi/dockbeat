@@ -33,6 +33,7 @@ func TestDockerbeatSetupMethod(t *testing.T) {
 	assert.Equal(t, dockerbeat.socket, dockerbeat.dockerClient.Endpoint())
 	// eventGenerator initialized
 	assert.NotNil(t, dockerbeat.eventGenerator)
+	assert.NotNil(t, dockerbeat.eventGenerator.socket)
 	assert.NotNil(t, dockerbeat.eventGenerator.blkioStats)
 	assert.NotNil(t, dockerbeat.eventGenerator.networkStats)
 	assert.NotNil(t, dockerbeat.eventGenerator.calculatorFactory)
