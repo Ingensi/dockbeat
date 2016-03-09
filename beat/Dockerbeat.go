@@ -163,7 +163,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 		stats := <-statsC
 		err := <-errC
 
-		if err == nil {
+		if err == nil && stats != nil {
 			events := []common.MapStr{
 				d.eventGenerator.getContainerEvent(&container, stats),
 				d.eventGenerator.getCpuEvent(&container, stats),
@@ -174,6 +174,8 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 			events = append(events, d.eventGenerator.getNetworksEvent(&container, stats)...)
 
 			d.events.PublishEvents(events)
+		} else if err == nil && stats == nil {
+			logp.Err("Container was existing at listing but not when getting statistics: %v", container.ID)
 		} else {
 			logp.Err("An error occurred while getting docker stats: %v", err)
 		}
