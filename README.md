@@ -14,11 +14,11 @@ This is quite early stage and not yet released.
 
 There are five types of documents exported:
 
-- `type: container` for container attributes
-- `type: cpu` for per process container statistics. One document per container is generated.
-- `type: net` for container network statistics. One document per network container is generated.
-- `type: memory` for container memory statistics. One document per container is generated.
-- `type: blkio` for container io access statistics. One document per container is generated.
+- `type: container`: container attributes
+- `type: cpu`: container CPU usage statistics. One document per container is generated.
+- `type: net`: container network statistics. One document per network container is generated.
+- `type: memory`: container memory statistics. One document per container is generated.
+- `type: blkio`: container io access statistics. One document per container is generated.
 
 To get a detailled list of all generated fields, please read the [fields documentation page](doc/fields.asciidoc).
 
