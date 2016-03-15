@@ -6,12 +6,22 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/cfgfile"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/publisher"
 	"github.com/fsouza/go-dockerclient"
+)
+
+// const for event logs
+const (
+	ERROR = "error"
+	WARN  = "warning"
+	INFO  = "info"
+	DEBUG = "debug"
+	TRACE = "trace"
 )
 
 type SoftwareVersion struct {
@@ -98,6 +108,7 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 		err = d.checkPrerequisites()
 		if err != nil {
 			logp.Err("Unable to collect metrics: %v", err)
+			d.publishLogEvent(ERROR, fmt.Sprintf("Unable to collect metrics: %v", err))
 			continue
 		}
 
@@ -108,6 +119,7 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 		duration := timerEnd.Sub(timerStart)
 		if duration.Nanoseconds() > d.period.Nanoseconds() {
 			logp.Warn("Ignoring tick(s) due to processing taking longer than one period")
+			d.publishLogEvent(WARN, "Ignoring tick(s) due to processing taking longer than one period")
 		}
 	}
 
@@ -133,6 +145,7 @@ func (d *Dockerbeat) RunOneTime(b *beat.Beat) error {
 		}
 	} else {
 		logp.Err("Cannot get container list: %v", err)
+		d.publishLogEvent(ERROR, fmt.Sprintf("Cannot get container list: %v", err))
 	}
 
 	d.eventGenerator.cleanOldStats(containers)
@@ -175,9 +188,11 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 
 			d.events.PublishEvents(events)
 		} else if err == nil && stats == nil {
-			logp.Err("Container was existing at listing but not when getting statistics: %v", container.ID)
+			logp.Warn("Container was existing at listing but not when getting statistics: %v", container.ID)
+			d.publishLogEvent(WARN, fmt.Sprintf("Container was existing at listing but not when getting statistics: %v", container.ID))
 		} else {
 			logp.Err("An error occurred while getting docker stats: %v", err)
+			d.publishLogEvent(ERROR, fmt.Sprintf("An error occurred while getting docker stats: %v", err))
 		}
 	}()
 
@@ -195,8 +210,8 @@ func (d *Dockerbeat) checkPrerequisites() error {
 
 		if !valid {
 			output = errors.New("Docker server is too old (version " +
-			strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
-			" and earlier is required)")
+				strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
+				" and earlier is required)")
 		}
 
 	} else {
@@ -225,10 +240,15 @@ func (d *Dockerbeat) validVersion(version string) (bool, error) {
 	var output bool
 
 	if actualMajorVersion > d.minimalDockerVersion.major ||
-	(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
+		(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
 		output = true
 	} else {
 		output = false
 	}
 	return output, nil
+}
+
+func (d *Dockerbeat) publishLogEvent(level string, message string) {
+	event := d.eventGenerator.getLogEvent(level, message)
+	d.events.PublishEvent(event)
 }

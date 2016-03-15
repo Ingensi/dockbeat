@@ -352,4 +352,20 @@ cpu:
             - name: cpu23
               type: float
 
+log:
+  type: group
+  description: >
+    Special event sent by dockerbeat to log some events.
+  fields:
+    - name: log
+      type: group
+      fields:
+        - name: level
+          type: string
+          description: >
+            Log level (debug, info, warning, error, fatal).
 
+        - name: message
+          type: string
+          description: >
+            Log message.

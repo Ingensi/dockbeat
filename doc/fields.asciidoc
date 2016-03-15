@@ -16,6 +16,7 @@ following categories:
 * <<exported-fields-memory>>
 * <<exported-fields-blkio>>
 * <<exported-fields-cpu>>
+* <<exported-fields-log>>
 
 [[exported-fields-env]]
 === Common fields fields
@@ -486,4 +487,29 @@ type: float
 ==== cpu23
 
 type: float
+
+[[exported-fields-log]]
+=== Dockerbeat logs fields
+
+Special event sent by dockerbeat to log some events.
+
+
+
+[[exported-fields-log]]
+=== Dockerbeat logs fields
+
+
+==== level
+
+type: string
+
+Log level (debug, info, warning, error, fatal).
+
+
+==== message
+
+type: string
+
+Log message.
+
 

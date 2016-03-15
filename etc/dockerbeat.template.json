@@ -160,6 +160,9 @@
             }
           }
         },
+        "log": {
+          "properties": {}
+        },
         "memory": {
           "properties": {
             "failcnt": {

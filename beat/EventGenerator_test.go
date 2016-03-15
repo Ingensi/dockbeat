@@ -1105,6 +1105,45 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	}
 }
 
+// DAEMON EVENT GENERATION
+
+/*
+TestEventGeneratorGetLogEvent check that a well formatted event is generated from a level and message.
+*/
+func TestEventGeneratorGetLogEvent(t *testing.T) {
+	// GIVEN
+	// an error
+	message := "Some error message"
+	level := "Some level"
+
+	// docker socket
+	socket := "unix:///some/docker/socket"
+
+	// expected event
+	expectedEvent := common.MapStr{
+		"@timestamp":   nil,
+		"type":         "log",
+		"dockerSocket": &socket,
+		"log": common.MapStr{
+			"level":   level,
+			"message": message,
+		},
+	}
+
+	// the eventGenerator to test
+	var eventGenerator = EventGenerator{&socket, nil, nil, nil, time.Second}
+
+	// WHEN
+	event := eventGenerator.getLogEvent(level, message)
+
+	// get the event time and set value to the expectedEvent
+	expectedEvent["@timestamp"] = event["@timestamp"]
+
+	// THEN
+	// check returned events
+	assert.Equal(t, expectedEvent, event)
+}
+
 // NEEDED TYPES
 
 type MemoryStats struct {
