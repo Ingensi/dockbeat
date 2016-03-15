@@ -1147,37 +1147,37 @@ func TestEventGeneratorGetLogEvent(t *testing.T) {
 // NEEDED TYPES
 
 type MemoryStats struct {
-	Stats    struct {
-			 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-			 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-			 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-			 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-			 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-			 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-			 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-			 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-			 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-			 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-			 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-			 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-			 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-			 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-			 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-			 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-			 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-			 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-			 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-			 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-			 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-			 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-			 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-			 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-			 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-			 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-			 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-			 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-			 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-		 } `json:"stats,omitempty" yaml:"stats,omitempty"`
+	Stats struct {
+		TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+		Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+		MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+		TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+		Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+		Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+		TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+		Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+		Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+		Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+		TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+		Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+		TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+		TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+		TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+		TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+		RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+		HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+		TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+		TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+		ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+		TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+		TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+		TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+		InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+		ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+		Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+		InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+		TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+	} `json:"stats,omitempty" yaml:"stats,omitempty"`
 	MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 	Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
 	Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
@@ -1244,37 +1244,37 @@ func getMockedCPUCalculator(number float64) CPUCalculator {
 
 func getMemoryStats(read time.Time, number uint64) docker.Stats {
 	type memoryStats struct {
-		Stats    struct {
-				 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-				 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-				 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-				 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-				 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-				 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-				 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-				 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-				 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-				 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-				 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-				 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-				 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-				 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-				 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-				 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-				 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-				 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-				 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-				 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-				 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-				 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-				 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-				 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-				 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-				 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-				 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-				 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-				 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-			 } `json:"stats,omitempty" yaml:"stats,omitempty"`
+		Stats struct {
+			TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+			Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+			MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+			TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+			Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+			Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+			TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+			Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+			Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+			Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+			TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+			Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+			TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+			TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+			TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+			TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+			RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+			HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+			TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+			TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+			ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+			TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+			TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+			TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+			InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+			ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+			Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+			InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+			TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+		} `json:"stats,omitempty" yaml:"stats,omitempty"`
 		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
 		Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`

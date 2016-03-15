@@ -237,7 +237,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 func (d *EventGenerator) getLogEvent(level string, message string) common.MapStr {
 
 	event := common.MapStr{
-		"@timestamp":   time.Now(),
+		"@timestamp":   common.Time(time.Now()),
 		"type":         "log",
 		"dockerSocket": d.socket,
 		"log": common.MapStr{
