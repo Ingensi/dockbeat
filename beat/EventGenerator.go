@@ -1,6 +1,7 @@
 package beat
 
 import (
+	"fmt"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"strings"
@@ -230,6 +231,20 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 		if d.expiredSavedData(blkioStat.time) {
 			delete(d.blkioStats, containerId)
 		}
+	}
+	return event
+}
+
+func (d *EventGenerator) getLogEvent(err error, time time.Time) common.MapStr {
+
+	event := common.MapStr{
+		"@timestamp":   common.Time(time),
+		"type":         "daemon",
+		"dockerSocket": d.socket,
+		"daemon": common.MapStr{
+			"level":   "error",
+			"message": fmt.Sprintf("%s", err),
+		},
 	}
 	return event
 }

@@ -17,8 +17,9 @@ There are five types of documents exported:
 - `type: net`: container network statistics. One document per network container is generated.
 - `type: memory`: container memory statistics. One document per container is generated.
 - `type: blkio`: container io access statistics. One document per container is generated.
+- `type: daemon`: daemon status information. One document per tick is generated if an error occurred.
 
-To get a detailled list of all generated fields, please read the [fields documentation page](doc/fields.asciidoc).
+To get a detailed list of all generated fields, please read the [fields documentation page](doc/fields.asciidoc).
 
 #### Elasticsearch template 
 
