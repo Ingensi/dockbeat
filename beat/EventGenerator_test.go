@@ -4,7 +4,6 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/stretchr/testify/assert"
-	"github.com/vektra/errors"
 	"testing"
 	"time"
 )
@@ -1109,27 +1108,25 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 // DAEMON EVENT GENERATION
 
 /*
-TestEventGeneratorGetDaemonStatusEvent check that a well formatted event is generated from an error.
+TestEventGeneratorGetLogEvent check that a well formatted event is generated from a level and message.
 */
-func TestEventGeneratorGetDaemonStatusEvent(t *testing.T) {
+func TestEventGeneratorGetLogEvent(t *testing.T) {
 	// GIVEN
 	// an error
-	errorTxt := "Some error message"
-	err := errors.New(errorTxt)
+	message := "Some error message"
+	level := "Some level"
 
 	// docker socket
 	socket := "unix:///some/docker/socket"
 
-	currentTime := time.Now()
-
 	// expected event
 	expectedEvent := common.MapStr{
-		"@timestamp":   common.Time(currentTime),
-		"type":         "daemon",
+		"@timestamp":   nil,
+		"type":         "log",
 		"dockerSocket": &socket,
-		"daemon": common.MapStr{
-			"level":   "error",
-			"message": errorTxt,
+		"log": common.MapStr{
+			"level":   level,
+			"message": message,
 		},
 	}
 
@@ -1137,7 +1134,10 @@ func TestEventGeneratorGetDaemonStatusEvent(t *testing.T) {
 	var eventGenerator = EventGenerator{&socket, nil, nil, nil, time.Second}
 
 	// WHEN
-	event := eventGenerator.getLogEvent(err, currentTime)
+	event := eventGenerator.getLogEvent(level, message)
+
+	// get the event time and set value to the expectedEvent
+	expectedEvent["@timestamp"] = event["@timestamp"]
 
 	// THEN
 	// check returned events

@@ -1,7 +1,6 @@
 package beat
 
 import (
-	"fmt"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"strings"
@@ -235,15 +234,15 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 	return event
 }
 
-func (d *EventGenerator) getLogEvent(err error, time time.Time) common.MapStr {
+func (d *EventGenerator) getLogEvent(level string, message string) common.MapStr {
 
 	event := common.MapStr{
-		"@timestamp":   common.Time(time),
-		"type":         "daemon",
+		"@timestamp":   time.Now(),
+		"type":         "log",
 		"dockerSocket": d.socket,
-		"daemon": common.MapStr{
-			"level":   "error",
-			"message": fmt.Sprintf("%s", err),
+		"log": common.MapStr{
+			"level":   level,
+			"message": message,
 		},
 	}
 	return event
