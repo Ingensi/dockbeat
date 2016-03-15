@@ -234,6 +234,20 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 	return event
 }
 
+func (d *EventGenerator) getLogEvent(level string, message string) common.MapStr {
+
+	event := common.MapStr{
+		"@timestamp":   common.Time(time.Now()),
+		"type":         "log",
+		"dockerSocket": d.socket,
+		"log": common.MapStr{
+			"level":   level,
+			"message": message,
+		},
+	}
+	return event
+}
+
 func (d *EventGenerator) convertContainerPorts(ports *[]docker.APIPort) []map[string]interface{} {
 	var outputPorts = []map[string]interface{}{}
 	for _, port := range *ports {
