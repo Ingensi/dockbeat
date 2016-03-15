@@ -92,19 +92,19 @@ Dockerbeat configuration file is located at `etc/dockerbeat.yml`. This default t
     - Default value : `unix:///var/run/docker.sock`
   - Enable TLS encryption
     - ENV : `DOCKER_ENABLE_TLS`
-    - Beats variable : `input.enable_tls`
+    - Beats variable : `input.tls.enable`
     - Default value : `false`
   - Path to the CA file (when TLS is enabled)
     - ENV : `DOCKER_CA_PATH`
-    - Beats variable : `input.tls_ca_path`
+    - Beats variable : `input.tls.ca_path`
     - Default value : no default value
   - Path to the CERT file (when TLS is enabled)
     - ENV : `DOCKER_CERT_PATH`
-    - Beats variable : `input.tls_cert_path`
+    - Beats variable : `input.tls.cert_path`
     - Default value : no default value
   - Path to the KEY file (when TLS is enabled)
     - ENV : `DOCKER_KEY_PATH`
-    - Beats variable : `input.tls_key_path`
+    - Beats variable : `input.tls.key_path`
     - Default value : no default value
   - Name of the Beat 
     - ENV : `SHIPPER_NAME`

@@ -29,10 +29,18 @@ type SoftwareVersion struct {
 	minor int
 }
 
+type SocketConfig struct {
+	socket    string
+	enableTls bool
+	caPath    string
+	certPath  string
+	keyPath   string
+}
+
 type Dockerbeat struct {
 	done                 chan struct{}
 	period               time.Duration
-	socket               string
+	socketConfig         SocketConfig
 	TbConfig             ConfigSettings
 	dockerClient         *docker.Client
 	events               publisher.Client
@@ -61,34 +69,81 @@ func (d *Dockerbeat) Config(b *beat.Beat) error {
 	} else {
 		d.period = 1 * time.Second
 	}
-	//init the socket
+	//init the socketConfig
+	d.socketConfig = SocketConfig{
+		socket:    "",
+		enableTls: false,
+		caPath:    "",
+		certPath:  "",
+		keyPath:   "",
+	}
+
 	if d.TbConfig.Input.Socket != nil {
-		d.socket = *d.TbConfig.Input.Socket
+		d.socketConfig.socket = *d.TbConfig.Input.Socket
 	} else {
-		d.socket = "unix:///var/run/docker.sock" // default docker socket location
+		d.socketConfig.socket = "unix:///var/run/docker.sock" // default docker socket location
+	}
+	if d.TbConfig.Input.Tls.Enable != nil {
+		d.socketConfig.enableTls = *d.TbConfig.Input.Tls.Enable
+	} else {
+		d.socketConfig.enableTls = false
+	}
+	if d.socketConfig.enableTls {
+		if d.TbConfig.Input.Tls.CaPath != nil {
+			d.socketConfig.caPath = *d.TbConfig.Input.Tls.CaPath
+		}
+		if d.TbConfig.Input.Tls.CertPath != nil {
+			d.socketConfig.certPath = *d.TbConfig.Input.Tls.CertPath
+		}
+		if d.TbConfig.Input.Tls.KeyPath != nil {
+			d.socketConfig.keyPath = *d.TbConfig.Input.Tls.KeyPath
+		}
 	}
 
 	logp.Info("dockerbeat", "Init dockerbeat")
-	logp.Info("dockerbeat", "Follow docker socket %q\n", d.socket)
+	logp.Info("dockerbeat", "Follow docker socket %q\n", d.socketConfig.socket)
+	if d.socketConfig.enableTls {
+		logp.Info("dockerbeat", "TLS enabled\n")
+	} else {
+		logp.Info("dockerbeat", "TLS disabled\n")
+	}
 	logp.Info("dockerbeat", "Period %v\n", d.period)
 
 	return nil
 }
 
+func (d *Dockerbeat) getDockerClient() (*docker.Client, error) {
+	var client *docker.Client
+	var err error
+
+	if d.socketConfig.enableTls {
+		client, err = docker.NewTLSClient(
+			d.socketConfig.socket,
+			d.socketConfig.certPath,
+			d.socketConfig.keyPath,
+			d.socketConfig.caPath,
+		)
+	} else {
+		client, err = docker.NewClient(d.socketConfig.socket)
+	}
+	return client, err
+}
+
 func (d *Dockerbeat) Setup(b *beat.Beat) error {
+	var err error
 	//populate Dockerbeat
 	d.events = b.Events
 	d.done = make(chan struct{})
-	d.dockerClient, _ = docker.NewClient(d.socket)
+	d.dockerClient, err = d.getDockerClient()
 	d.eventGenerator = EventGenerator{
-		socket:            &d.socket,
+		socket:            &d.socketConfig.socket,
 		networkStats:      map[string]map[string]NetworkData{},
 		blkioStats:        map[string]BlkioData{},
 		calculatorFactory: CalculatorFactoryImpl{},
 		period:            d.period,
 	}
 
-	return nil
+	return errors.New(fmt.Sprintf("Unable to create docker client, please check your docker socket/TLS settings: %v", err))
 }
 
 func (d *Dockerbeat) Run(b *beat.Beat) error {
