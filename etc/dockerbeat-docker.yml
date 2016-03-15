@@ -10,17 +10,18 @@ input:
  socket: ${DOCKER_SOCKET:unix:///var/run/docker.sock}
 
  # If dockerbeat has to deal with a TLS-enabled docker daemon, you need to enable TLS and configure path for key and certificates.
- # By default, TLS is disabled
- enable_tls: ${DOCKER_ENABLE_TLS:false}
+ tls:
+  # By default, TLS is disabled
+  enable: ${DOCKER_ENABLE_TLS:false}
 
- # Path to the ca file
- tls_ca_path: ${DOCKER_CA_PATH}
+  # Path to the ca file
+  ca_path: ${DOCKER_CA_PATH}
 
- # Path to the cert file
- tls_cert_path: ${DOCKER_CERT_PATH}
+  # Path to the cert file
+  cert_path: ${DOCKER_CERT_PATH}
 
- # Path to the key file
- tls_key_path: ${DOCKER_KEY_PATH}
+  # Path to the key file
+  key_path: ${DOCKER_KEY_PATH}
 
 ###############################################################################
 ############################# Libbeat Config ##################################
