@@ -74,6 +74,15 @@ docker run -d --link elastic:elasticsearch \
   ingensi/dockerbeat:1.0.0-rc1
 ```
 
+By default, when dockerbeat is running from this image, it logs into the `/var/log/dockerbeat` directory. To access this logs from the host, link a directory to the dockerbeat logging directory:
+```
+docker run -d --link elastic:elasticsearch \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /volumes/dockerbeat-config/:/etc/dockerbeat \
+  -v /volumes/dockerbeat-logs/:/var/logs/dockerbeat \
+  ingensi/dockerbeat:1.0.0-rc1
+```
+
 ### Configuring Dockerbeat
 
 Dockerbeat configuration file is located at `etc/dockerbeat.yml`. This default template provides the following environment variable mapping:
@@ -85,7 +94,8 @@ Dockerbeat configuration file is located at `etc/dockerbeat.yml`. This default t
   - Where data will be send (array list of elasticsearch nodes)
     - ENV : `ES_HOSTS`
     - Beats variable : `output.elasticsearch.hosts`
-    - Default value : `localhost:9200`
+    - Default value : `[localhost:9200]`
+    - Note: This variable is an array of string, escape special chars when using in command line: `export ES_HOSTS=[\"es1:9200\",\"es2:9200\"]`
   - Docker socket path
     - ENV : `DOCKER_SOCKET`
     - Beats variable : `input.socket`
@@ -98,12 +108,13 @@ Dockerbeat configuration file is located at `etc/dockerbeat.yml`. This default t
     - ENV : `SHIPPER_TAGS`
     - Beats variable : `shipper.tags`
     - Default value : none
+    - Node: This variable is an array of string, escape special chars when using in command line.
   - Dockerbeat log level
     - ENV : `DOCKERBEAT_LOG_LEVEL`
     - Beats variable : `logging.level`
     - Default value : `error`
                                        
-When launching it inside a docker container, you can modify the environement variables using the `-e` flag :
+When launching it inside a docker container, you can modify the environment variables using the `-e` flag :
 
 ```bash
 docker run -d \
@@ -111,7 +122,7 @@ docker run -d \
   --link elastic1:es1 \
   --link elastic2:es2 \
   -e SHIPPER_NAME=$(hostname) \
-  -e ES_HOSTS=es1:9200,es2,9200 \
+  -e ES_HOSTS=[\"es1:9200\",\"es2,9200\"] \
   ingensi/dockerbeat:1.0.0-rc1
 ```
 
