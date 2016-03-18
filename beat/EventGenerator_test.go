@@ -802,11 +802,13 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"containerName": "name1",
 		"dockerSocket":  &socket,
 		"memory": common.MapStr{
-			"failcnt":  stats.MemoryStats.Failcnt,
-			"limit":    stats.MemoryStats.Limit,
-			"maxUsage": stats.MemoryStats.MaxUsage,
-			"usage":    stats.MemoryStats.Usage,
-			"usage_p":  float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit),
+			"totalRss":   stats.MemoryStats.Stats.TotalRss,
+			"totalRss_p": float64(stats.MemoryStats.Stats.TotalRss) / float64(stats.MemoryStats.Limit),
+			"failcnt":    stats.MemoryStats.Failcnt,
+			"limit":      stats.MemoryStats.Limit,
+			"maxUsage":   stats.MemoryStats.MaxUsage,
+			"usage":      stats.MemoryStats.Usage,
+			"usage_p":    float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit),
 		},
 	}
 
