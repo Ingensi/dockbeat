@@ -802,11 +802,11 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"containerName": "name1",
 		"dockerSocket":  &socket,
 		"memory": common.MapStr{
-			"totalRss":   stats.MemoryStats.Stats.TotalRss,
-			"totalRss_p": float64(stats.MemoryStats.Stats.TotalRss) / float64(stats.MemoryStats.Limit),
 			"failcnt":    stats.MemoryStats.Failcnt,
 			"limit":      stats.MemoryStats.Limit,
 			"maxUsage":   stats.MemoryStats.MaxUsage,
+			"totalRss":   stats.MemoryStats.Stats.TotalRss,
+			"totalRss_p": float64(stats.MemoryStats.Stats.TotalRss) / float64(stats.MemoryStats.Limit),
 			"usage":      stats.MemoryStats.Usage,
 			"usage_p":    float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit),
 		},
@@ -1283,7 +1283,7 @@ func getMemoryStats(read time.Time, number uint64) docker.Stats {
 		Limit    uint64 `json:"limit,omitempty" yaml:"limit,omitempty"`
 	}
 
-	return docker.Stats{
+	testStats := docker.Stats{
 		Read: read,
 		MemoryStats: memoryStats{
 			MaxUsage: number,
@@ -1291,7 +1291,11 @@ func getMemoryStats(read time.Time, number uint64) docker.Stats {
 			Failcnt:  number * 3,
 			Limit:    number * 4,
 		},
-	}
+	};
+	
+	testStats.MemoryStats.Stats.TotalRss = number * 5;
+	
+	return testStats;
 }
 
 func getMockedBlkioCalculator(number float64) *MockedBlkioCalculator {

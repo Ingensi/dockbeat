@@ -220,7 +220,17 @@ memory:
           type: float
           description: >
             Maximum memory used by the container in Bytes.
+            
+        - name: totalRss
+          type: float
+          description: >
+            "Current RSS (applications' Resident Set Size) memory consumption in Bytes."
 
+        - name: totalRss_p
+          type: float
+          description: >
+            "Current RSS (applications' Resident Set Size) memory consumption in percents between 0.0 and 1.0."
+            
         - name: usage
           type: float
           description: >
