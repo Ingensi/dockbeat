@@ -308,6 +308,20 @@ type: float
 Maximum memory used by the container in Bytes.
 
 
+==== totalRss
+
+type: float
+
+"Current RSS (applications' Resident Set Size) memory consumption in Bytes."
+
+
+==== totalRss_p
+
+type: float
+
+"Current RSS (applications' Resident Set Size) memory consumption in percents between 0.0 and 1.0."
+
+
 ==== usage
 
 type: float

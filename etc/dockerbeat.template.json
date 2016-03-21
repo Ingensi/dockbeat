@@ -177,6 +177,14 @@
               "doc_values": "true",
               "type": "float"
             },
+            "totalRss": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "totalRss_p": {
+              "doc_values": "true",
+              "type": "float"
+            },
             "usage": {
               "doc_values": "true",
               "type": "float"
