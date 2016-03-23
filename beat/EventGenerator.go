@@ -10,7 +10,7 @@ import (
 type EventGenerator struct {
 	socket            *string
 	networkStats      map[string]map[string]NetworkData
-	blkioStats        map[string]BlkioData
+	blkioStats        ConcurrentMap
 	calculatorFactory CalculatorFactory
 	period            time.Duration
 }
@@ -193,7 +193,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 
 	var event common.MapStr
 
-	oldBlkioStats, ok := d.blkioStats[container.ID]
+	oldBlkioStats, ok := d.blkioStats.Get(container.ID)
 
 	if ok {
 		calculator := d.calculatorFactory.newBlkioCalculator(oldBlkioStats, blkioStats)
@@ -224,13 +224,13 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 		}
 	}
 
-	d.blkioStats[container.ID] = blkioStats
+	d.blkioStats.Set(container.ID, blkioStats)
 
 	// purge old saved data
-	for containerId, blkioStat := range d.blkioStats {
+	for stat := range d.blkioStats.Iter() {
 		// if data older than two ticks, then delete it
-		if d.expiredSavedData(blkioStat.time) {
-			delete(d.blkioStats, containerId)
+		if d.expiredSavedData(stat.Val.time) {
+			d.blkioStats.Remove(stat.Key)
 		}
 	}
 	return event

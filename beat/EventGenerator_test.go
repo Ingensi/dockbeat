@@ -866,7 +866,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	var stats = getBlkioStats(newTimestamp, 10, 20, 30)
 
 	// saved network status (blkio stats does not exist for this container)
-	oldBlkioData := map[string]BlkioData{}
+	oldBlkioData := NewBlkioMap()
 
 	// mocking calculators
 	// first - generate expected calls (NetworkStats to NetworkData conversion)
@@ -903,8 +903,8 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	// THEN
 	// check returned events
 	assert.Equal(t, expectedEvent, event)
-
-	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
+	blkData, _ := eventGenerator.blkioStats.Get(container.ID)
+	assert.Equal(t, blkData, newBlkioData)
 }
 
 /*
@@ -950,13 +950,13 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	var stats = getBlkioStats(newTimestamp, 10, 20, 30)
 
 	// saved network status
-	oldBlkioData := map[string]BlkioData{}
-	oldBlkioData[containerId] = BlkioData{
+	oldBlkioData := NewBlkioMap()
+	oldBlkioData.Set(containerId, BlkioData{
 		time:   oldTimestamp,
 		reads:  1,
 		writes: 2,
 		totals: 3,
-	}
+	})
 
 	// mocking calculators
 	// first - generate expected calls (NetworkStats to NetworkData conversion)
@@ -970,7 +970,8 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	// second - instantiate mock
 	mockedCalculatorFactory := new(MockedCalculatorFactory)
 	mockedBlkioCalculator := getMockedBlkioCalculator(1)
-	mockedCalculatorFactory.On("newBlkioCalculator", oldBlkioData[containerId], newBlkioData).Return(mockedBlkioCalculator)
+	blkData, _ := oldBlkioData.Get(containerId)
+	mockedCalculatorFactory.On("newBlkioCalculator", blkData, newBlkioData).Return(mockedBlkioCalculator)
 
 	// expected events
 	expectedEvent := common.MapStr{
@@ -997,7 +998,8 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	assert.Equal(t, expectedEvent, event)
 
 	// check that new stats saved
-	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
+	blkData, _ = eventGenerator.blkioStats.Get(container.ID)
+	assert.Equal(t, blkData, newBlkioData)
 }
 
 /*
@@ -1044,20 +1046,20 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	var stats = getBlkioStats(newTimestamp, 10, 20, 30)
 
 	// saved blkio stats
-	oldBlkioData := map[string]BlkioData{}
-	oldBlkioData[containerId] = BlkioData{
+	oldBlkioData := NewBlkioMap()
+	oldBlkioData.Set(containerId, BlkioData{
 		time:   oldTimestamp,
 		reads:  1,
 		writes: 2,
 		totals: 3,
-	}
+	})
 	// another container has a very old blkio stats
-	oldBlkioData[anotherContainerId] = BlkioData{
+	oldBlkioData.Set(anotherContainerId, BlkioData{
 		time:   veryOldTimestamp,
 		reads:  4,
 		writes: 5,
 		totals: 6,
-	}
+	})
 
 	// mocking calculators
 	// first - generate expected calls (BlkioStats to BlkioData conversion)
@@ -1071,7 +1073,8 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	// second - instantiate mock
 	mockedCalculatorFactory := new(MockedCalculatorFactory)
 	mockedBlkioCalculator := getMockedBlkioCalculator(1)
-	mockedCalculatorFactory.On("newBlkioCalculator", oldBlkioData[containerId], newBlkioData).Return(mockedBlkioCalculator)
+	blkData, _ := oldBlkioData.Get(containerId)
+	mockedCalculatorFactory.On("newBlkioCalculator", blkData, newBlkioData).Return(mockedBlkioCalculator)
 
 	// expected events
 	expectedEvent := common.MapStr{
@@ -1098,10 +1101,11 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	assert.Equal(t, expectedEvent, event)
 
 	// check that new stats saved
-	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
+	blkData, _ = eventGenerator.blkioStats.Get(container.ID)
+	assert.Equal(t, blkData, newBlkioData)
 
 	// check that expired state has been deleted
-	_, ok := eventGenerator.blkioStats[anotherContainerId]
+	_, ok := eventGenerator.blkioStats.Get(anotherContainerId)
 	if ok {
 		assert.Fail(t, "Expired event has not been deleted")
 	}

@@ -83,7 +83,7 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	d.eventGenerator = EventGenerator{
 		socket:            &d.socket,
 		networkStats:      map[string]map[string]NetworkData{},
-		blkioStats:        map[string]BlkioData{},
+		blkioStats:        NewBlkioMap(),
 		calculatorFactory: CalculatorFactoryImpl{},
 		period:            d.period,
 	}
