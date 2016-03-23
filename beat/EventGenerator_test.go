@@ -48,6 +48,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -230,6 +231,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -426,6 +428,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -562,6 +565,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	timestamp := time.Now()
@@ -628,6 +632,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	timestamp := time.Now()
@@ -701,6 +706,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// CPU stats from Docker API
@@ -789,6 +795,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// main stats object
@@ -860,6 +867,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		456,
 		[]string{"name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// main stats object
@@ -944,6 +952,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// main stats object
@@ -1038,6 +1047,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// main stats object
@@ -1276,6 +1286,8 @@ func getMemoryStats(read time.Time, number uint64) docker.Stats {
 			Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
 			InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
 			TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+			HierarchicalMemswLimit  uint64 `json:"hierarchical_memsw_limit,omitempty" yaml:"hierarchical_memsw_limit,omitempty"`
+			Swap                    uint64 `json:"swap,omitempty" yaml:"swap,omitempty"`
 		} `json:"stats,omitempty" yaml:"stats,omitempty"`
 		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
