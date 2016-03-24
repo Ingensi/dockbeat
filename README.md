@@ -1,5 +1,7 @@
 ### Dockerbeat
 
+(if you're on the fast lane, check the TL;DR at the bottom of the readme)
+
 Build status : [![Build Status](https://travis-ci.org/Ingensi/dockerbeat.svg?branch=develop)](https://travis-ci.org/Ingensi/dockerbeat)
 
 Test coverage : [![codecov.io](http://codecov.io/github/Ingensi/dockerbeat/coverage.svg?branch=develop)](http://codecov.io/github/Ingensi/dockerbeat?branch=develop)
