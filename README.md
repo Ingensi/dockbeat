@@ -129,3 +129,26 @@ docker run -d \
 ### Contribute to the project
 
 All contribs are welcome! Read the [CONTRIBUTING](CONTRIBUTING.md) documentation to get more information.
+
+### TL;DR
+
+I want to monitor a host :
+(If kibana can't join elastic, check its network configuration.)
+
+```
+$ docker network create dockernet
+
+$ docker run -d --net=dockernet --name=elastic \
+  -v /mnt/volumes/elastic/config:/usr/share/elasticsearch/config \
+  -v /mnt/volumes/elastic/data:/usr/share/elasticsearch/data \
+  elasticsearch:2.2.0
+
+$ docker run -d --net=dockernet --name=kibana -p 5601:5601 \
+  -e ELASTICSEARCH_URL=http://elastic:9200 \
+  kibana:4.4.1
+
+$ docker run -d --net=dockernet --name=dockerbeat \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /mnt/dv/dockerbeat:/etc/dockerbeat ingensi/dockerbeat:latest
+
+```
