@@ -15,6 +15,28 @@ type EventGenerator struct {
 	period            time.Duration
 }
 
+func(d *EventGenerator) getProcessesEvent(container *docker.APIContainers, top docker.TopResult) common.MapStr {
+	var processes []common.MapStr
+	for i := 0; i < len(top.Processes); i++ {
+		process := common.MapStr{}
+		for j := 0; j < len(top.Titles); j++ {
+			process[top.Titles[j]] = top.Processes[i][j]
+		}
+		processes = append(processes, process)
+	}
+
+	event := common.MapStr{
+		"@timestamp": 	common.Time(time.Now()),
+		"type":		"processes",
+		"containerID":	container.ID,
+		"containerName": d.extractContainerName(container.Names),
+		"dockerSocket":  d.socket,
+		"processes": processes,
+	}
+
+	return event
+}
+
 func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
 	event := common.MapStr{
 		"@timestamp":    common.Time(stats.Read),

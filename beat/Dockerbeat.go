@@ -175,6 +175,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 	go func() {
 		stats := <-statsC
 		err := <-errC
+		procStats, _ := d.dockerClient.TopContainer(container.ID, "aux")
 
 		if err == nil && stats != nil {
 			events := []common.MapStr{
@@ -182,6 +183,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 				d.eventGenerator.getCpuEvent(&container, stats),
 				d.eventGenerator.getMemoryEvent(&container, stats),
 				d.eventGenerator.getBlkioEvent(&container, stats),
+				d.eventGenerator.getProcessesEvent(&container, procStats),
 			}
 
 			events = append(events, d.eventGenerator.getNetworksEvent(&container, stats)...)
