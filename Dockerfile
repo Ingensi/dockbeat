@@ -9,5 +9,6 @@ RUN mkdir -p /etc/dockerbeat/ \
     && cp /go/src/github.com/ingensi/dockerbeat/etc/dockerbeat-docker.yml /etc/dockerbeat/dockerbeat.yml
 
 WORKDIR /etc/dockerbeat
+ENTRYPOINT dockerbeat
 
-CMD [ "/usr/local/bin/dockerbeat", "-c", "dockerbeat.yml" ]
+CMD [ "-c", "dockerbeat.yml" ]
