@@ -13,7 +13,7 @@ getdeps:
 
 .PHONY: test
 test:
-	$(GODEP) go test ./...
+	$(GODEP) go test . ./beat
 
 .PHONY: updatedeps
 updatedeps:
