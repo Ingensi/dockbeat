@@ -5,3 +5,6 @@
 /dockerbeat
 /dockerbeat.test
 *.pyc
+
+atlassian-ide-plugin.xml
+dockerbeat.iml
