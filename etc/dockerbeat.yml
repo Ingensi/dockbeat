@@ -2,13 +2,26 @@
 
 ############################# Input ############################################
 input:
- # In seconds, defines how often to read server statistics
- period: 5
+ # In seconds, defines
+ period: ${PERIOD:5}
 
-# Define the docker socket path
-# By default, this will get the unix:///var/run/docker.sock
- socket:
+ # Define the docker socket path
+ # By default, this will get the unix:///var/run/docker.sock
+ socket: ${DOCKER_SOCKET:unix:///var/run/docker.sock}
 
+ # If dockerbeat has to deal with a TLS-enabled docker daemon, you need to enable TLS and configure path for key and certificates.
+ tls:
+  # By default, TLS is disabled
+  enable: ${DOCKER_ENABLE_TLS:false}
+
+  # Path to the ca file
+  ca_path: ${DOCKER_CA_PATH}
+
+  # Path to the cert file
+  cert_path: ${DOCKER_CERT_PATH}
+
+  # Path to the key file
+  key_path: ${DOCKER_KEY_PATH}
 
 ###############################################################################
 ############################# Libbeat Config ##################################
@@ -26,7 +39,7 @@ output:
     # Scheme and port can be left out and will be set to the default (http and 9200)
     # In case you specify and additional path, the scheme is required: http://localhost:9200/path
     # IPv6 addresses should always be defined as: https://[2001:db8::1]:9200
-    hosts: ["localhost:9200"]
+    hosts: ${ES_HOSTS:["localhost:9200"]}
 
     # Optional protocol and basic auth credentials.
     #protocol: "https"
@@ -171,12 +184,12 @@ shipper:
   # The name of the shipper that publishes the network data. It can be used to group
   # all the transactions sent by a single shipper in the web interface.
   # If this options is not defined, the hostname is used.
-  #name:
+  name: ${SHIPPER_NAME}
 
   # The tags of the shipper are included in their own field with each
   # transaction published. Tags make it easy to group servers by different
   # logical properties.
-  #tags: ["service-X", "web-tier"]
+  tags: ${SHIPPER_TAGS}
 
   # Uncomment the following if you want to ignore transactions created
   # by the server on which the shipper is installed. This option is useful
@@ -237,6 +250,4 @@ logging:
 
   # Sets log level. The default log level is error.
   # Available log levels are: critical, error, warning, info, debug
-  #level: error
-
-
+  level: ${DOCKERBEAT_LOG_LEVEL:error}

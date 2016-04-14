@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/cfgfile"
 	"github.com/elastic/beats/libbeat/common"
@@ -14,15 +15,32 @@ import (
 	"github.com/fsouza/go-dockerclient"
 )
 
+// const for event logs
+const (
+	ERROR = "error"
+	WARN  = "warning"
+	INFO  = "info"
+	DEBUG = "debug"
+	TRACE = "trace"
+)
+
 type SoftwareVersion struct {
 	major int
 	minor int
 }
 
+type SocketConfig struct {
+	socket    string
+	enableTls bool
+	caPath    string
+	certPath  string
+	keyPath   string
+}
+
 type Dockerbeat struct {
 	done                 chan struct{}
 	period               time.Duration
-	socket               string
+	socketConfig         SocketConfig
 	TbConfig             ConfigSettings
 	dockerClient         *docker.Client
 	events               publisher.Client
@@ -36,8 +54,8 @@ func New() *Dockerbeat {
 
 func (d *Dockerbeat) Config(b *beat.Beat) error {
 
-	// Requires Docker 1.5 minimum
-	d.minimalDockerVersion = SoftwareVersion{major: 1, minor: 5}
+	// Requires Docker 1.9 minimum
+	d.minimalDockerVersion = SoftwareVersion{major: 1, minor: 9}
 
 	err := cfgfile.Read(&d.TbConfig, "")
 	if err != nil {
@@ -51,33 +69,85 @@ func (d *Dockerbeat) Config(b *beat.Beat) error {
 	} else {
 		d.period = 1 * time.Second
 	}
-	//init the socket
+	//init the socketConfig
+	d.socketConfig = SocketConfig{
+		socket:    "",
+		enableTls: false,
+		caPath:    "",
+		certPath:  "",
+		keyPath:   "",
+	}
+
 	if d.TbConfig.Input.Socket != nil {
-		d.socket = *d.TbConfig.Input.Socket
+		d.socketConfig.socket = *d.TbConfig.Input.Socket
 	} else {
-		d.socket = "unix:///var/run/docker.sock" // default docker socket location
+		d.socketConfig.socket = "unix:///var/run/docker.sock" // default docker socket location
+	}
+	if d.TbConfig.Input.Tls.Enable != nil {
+		d.socketConfig.enableTls = *d.TbConfig.Input.Tls.Enable
+	} else {
+		d.socketConfig.enableTls = false
+	}
+	if d.socketConfig.enableTls {
+		if d.TbConfig.Input.Tls.CaPath != nil {
+			d.socketConfig.caPath = *d.TbConfig.Input.Tls.CaPath
+		}
+		if d.TbConfig.Input.Tls.CertPath != nil {
+			d.socketConfig.certPath = *d.TbConfig.Input.Tls.CertPath
+		}
+		if d.TbConfig.Input.Tls.KeyPath != nil {
+			d.socketConfig.keyPath = *d.TbConfig.Input.Tls.KeyPath
+		}
 	}
 
 	logp.Info("dockerbeat", "Init dockerbeat")
-	logp.Info("dockerbeat", "Follow docker socket %q\n", d.socket)
+	logp.Info("dockerbeat", "Follow docker socket %q\n", d.socketConfig.socket)
+	if d.socketConfig.enableTls {
+		logp.Info("dockerbeat", "TLS enabled\n")
+	} else {
+		logp.Info("dockerbeat", "TLS disabled\n")
+	}
 	logp.Info("dockerbeat", "Period %v\n", d.period)
 
 	return nil
 }
 
+func (d *Dockerbeat) getDockerClient() (*docker.Client, error) {
+	var client *docker.Client
+	var err error
+
+	if d.socketConfig.enableTls {
+		client, err = docker.NewTLSClient(
+			d.socketConfig.socket,
+			d.socketConfig.certPath,
+			d.socketConfig.keyPath,
+			d.socketConfig.caPath,
+		)
+	} else {
+		client, err = docker.NewClient(d.socketConfig.socket)
+	}
+	return client, err
+}
+
 func (d *Dockerbeat) Setup(b *beat.Beat) error {
+	var clientErr error
+	var err error
 	//populate Dockerbeat
 	d.events = b.Events
 	d.done = make(chan struct{})
-	d.dockerClient, _ = docker.NewClient(d.socket)
+	d.dockerClient, clientErr = d.getDockerClient()
 	d.eventGenerator = EventGenerator{
-		networkStats:      map[string]map[string]NetworkData{},
-		blkioStats:        map[string]BlkioData{},
+		socket:            &d.socketConfig.socket,
+		networkStats:      EGNetworkStats{m: map[string]map[string]NetworkData{}},
+		blkioStats:        EGBlkioStats{m: map[string]BlkioData{}},
 		calculatorFactory: CalculatorFactoryImpl{},
 		period:            d.period,
 	}
 
-	return nil
+	if clientErr != nil {
+		err = errors.New(fmt.Sprintf("Unable to create docker client, please check your docker socket/TLS settings: %v", clientErr))
+	}
+	return err
 }
 
 func (d *Dockerbeat) Run(b *beat.Beat) error {
@@ -97,6 +167,7 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 		err = d.checkPrerequisites()
 		if err != nil {
 			logp.Err("Unable to collect metrics: %v", err)
+			d.publishLogEvent(ERROR, fmt.Sprintf("Unable to collect metrics: %v", err))
 			continue
 		}
 
@@ -107,6 +178,7 @@ func (d *Dockerbeat) Run(b *beat.Beat) error {
 		duration := timerEnd.Sub(timerStart)
 		if duration.Nanoseconds() > d.period.Nanoseconds() {
 			logp.Warn("Ignoring tick(s) due to processing taking longer than one period")
+			d.publishLogEvent(WARN, "Ignoring tick(s) due to processing taking longer than one period")
 		}
 	}
 
@@ -132,6 +204,7 @@ func (d *Dockerbeat) RunOneTime(b *beat.Beat) error {
 		}
 	} else {
 		logp.Err("Cannot get container list: %v", err)
+		d.publishLogEvent(ERROR, fmt.Sprintf("Cannot get container list: %v", err))
 	}
 
 	d.eventGenerator.cleanOldStats(containers)
@@ -162,7 +235,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 		stats := <-statsC
 		err := <-errC
 
-		if err == nil {
+		if err == nil && stats != nil {
 			events := []common.MapStr{
 				d.eventGenerator.getContainerEvent(&container, stats),
 				d.eventGenerator.getCpuEvent(&container, stats),
@@ -173,8 +246,12 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 			events = append(events, d.eventGenerator.getNetworksEvent(&container, stats)...)
 
 			d.events.PublishEvents(events)
+		} else if err == nil && stats == nil {
+			logp.Warn("Container was existing at listing but not when getting statistics: %v", container.ID)
+			d.publishLogEvent(WARN, fmt.Sprintf("Container was existing at listing but not when getting statistics: %v", container.ID))
 		} else {
 			logp.Err("An error occurred while getting docker stats: %v", err)
+			d.publishLogEvent(ERROR, fmt.Sprintf("An error occurred while getting docker stats: %v", err))
 		}
 	}()
 
@@ -228,4 +305,9 @@ func (d *Dockerbeat) validVersion(version string) (bool, error) {
 		output = false
 	}
 	return output, nil
+}
+
+func (d *Dockerbeat) publishLogEvent(level string, message string) {
+	event := d.eventGenerator.getLogEvent(level, message)
+	d.events.PublishEvent(event)
 }

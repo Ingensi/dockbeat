@@ -160,6 +160,9 @@
             }
           }
         },
+        "log": {
+          "properties": {}
+        },
         "memory": {
           "properties": {
             "failcnt": {
@@ -171,6 +174,14 @@
               "type": "float"
             },
             "maxUsage": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "totalRss": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "totalRss_p": {
               "doc_values": "true",
               "type": "float"
             },

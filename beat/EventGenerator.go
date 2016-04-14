@@ -4,12 +4,24 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"strings"
+	"sync"
 	"time"
 )
 
+type EGNetworkStats struct {
+	sync.RWMutex
+	m map[string]map[string]NetworkData
+}
+
+type EGBlkioStats struct {
+	sync.RWMutex
+	m map[string]BlkioData
+}
+
 type EventGenerator struct {
-	networkStats      map[string]map[string]NetworkData
-	blkioStats        map[string]BlkioData
+	socket            *string
+	networkStats      EGNetworkStats
+	blkioStats        EGBlkioStats
 	calculatorFactory CalculatorFactory
 	period            time.Duration
 }
@@ -20,6 +32,7 @@ func (d *EventGenerator) getContainerEvent(container *docker.APIContainers, stat
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
+		"dockerSocket":  d.socket,
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
@@ -58,6 +71,7 @@ func (d *EventGenerator) getCpuEvent(container *docker.APIContainers, stats *doc
 		"type":          "cpu",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
+		"dockerSocket":  d.socket,
 		"cpu": common.MapStr{
 			"percpuUsage":       calculator.perCpuUsage(),
 			"totalUsage":        calculator.totalUsage(),
@@ -77,7 +91,8 @@ func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats
 	}
 
 	// purge old saved data
-	for container, networkDataMap := range d.networkStats {
+	d.networkStats.Lock()
+	for container, networkDataMap := range d.networkStats.m {
 		useless := true
 		for networkName, networkData := range networkDataMap {
 			// if data older than two ticks, then delete it
@@ -90,9 +105,10 @@ func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats
 
 		// if all network data are useless, then delete container entry
 		if useless {
-			delete(d.networkStats, container)
+			delete(d.networkStats.m, container)
 		}
 	}
+	d.networkStats.Unlock()
 
 	return events
 }
@@ -113,7 +129,9 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 
 	var event common.MapStr
 
-	oldNetworkData, ok := d.networkStats[container.ID][network]
+	d.networkStats.RLock()
+	oldNetworkData, ok := d.networkStats.m[container.ID][network]
+	d.networkStats.RUnlock()
 
 	if ok {
 		calculator := d.calculatorFactory.newNetworkCalculator(oldNetworkData, newNetworkData)
@@ -122,6 +140,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
+			"dockerSocket":  d.socket,
 			"net": common.MapStr{
 				"name":         network,
 				"rxBytes_ps":   calculator.getRxBytesPerSecond(),
@@ -140,6 +159,7 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
+			"dockerSocket":  d.socket,
 			"net": common.MapStr{
 				"name":         network,
 				"rxBytes_ps":   0,
@@ -155,10 +175,12 @@ func (d *EventGenerator) getNetworkEvent(container *docker.APIContainers, time t
 	}
 
 	// save status
-	if _, exists := d.networkStats[container.ID]; !exists {
-		d.networkStats[container.ID] = map[string]NetworkData{}
+	d.networkStats.Lock()
+	if _, exists := d.networkStats.m[container.ID]; !exists {
+		d.networkStats.m[container.ID] = map[string]NetworkData{}
 	}
-	d.networkStats[container.ID][network] = newNetworkData
+	d.networkStats.m[container.ID][network] = newNetworkData
+	d.networkStats.Unlock()
 	return event
 }
 
@@ -168,12 +190,15 @@ func (d *EventGenerator) getMemoryEvent(container *docker.APIContainers, stats *
 		"type":          "memory",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
+		"dockerSocket":  d.socket,
 		"memory": common.MapStr{
-			"failcnt":  stats.MemoryStats.Failcnt,
-			"limit":    stats.MemoryStats.Limit,
-			"maxUsage": stats.MemoryStats.MaxUsage,
-			"usage":    stats.MemoryStats.Usage,
-			"usage_p":  float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit),
+			"failcnt":    stats.MemoryStats.Failcnt,
+			"limit":      stats.MemoryStats.Limit,
+			"maxUsage":   stats.MemoryStats.MaxUsage,
+			"totalRss":   stats.MemoryStats.Stats.TotalRss,
+			"totalRss_p": float64(stats.MemoryStats.Stats.TotalRss) / float64(stats.MemoryStats.Limit),
+			"usage":      stats.MemoryStats.Usage,
+			"usage_p":    float64(stats.MemoryStats.Usage) / float64(stats.MemoryStats.Limit),
 		},
 	}
 
@@ -185,7 +210,9 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 
 	var event common.MapStr
 
-	oldBlkioStats, ok := d.blkioStats[container.ID]
+	d.blkioStats.RLock()
+	oldBlkioStats, ok := d.blkioStats.m[container.ID]
+	d.blkioStats.RUnlock()
 
 	if ok {
 		calculator := d.calculatorFactory.newBlkioCalculator(oldBlkioStats, blkioStats)
@@ -194,6 +221,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 			"type":          "blkio",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
+			"dockerSocket":  d.socket,
 			"blkio": common.MapStr{
 				"read_ps":  calculator.getReadPs(),
 				"write_ps": calculator.getWritePs(),
@@ -206,6 +234,7 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 			"type":          "blkio",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
+			"dockerSocket":  d.socket,
 			"blkio": common.MapStr{
 				"read_ps":  float64(0),
 				"write_ps": float64(0),
@@ -214,20 +243,36 @@ func (d *EventGenerator) getBlkioEvent(container *docker.APIContainers, stats *d
 		}
 	}
 
-	d.blkioStats[container.ID] = blkioStats
+	d.blkioStats.Lock()
+	d.blkioStats.m[container.ID] = blkioStats
 
 	// purge old saved data
-	for containerId, blkioStat := range d.blkioStats {
+	for containerId, blkioStat := range d.blkioStats.m {
 		// if data older than two ticks, then delete it
 		if d.expiredSavedData(blkioStat.time) {
-			delete(d.blkioStats, containerId)
+			delete(d.blkioStats.m, containerId)
 		}
+	}
+	d.blkioStats.Unlock()
+	return event
+}
+
+func (d *EventGenerator) getLogEvent(level string, message string) common.MapStr {
+
+	event := common.MapStr{
+		"@timestamp":   common.Time(time.Now()),
+		"type":         "log",
+		"dockerSocket": d.socket,
+		"log": common.MapStr{
+			"level":   level,
+			"message": message,
+		},
 	}
 	return event
 }
 
 func (d *EventGenerator) convertContainerPorts(ports *[]docker.APIPort) []map[string]interface{} {
-	var outputPorts []map[string]interface{}
+	var outputPorts = []map[string]interface{}{}
 	for _, port := range *ports {
 		outputPort := common.MapStr{
 			"ip":          port.IP,
@@ -243,7 +288,8 @@ func (d *EventGenerator) convertContainerPorts(ports *[]docker.APIPort) []map[st
 
 func (d *EventGenerator) cleanOldStats(containers []docker.APIContainers) {
 	found := false
-	for containerStatKey, _ := range d.networkStats {
+	d.networkStats.Lock()
+	for containerStatKey, _ := range d.networkStats.m {
 		for _, container := range containers {
 			if container.ID == containerStatKey {
 				found = true
@@ -251,9 +297,10 @@ func (d *EventGenerator) cleanOldStats(containers []docker.APIContainers) {
 			}
 		}
 		if !found {
-			delete(d.networkStats, containerStatKey)
+			delete(d.networkStats.m, containerStatKey)
 		}
 	}
+	d.networkStats.Unlock()
 }
 
 func (d *EventGenerator) buildStats(time time.Time, entry []docker.BlkioStatsEntry) BlkioData {
@@ -288,12 +335,11 @@ func (d *EventGenerator) expiredSavedData(date time.Time) bool {
 }
 
 func (d *EventGenerator) sanitizeLabelNames(labels map[string]string) map[string]string {
-        
+
 	labels_sanitized := make(map[string]string)
-        for k, v := range labels {
-                labels_sanitized[strings.Replace(k, ".", "_", -1)] = v
-        }
+	for k, v := range labels {
+		labels_sanitized[strings.Replace(k, ".", "_", -1)] = v
+	}
 
-        return labels_sanitized
+	return labels_sanitized
 }
-

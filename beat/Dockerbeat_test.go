@@ -30,14 +30,14 @@ func TestDockerbeatSetupMethod(t *testing.T) {
 	assert.NotNil(t, dockerbeat.done)
 	// dockerClient initialized with given socket
 	assert.NotNil(t, dockerbeat.dockerClient)
-	assert.Equal(t, dockerbeat.socket, dockerbeat.dockerClient.Endpoint())
+	assert.Equal(t, dockerbeat.socketConfig.socket, dockerbeat.dockerClient.Endpoint())
 	// eventGenerator initialized
 	assert.NotNil(t, dockerbeat.eventGenerator)
+	assert.NotNil(t, dockerbeat.eventGenerator.socket)
 	assert.NotNil(t, dockerbeat.eventGenerator.blkioStats)
 	assert.NotNil(t, dockerbeat.eventGenerator.networkStats)
 	assert.NotNil(t, dockerbeat.eventGenerator.calculatorFactory)
 	assert.Equal(t, dockerbeat.period, dockerbeat.eventGenerator.period)
-
 }
 
 // CLOSE TESTS
@@ -103,20 +103,66 @@ func TestDockerbeatValidVersion(t *testing.T) {
 	}
 }
 
+// Docker client getter function
+func TestDockerClientGetterWithUnixPath(t *testing.T) {
+	// GIVEN
+	var beat = getEmptyDockerbeat()
+	socket := "unix:///some/socket/path.sock"
+	beat.socketConfig.socket = socket
+
+	// WHEN
+	var _, err = beat.getDockerClient()
+
+	// THEN
+	assert.Nil(t, err)
+	// TODO check if client is initialized according to the given socket
+}
+
+func TestDockerClientGetterWithTCPPath(t *testing.T) {
+	// GIVEN
+	var beat = getEmptyDockerbeat()
+	socket := "tcp://someHostname:9876"
+	beat.socketConfig.socket = socket
+
+	// WHEN
+	var _, err = beat.getDockerClient()
+
+	// THEN
+	assert.Nil(t, err)
+	// TODO check if client is initialized according to the given socket
+}
+
+// TODO write test for TLS docker client instantiation
+
 // helper method
 func getEmptyDockerbeat() Dockerbeat {
 	return Dockerbeat{
 		done:   make(chan struct{}),
 		period: time.Duration(10),
-		socket: "/fake/path/to/socket.sock",
+		socketConfig: SocketConfig{
+			socket:    "/fake/path/to/socket.sock",
+			enableTls: false,
+			caPath:    "",
+			certPath:  "",
+			keyPath:   "",
+		},
 		TbConfig: ConfigSettings{
-			Input: DockerConfig{Period: nil, Socket: nil},
+			Input: DockerConfig{
+				Period: nil,
+				Socket: nil,
+				Tls: TlsConfig{
+					Enable:   nil,
+					CaPath:   nil,
+					CertPath: nil,
+					KeyPath:  nil,
+				},
+			},
 		},
 		dockerClient: nil,
 		events:       nil,
 		eventGenerator: EventGenerator{
-			networkStats:      map[string]map[string]NetworkData{},
-			blkioStats:        map[string]BlkioData{},
+			networkStats:      EGNetworkStats{m: map[string]map[string]NetworkData{}},
+			blkioStats:        EGBlkioStats{m: map[string]BlkioData{}},
 			calculatorFactory: CalculatorFactoryImpl{},
 			period:            time.Second,
 		},

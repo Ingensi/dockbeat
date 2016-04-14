@@ -47,6 +47,12 @@ env:
         Name of the Docker container related to the current metric event.
       required: true
 
+    - name: dockerSocket
+      type: string
+      description: >
+        URI to the monitored docker daemon.
+      required: true
+
     - name: beat.name
       description: >
         Name of the Beat sending the events. If the shipper name is set
@@ -214,7 +220,17 @@ memory:
           type: float
           description: >
             Maximum memory used by the container in Bytes.
+            
+        - name: totalRss
+          type: float
+          description: >
+            "Current RSS (applications' Resident Set Size) memory consumption in Bytes."
 
+        - name: totalRss_p
+          type: float
+          description: >
+            "Current RSS (applications' Resident Set Size) memory consumption in percents between 0.0 and 1.0."
+            
         - name: usage
           type: float
           description: >
@@ -346,4 +362,20 @@ cpu:
             - name: cpu23
               type: float
 
+log:
+  type: group
+  description: >
+    Special event sent by dockerbeat to log some events.
+  fields:
+    - name: log
+      type: group
+      fields:
+        - name: level
+          type: string
+          description: >
+            Log level (debug, info, warning, error, fatal).
 
+        - name: message
+          type: string
+          description: >
+            Log message.

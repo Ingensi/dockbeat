@@ -16,6 +16,7 @@ following categories:
 * <<exported-fields-memory>>
 * <<exported-fields-blkio>>
 * <<exported-fields-cpu>>
+* <<exported-fields-log>>
 
 [[exported-fields-env]]
 === Common fields fields
@@ -69,6 +70,15 @@ type: string
 required: True
 
 Name of the Docker container related to the current metric event.
+
+
+==== dockerSocket
+
+type: string
+
+required: True
+
+URI to the monitored docker daemon.
 
 
 ==== beat.name
@@ -298,6 +308,20 @@ type: float
 Maximum memory used by the container in Bytes.
 
 
+==== totalRss
+
+type: float
+
+"Current RSS (applications' Resident Set Size) memory consumption in Bytes."
+
+
+==== totalRss_p
+
+type: float
+
+"Current RSS (applications' Resident Set Size) memory consumption in percents between 0.0 and 1.0."
+
+
 ==== usage
 
 type: float
@@ -477,4 +501,29 @@ type: float
 ==== cpu23
 
 type: float
+
+[[exported-fields-log]]
+=== Dockerbeat logs fields
+
+Special event sent by dockerbeat to log some events.
+
+
+
+[[exported-fields-log]]
+=== Dockerbeat logs fields
+
+
+==== level
+
+type: string
+
+Log level (debug, info, warning, error, fatal).
+
+
+==== message
+
+type: string
+
+Log message.
+
 

@@ -16,7 +16,8 @@ SECTIONS = [
     ("net", "Network container statistics"),
     ("memory", "Memory container statistics"),
     ("blkio", "Blkio (disk) container statistics"),
-    ("cpu", "CPU container statistics")]
+    ("cpu", "CPU container statistics"),
+    ("log", "Dockerbeat logs")]
 
 
 def document_fields(output, section):
