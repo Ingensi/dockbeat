@@ -1291,11 +1291,11 @@ func getMemoryStats(read time.Time, number uint64) docker.Stats {
 			Failcnt:  number * 3,
 			Limit:    number * 4,
 		},
-	};
-	
-	testStats.MemoryStats.Stats.TotalRss = number * 5;
-	
-	return testStats;
+	}
+
+	testStats.MemoryStats.Stats.TotalRss = number * 5
+
+	return testStats
 }
 
 func getMockedBlkioCalculator(number float64) *MockedBlkioCalculator {
