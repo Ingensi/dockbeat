@@ -130,11 +130,12 @@ func (d *Dockerbeat) getDockerClient() (*docker.Client, error) {
 }
 
 func (d *Dockerbeat) Setup(b *beat.Beat) error {
+	var clientErr error
 	var err error
 	//populate Dockerbeat
 	d.events = b.Events
 	d.done = make(chan struct{})
-	d.dockerClient, err = d.getDockerClient()
+	d.dockerClient, clientErr = d.getDockerClient()
 	d.eventGenerator = EventGenerator{
 		socket:            &d.socketConfig.socket,
 		networkStats:      map[string]map[string]NetworkData{},
@@ -143,7 +144,10 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 		period:            d.period,
 	}
 
-	return errors.New(fmt.Sprintf("Unable to create docker client, please check your docker socket/TLS settings: %v", err))
+	if clientErr != nil {
+		err = errors.New(fmt.Sprintf("Unable to create docker client, please check your docker socket/TLS settings: %v", clientErr))
+	}
+	return err
 }
 
 func (d *Dockerbeat) Run(b *beat.Beat) error {
