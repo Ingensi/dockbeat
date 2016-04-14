@@ -161,8 +161,8 @@ func getEmptyDockerbeat() Dockerbeat {
 		dockerClient: nil,
 		events:       nil,
 		eventGenerator: EventGenerator{
-			networkStats:      map[string]map[string]NetworkData{},
-			blkioStats:        map[string]BlkioData{},
+			networkStats:      EGNetworkStats{m: map[string]map[string]NetworkData{}},
+			blkioStats:        EGBlkioStats{m: map[string]BlkioData{}},
 			calculatorFactory: CalculatorFactoryImpl{},
 			period:            time.Second,
 		},

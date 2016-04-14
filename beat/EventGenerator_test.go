@@ -164,7 +164,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{m: oldNetworkData}, EGBlkioStats{}, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -187,8 +187,8 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	}
 
 	// check that new stats saved
-	assert.Equal(t, eventGenerator.networkStats[container.ID]["eth0"], newNetworkData["eth0"])
-	assert.Equal(t, eventGenerator.networkStats[container.ID]["em1"], newNetworkData["em1"])
+	assert.Equal(t, eventGenerator.networkStats.m[container.ID]["eth0"], newNetworkData["eth0"])
+	assert.Equal(t, eventGenerator.networkStats.m[container.ID]["em1"], newNetworkData["em1"])
 }
 
 /*
@@ -358,7 +358,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{m: oldNetworkData}, EGBlkioStats{}, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -381,8 +381,8 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	}
 
 	// check that new stats saved
-	assert.Equal(t, eventGenerator.networkStats[container.ID]["eth0"], newNetworkData["eth0"])
-	assert.Equal(t, eventGenerator.networkStats[container.ID]["em1"], newNetworkData["em1"])
+	assert.Equal(t, eventGenerator.networkStats.m[container.ID]["eth0"], newNetworkData["eth0"])
+	assert.Equal(t, eventGenerator.networkStats.m[container.ID]["em1"], newNetworkData["em1"])
 }
 
 /*
@@ -515,7 +515,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			}})
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, oldNetworkData, nil, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{m: oldNetworkData}, EGBlkioStats{}, mockedCalculatorFactory, period}
 
 	// WHEN
 	events := eventGenerator.getNetworksEvent(&container, stats)
@@ -525,10 +525,10 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	assert.Equal(t, expectedEvents, events)
 
 	// check that new stats saved
-	assert.Equal(t, eventGenerator.networkStats[container.ID]["eth0"], newNetworkData["eth0"])
+	assert.Equal(t, eventGenerator.networkStats.m[container.ID]["eth0"], newNetworkData["eth0"])
 
 	// check that expired state has been deleted
-	_, ok := eventGenerator.networkStats[container.ID]["em1"]
+	_, ok := eventGenerator.networkStats.m[container.ID]["em1"]
 	if ok {
 		assert.Fail(t, "Expired event has not been deleted")
 	}
@@ -567,7 +567,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{&socket, nil, nil, CalculatorFactoryImpl{}, time.Second}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	// sanitized lables expected
@@ -633,7 +633,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{&socket, nil, nil, CalculatorFactoryImpl{}, time.Second}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	// sanitized lables expected
@@ -751,7 +751,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, nil, nil, mockedCalculatorFactory, time.Second}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, mockedCalculatorFactory, time.Second}
 
 	// WHEN
 	event := eventGenerator.getCpuEvent(&container, stats)
@@ -813,7 +813,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, nil, nil, nil, time.Second}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, nil, time.Second}
 
 	// WHEN
 	event := eventGenerator.getMemoryEvent(&container, &stats)
@@ -895,7 +895,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, nil, oldBlkioData, nil, time.Second}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{m: oldBlkioData}, nil, time.Second}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)
@@ -904,7 +904,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	// check returned events
 	assert.Equal(t, expectedEvent, event)
 
-	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
+	assert.Equal(t, eventGenerator.blkioStats.m[container.ID], newBlkioData)
 }
 
 /*
@@ -987,7 +987,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, nil, oldBlkioData, mockedCalculatorFactory, time.Second}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{m: oldBlkioData}, mockedCalculatorFactory, time.Second}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)
@@ -997,7 +997,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	assert.Equal(t, expectedEvent, event)
 
 	// check that new stats saved
-	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
+	assert.Equal(t, eventGenerator.blkioStats.m[container.ID], newBlkioData)
 }
 
 /*
@@ -1088,7 +1088,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, nil, oldBlkioData, mockedCalculatorFactory, period}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{m: oldBlkioData}, mockedCalculatorFactory, period}
 
 	// WHEN
 	event := eventGenerator.getBlkioEvent(&container, &stats)
@@ -1098,10 +1098,10 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	assert.Equal(t, expectedEvent, event)
 
 	// check that new stats saved
-	assert.Equal(t, eventGenerator.blkioStats[container.ID], newBlkioData)
+	assert.Equal(t, eventGenerator.blkioStats.m[container.ID], newBlkioData)
 
 	// check that expired state has been deleted
-	_, ok := eventGenerator.blkioStats[anotherContainerId]
+	_, ok := eventGenerator.blkioStats.m[anotherContainerId]
 	if ok {
 		assert.Fail(t, "Expired event has not been deleted")
 	}
@@ -1133,7 +1133,7 @@ func TestEventGeneratorGetLogEvent(t *testing.T) {
 	}
 
 	// the eventGenerator to test
-	var eventGenerator = EventGenerator{&socket, nil, nil, nil, time.Second}
+	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, nil, time.Second}
 
 	// WHEN
 	event := eventGenerator.getLogEvent(level, message)

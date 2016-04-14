@@ -138,8 +138,8 @@ func (d *Dockerbeat) Setup(b *beat.Beat) error {
 	d.dockerClient, clientErr = d.getDockerClient()
 	d.eventGenerator = EventGenerator{
 		socket:            &d.socketConfig.socket,
-		networkStats:      map[string]map[string]NetworkData{},
-		blkioStats:        map[string]BlkioData{},
+		networkStats:      EGNetworkStats{m: map[string]map[string]NetworkData{}},
+		blkioStats:        EGBlkioStats{m: map[string]BlkioData{}},
 		calculatorFactory: CalculatorFactoryImpl{},
 		period:            d.period,
 	}
