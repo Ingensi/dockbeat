@@ -1,0 +1,5 @@
+= Dockerbeat Docs
+
+Welcome to the Dockerbeat documentation.
+
+

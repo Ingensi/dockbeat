@@ -1,47 +1,38 @@
-GODEP=$(GOPATH)/bin/godep
-PREFIX?=/build
+BEATNAME=dockerbeat
+BEAT_DIR=github.com/ingensi
+SYSTEM_TESTS=false
+TEST_ENVIRONMENT=false
+ES_BEATS=./vendor/github.com/elastic/beats
+GOPACKAGES=$(shell glide novendor)
+PREFIX?=.
 
-GOFILES = $(shell find . -type f -name '*.go')
-dockerbeat: $(GOFILES)
-	# first make sure we have godep
-	go get github.com/tools/godep
-	$(GODEP) go build
+# Path to the libbeat Makefile
+-include $(ES_BEATS)/libbeat/scripts/Makefile
 
-.PHONY: getdeps
-getdeps:
-	go get -t -u -f
+.PHONY: init
+init:
+	glide update  --no-recursive
+	make update
+	git init
 
-.PHONY: test
-test:
-	$(GODEP) go test ./...
+.PHONY: commit
+commit:
+	git add README.md CONTRIBUTING.md
+	git commit -m "Initial commit"
+	git add LICENSE
+	git commit -m "Add the LICENSE"
+	git add .gitignore .gitattributes
+	git commit -m "Add git settings"
+	git add .
+	git reset -- .travis.yml
+	git commit -m "Add dockerbeat"
+	git add .travis.yml
+	git commit -m "Add Travis CI"
 
-.PHONY: updatedeps
-updatedeps:
-	$(GODEP) update ...
+.PHONY: update-deps
+update-deps:
+	glide update --no-recursive --strip-vcs
 
-.PHONY: dockermake
-dockermake:
-	docker run --rm \
-		-v ${PWD}:/usr/local/go/src/github.com/ingensi/dockerbeat \
-		-w /usr/local/go/src/github.com/ingensi/dockerbeat \
-		-e http_proxy=${http_proxy} \
-		-e https_proxy=${https_proxy} \
-		golang:1.5.1 /bin/bash -c "make && chown $$(id -ru):$$(id -rg) dockerbeat"
-
-.PHONY: gofmt
-gofmt:
-	go fmt ./...
-
-.PHONY: cover
-cover:
-	# gotestcover is needed to fetch coverage for multiple packages
-	go get github.com/pierrre/gotestcover
-	GOPATH=$(shell $(GODEP) path):$(GOPATH) $(GOPATH)/bin/gotestcover -coverprofile=profile.cov -covermode=count github.com/ingensi/dockerbeat/...
-	mkdir -p cover
-	$(GODEP) go tool cover -html=profile.cov -o cover/coverage.html
-
-.PHONY: clean
-clean:
-	rm -r cover || true
-	rm profile.cov || true
-	rm dockerbeat || true
+# This is called by the beats packer before building starts
+.PHONY: before-build
+before-build:

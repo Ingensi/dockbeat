@@ -1,172 +1,131 @@
-### Dockerbeat
+# Dockerbeat
 
-(if you're on the fast lane, check the TL;DR at the bottom of the readme)
+Welcome to Dockerbeat.
 
-Build status : [![Build Status](https://travis-ci.org/Ingensi/dockerbeat.svg?branch=develop)](https://travis-ci.org/Ingensi/dockerbeat)
+Ensure that this folder is at the following location:
+`${GOPATH}/github.com/ingensi`
 
-Test coverage : [![codecov.io](http://codecov.io/github/Ingensi/dockerbeat/coverage.svg?branch=develop)](http://codecov.io/github/Ingensi/dockerbeat?branch=develop)
+## Getting Started with Dockerbeat
 
-Dockerbeat is the [Beat](https://www.elastic.co/products/beats) used for docker daemon monitoring. It is a lightweight agent that installed on your servers, reads periodically docker container statistics and indexes them in Elasticsearch.
+### Requirements
 
-We've reached the Release Candidate 1 : it's almost stable today, some minor issues can still appear.
+* [Golang](https://golang.org/dl/) 1.6
+* [Glide](https://github.com/Masterminds/glide) >= 0.10.0
 
-#### Exported document types
-
-There are five types of documents exported:
-
-- `type: container`: container attributes
-- `type: cpu`: container CPU usage statistics. One document per container is generated.
-- `type: net`: container network statistics. One document per network container is generated.
-- `type: memory`: container memory statistics. One document per container is generated.
-- `type: blkio`: container io access statistics. One document per container is generated.
-- `type: daemon`: daemon status information. One document per tick is generated if an error occurred.
-
-To get a detailed list of all generated fields, please read the [fields documentation page](doc/fields.asciidoc).
-
-#### Elasticsearch template 
-
-To apply Dockerbeat template (recommended but not required) :
-
-```bash
-curl -XPUT 'http://elastic:9200/_template/dockerbeat' -d@etc/dockerbeat.template.json
-```
-    
-#### Build Dockerbeat
-
-To launch Dockerbeat, build and run the executable. Executable can be compiled either with make command (this requires a fully functional golang environment) or in a docker container.
-
-#### Build with make
-
-Simply run the `make` command at the root project directory. Your golang development environment should be fully functional).
-
-#### Build in a container
-
-If you don't have (and don't want) to setup a golang environment in your host, you can run a `make dockermake` to launch compilation into a golang docker container (you just need a fully functionnal docker environment).
- 
-#### Run dockerbeat
-
-Project compilation generate a `dockerbeat` executable file in the root directory. To launch dockerbeat, run the following command:
-
-```bash
-./dockerbeat -c etc/dockerbeat.yml
-```
-
-#### Run in a docker container
-
-The easiest way to launch dockerbeat is to run it in a container. To achieve this, use the `ingensi/dockerbeat` docker image, available on the [docker hub](https://hub.docker.com/r/ingensi/dockerbeat/).
-
-Docker run command should:
-
-* mount the target Docker socket to `/var/run/docker.sock`
-* link an Elasticsearch node as `elasticsearch`
-
-Example:
+### Init Project
+To get running with Dockerbeat, run the following command:
 
 ```
-docker run -d -v /var/run/docker.sock:/var/run/docker.sock \
-  --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-rc1
+make init
 ```
 
-To override the default configuration, just link yours to `/etc/dockerbeat/dockerbeat.yml`:
+To commit the first version before you modify it, run:
 
 ```
-docker run -d --link elastic:elasticsearch \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /volumes/dockerbeat-config/:/etc/dockerbeat \
-  ingensi/dockerbeat:1.0.0-rc1
+make commit
 ```
 
-By default, when dockerbeat is running from this image, it logs into the `/var/log/dockerbeat` directory. To access this logs from the host, link a directory to the dockerbeat logging directory:
-```
-docker run -d --link elastic:elasticsearch \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /volumes/dockerbeat-config/:/etc/dockerbeat \
-  -v /volumes/dockerbeat-logs/:/var/logs/dockerbeat \
-  ingensi/dockerbeat:1.0.0-rc1
-```
+It will create a clean git history for each major step. Note that you can always rewrite the history if you wish before pushing your changes.
 
-### Configuring Dockerbeat
-
-Dockerbeat configuration file is located at `etc/dockerbeat.yml`. This default template provides the following environment variable mapping:
-
-  - How often to read server statistics 
-    - ENV : `PERIOD`
-    - Beats variable : `input.period`
-    - Default value : `5`
-  - Where data will be send (array list of elasticsearch nodes)
-    - ENV : `ES_HOSTS`
-    - Beats variable : `output.elasticsearch.hosts`
-    - Default value : `[localhost:9200]`
-    - Note: This variable is an array of string, escape special chars when using in command line: `export ES_HOSTS=[\"es1:9200\",\"es2:9200\"]`
-  - Docker socket path
-    - ENV : `DOCKER_SOCKET`
-    - Beats variable : `input.socket`
-    - Default value : `unix:///var/run/docker.sock`
-  - Enable TLS encryption
-    - ENV : `DOCKER_ENABLE_TLS`
-    - Beats variable : `input.tls.enable`
-    - Default value : `false`
-  - Path to the CA file (when TLS is enabled)
-    - ENV : `DOCKER_CA_PATH`
-    - Beats variable : `input.tls.ca_path`
-    - Default value : no default value
-  - Path to the CERT file (when TLS is enabled)
-    - ENV : `DOCKER_CERT_PATH`
-    - Beats variable : `input.tls.cert_path`
-    - Default value : no default value
-  - Path to the KEY file (when TLS is enabled)
-    - ENV : `DOCKER_KEY_PATH`
-    - Beats variable : `input.tls.key_path`
-    - Default value : no default value
-  - Name of the Beat 
-    - ENV : `SHIPPER_NAME`
-    - Beats variable : `shipper.name`
-    - Default value : Hostname of the machine
-  - Array of tags
-    - ENV : `SHIPPER_TAGS`
-    - Beats variable : `shipper.tags`
-    - Default value : none
-    - Node: This variable is an array of string, escape special chars when using in command line.
-  - Dockerbeat log level
-    - ENV : `DOCKERBEAT_LOG_LEVEL`
-    - Beats variable : `logging.level`
-    - Default value : `error`
-                                       
-When launching it inside a docker container, you can modify the environment variables using the `-e` flag :
-
-```bash
-docker run -d \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  --link elastic1:es1 \
-  --link elastic2:es2 \
-  -e SHIPPER_NAME=$(hostname) \
-  -e ES_HOSTS=[\"es1:9200\",\"es2,9200\"] \
-  ingensi/dockerbeat:1.0.0-rc1
-```
-
-### Contribute to the project
-
-All contribs are welcome! Read the [CONTRIBUTING](CONTRIBUTING.md) documentation to get more information.
-
-### TL;DR
-
-I want to monitor a host :
-(If kibana can't join elastic, check its network configuration.)
+To push Dockerbeat in the git repository, run the following commands:
 
 ```
-$ docker network create dockernet
+git remote set-url origin https://github.com/ingensi/dockerbeat
+git push origin master
+```
 
-$ docker run -d --net=dockernet --name=elastic \
-  -v /mnt/volumes/elastic/config:/usr/share/elasticsearch/config \
-  -v /mnt/volumes/elastic/data:/usr/share/elasticsearch/data \
-  elasticsearch:2.2.0
+For further development, check out the [beat developer guide](https://www.elastic.co/guide/en/beats/libbeat/current/new-beat.html).
 
-$ docker run -d --net=dockernet --name=kibana -p 5601:5601 \
-  -e ELASTICSEARCH_URL=http://elastic:9200 \
-  kibana:4.4.1
+### Build
 
-$ docker run -d --net=dockernet --name=dockerbeat \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /mnt/dv/dockerbeat:/etc/dockerbeat ingensi/dockerbeat:latest
+To build the binary for Dockerbeat run the command below. This will generate a binary
+in the same directory with the name dockerbeat.
 
 ```
+make
+```
+
+
+### Run
+
+To run Dockerbeat with debugging output enabled, run:
+
+```
+./dockerbeat -c dockerbeat.yml -e -d "*"
+```
+
+
+### Test
+
+To test Dockerbeat, run the following command:
+
+```
+make testsuite
+```
+
+alternatively:
+```
+make unit-tests
+make system-tests
+make integration-tests
+make coverage-report
+```
+
+The test coverage is reported in the folder `./build/coverage/`
+
+
+### Package
+
+To be able to package Dockerbeat the requirements are as follows:
+
+ * [Docker Environment](https://docs.docker.com/engine/installation/) >= 1.10
+ * $GOPATH/bin must be part of $PATH: `export PATH=${PATH}:${GOPATH}/bin`
+
+To cross-compile and package Dockerbeat for all supported platforms, run the following commands:
+
+```
+cd dev-tools/packer
+make deps
+make images
+make
+```
+
+### Update
+
+Each beat has a template for the mapping in elasticsearch and a documentation for the fields
+which is automatically generated based on `etc/fields.yml`.
+To generate etc/dockerbeat.template.json and etc/dockerbeat.asciidoc
+
+```
+make update
+```
+
+
+### Cleanup
+
+To clean  Dockerbeat source code, run the following commands:
+
+```
+make fmt
+make simplify
+```
+
+To clean up the build directory and generated artifacts, run:
+
+```
+make clean
+```
+
+
+### Clone
+
+To clone Dockerbeat from the git repository, run the following commands:
+
+```
+mkdir -p ${GOPATH}/github.com/ingensi
+cd ${GOPATH}/github.com/ingensi
+git clone https://github.com/ingensi/dockerbeat
+```
+
+
+For further development, check out the [beat developer guide](https://www.elastic.co/guide/en/beats/libbeat/current/new-beat.html).
