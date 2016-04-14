@@ -230,6 +230,18 @@
               "type": "float"
             }
           }
+        },
+        "processes": {
+          "properties": {
+            "%CPU": {
+              "doc_values": "true",
+              "type": "float"
+            },
+            "%MEM": {
+              "doc_values": "true",
+              "type": "float"
+            }
+          }
         }
       }
     }
