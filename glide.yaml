@@ -7,3 +7,4 @@ import:
   - libbeat/cfgfile
   - libbeat/common
   - libbeat/logp
+  - github.com/fsouza/go-dockerclient

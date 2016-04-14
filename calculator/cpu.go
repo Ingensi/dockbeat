@@ -10,7 +10,6 @@ type CPUCalculator interface {
 	TotalUsage() float64
 	UsageInKernelmode() float64
 	UsageInUsermode() float64
-	CalculateLoad(value uint64) float64
 }
 
 type CPUCalculatorImpl struct {

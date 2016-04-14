@@ -56,15 +56,3 @@ func (_m *MockedCPUCalculator) usageInUsermode() float64 {
 
 	return r0
 }
-func (_m *MockedCPUCalculator) calculateLoad(value uint64) float64 {
-	ret := _m.Called(value)
-
-	var r0 float64
-	if rf, ok := ret.Get(0).(func(uint64) float64); ok {
-		r0 = rf(value)
-	} else {
-		r0 = ret.Get(0).(float64)
-	}
-
-	return r0
-}

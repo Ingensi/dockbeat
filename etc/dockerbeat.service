@@ -1,0 +1,12 @@
+[Unit]
+Description=dockerbeat
+Documentation=https://github.com/ingensi/dockerbeat
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/dockerbeat -c /etc/dockerbeat/dockerbeat.yml
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
