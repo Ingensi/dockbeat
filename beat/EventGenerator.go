@@ -5,12 +5,19 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	"strings"
 	"time"
+	"sync"
 )
 
 type EventGenerator struct {
 	socket            *string
-	networkStats      map[string]map[string]NetworkData
-	blkioStats        map[string]BlkioData
+	networkStats      struct {
+				  sync.RWMutex
+				  m map[string]map[string]NetworkData
+			  }
+	blkioStats        struct {
+				  sync.RWMutex
+				  m map[string]BlkioData
+			  }
 	calculatorFactory CalculatorFactory
 	period            time.Duration
 }
@@ -80,6 +87,7 @@ func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats
 	}
 
 	// purge old saved data
+	// TODO add lock
 	for container, networkDataMap := range d.networkStats {
 		useless := true
 		for networkName, networkData := range networkDataMap {
@@ -96,6 +104,7 @@ func (d *EventGenerator) getNetworksEvent(container *docker.APIContainers, stats
 			delete(d.networkStats, container)
 		}
 	}
+	// TODO add unlock
 
 	return events
 }
