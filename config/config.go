@@ -7,6 +7,15 @@ type Config struct {
 	Dockerbeat DockerbeatConfig
 }
 
+type TlsConfig struct {
+	Enable   *bool   `config:"enable"`
+	CaPath   *string `config:"ca_path"`
+	CertPath *string `config:"cert_path"`
+	KeyPath  *string `config:"key_path"`
+}
+
 type DockerbeatConfig struct {
-	Period string `yaml:"period"`
+	Period *int64
+	Socket *string
+	Tls    TlsConfig
 }

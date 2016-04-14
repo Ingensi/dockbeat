@@ -18,21 +18,39 @@ env:
       format: YYYY-MM-DDTHH:MM:SS.milliZ
       example: 2015-01-24T14:06:05.071Z
       description: >
-        The timestamp of when the measurements were taken. The precision is in milliseconds.
+        The timestamp when the measurements were taken. The precision is in milliseconds.
         The timezone is UTC.
 
     - name: type
       description: >
-        PLEASE UPDATE DOCUMENTATION
+        Can be one of *container*, *cpu*, *net*, *memory*, *blkio* to specify metric type.
       required: true
 
     - name: count
       type: int
       description: >
-        The number of transactions that this event represents. This
+        For how many transactions is this event representative. This
         is generally the inverse of the sampling rate. For example, for
         a sample rate of 1/10, the count is 10. The count is used by the
         UIs to return estimated values. Reserved for future usage.
+      required: true
+
+    - name: containerID
+      type: string
+      description: >
+        Docker container ID related to the current metric event.
+      required: true
+
+    - name: containerName
+      type: string
+      description: >
+        Name of the Docker container related to the current metric event.
+      required: true
+
+    - name: dockerSocket
+      type: string
+      description: >
+        URI to the monitored docker daemon.
       required: true
 
     - name: beat.name
@@ -46,15 +64,318 @@ env:
         The hostname as returned by the operating system on which the Beat is
         running.
 
-dockerbeat:
+container:
+  type: group
+  description: >
+    Contains container informations. Details that you can get by running a *docker ps* command.
   fields:
-    - name: counter
-      type: integer
-      required: true
-      description: >
-        PLEASE UPDATE DOCUMENTATION
+    - name: container
+      type: group
+      fields:
+        - name: command
+          type: string
+          description: >
+            Command used to run the Docker container.
 
-sections:
-  - ["env", "Common"]
-  - ["dockerbeat", "Dockerbeat"]
+        - name: created
+          type: date
+          format: YYYY-MM-DDTHH:MM:SSZ
+          example: 2015-01-24T14:06:05Z
+          description: >
+            Date of the Docker container creation.
 
+        - name: id
+          type: string
+          description: >
+            ID of the Docker container.
+
+        - name: image
+          type: string
+          description: >
+            Name of the Docker image from which contained has been launched.
+
+        - name: labels
+          type: group
+          description: >
+            Key value related to the label metadata of the Docker container.
+          fields: []
+
+        - name: names
+          type: string
+          description: >
+            Human readable names of the container.
+
+        - name: ports
+          type: group
+          description: >
+            List of published ports.
+          fields:
+            - name: ip
+              type: string
+              description: >
+                Binding IP.
+
+            - name: privatePort
+              type: integer
+              description: >
+                Private port (container side) of the binding.
+
+            - name: publicPort
+              type: integer
+              description: >
+                Public port (host side) of the binding.
+
+            - name: type
+              type: string
+              description: >
+                Type of binding. Can be either *tcp* or *udp*.
+
+        - name: sizeRootFs
+          type: float
+          description: >
+            TODO
+
+        - name: sizeRw
+          type: string
+          description: >
+            TODO
+
+        - name: status
+          type: string
+          description: >
+            Status of the container.
+
+net:
+  type: group
+  description: >
+    Gather container metrics about network (rx/tx)
+  fields:
+    - name: net
+      type: group
+      fields:
+        - name: name
+          type: string
+          description: >
+            Name of the network interface.
+
+        - name: rxBytes_ps
+          type: float
+          description: >
+            Average number of bytes received per second since the last event.
+
+        - name: rxDropped_ps
+          type: float
+          description: >
+            Average received dropped packets per second since the last event.
+
+        - name: rxErrors_ps
+          type: float
+          description: >
+            Average number of errors received per second since the last event.
+
+        - name: rxPackets_ps
+          type: float
+          description: >
+            Average number of packets received per second since the last event.
+
+        - name: txBytes_ps
+          type: float
+          description: >
+            Average number of bytes transmitted per second since the last event.
+
+        - name: txDropped_ps
+          type: float
+          description: >
+            Average transmitted dropped packets per second since the last event.
+
+        - name: txErrors_ps
+          type: float
+          description: >
+            Average number of errors transmitted per second since the last event.
+
+        - name: txPackets_ps
+          type: float
+          description: >
+            Average number of packets transmitted per second since the last event.
+
+memory:
+  type: group
+  description: >
+    Contains metrics about container memory usage.
+  fields:
+    - name: memory
+      type: group
+      fields:
+        - name: failcnt
+          type: float
+          description: >
+            TODO
+
+        - name: limit
+          type: float
+          description: >
+            Limit of memory (max memory available) in Bytes.
+
+        - name: maxUsage
+          type: float
+          description: >
+            Maximum memory used by the container in Bytes.
+
+        - name: totalRss
+          type: float
+          description: >
+            "Current RSS (applications' Resident Set Size) memory consumption in Bytes."
+
+        - name: totalRss_p
+          type: float
+          description: >
+            "Current RSS (applications' Resident Set Size) memory consumption in percents between 0.0 and 1.0."
+
+        - name: usage
+          type: float
+          description: >
+            Current memory consumption in Bytes.
+
+        - name: usage_p
+          type: float
+          description: >
+            Amount of memory used by the container in percents between 0.0 and 1.0.
+
+blkio:
+  type: group
+  description: >
+    Gather disk usage of the current container.
+  fields:
+    - name: blkio
+      type: group
+      fields:
+        - name: read_ps
+          type: int
+          description: >
+            It represents average amount of bytes read per second by the container on disk(s) during the period.
+        - name: write_ps
+          type: int
+          description: >
+            It represents average amount of bytes written per second by the container on disk(s) during the period.
+        - name: total_ps
+          type: int
+          description: >
+            It represents average amount of bytes read and written per second by the container on disk(s) during the period.
+cpu:
+  type: group
+  description: >
+    Gather cpu consumption of the current container.
+  fields:
+    - name: cpu
+      type: group
+      fields:
+        - name: totalUsage
+          type: float
+          description: >
+            Total cpu consumption in percent.
+            This value can be greater than 100%, depending on the number of available CPUs.
+
+        - name: usageInKernelmode
+          type: float
+          description: >
+            Same as *totalUsage*, but only the Kernel mode consumptions.
+
+        - name: usageInUsermode
+          type: float
+          description: >
+            Same as *totalUsage*, but only the User mode consumptions.
+
+        - name: percpuUsage
+          type: group
+          description: >
+            Detailled cpu consumption per cpu (in percent).
+          fields:
+            - name: cpu0
+              type: float
+
+            - name: cpu1
+              type: float
+
+            - name: cpu2
+              type: float
+
+            - name: cpu3
+              type: float
+
+            - name: cpu4
+              type: float
+
+            - name: cpu5
+              type: float
+
+            - name: cpu6
+              type: float
+
+            - name: cpu7
+              type: float
+
+            - name: cpu8
+              type: float
+
+            - name: cpu9
+              type: float
+
+            - name: cpu10
+              type: float
+
+            - name: cpu11
+              type: float
+
+            - name: cpu12
+              type: float
+
+            - name: cpu13
+              type: float
+
+            - name: cpu14
+              type: float
+
+            - name: cpu15
+              type: float
+
+            - name: cpu16
+              type: float
+
+            - name: cpu17
+              type: float
+
+            - name: cpu18
+              type: float
+
+            - name: cpu19
+              type: float
+
+            - name: cpu20
+              type: float
+
+            - name: cpu21
+              type: float
+
+            - name: cpu22
+              type: float
+
+            - name: cpu23
+              type: float
+
+log:
+  type: group
+  description: >
+    Special event sent by dockerbeat to log some events.
+  fields:
+    - name: log
+      type: group
+      fields:
+        - name: level
+          type: string
+          description: >
+            Log level (debug, info, warning, error, fatal).
+
+        - name: message
+          type: string
+          description: >
+            Log message.

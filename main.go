@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	err := beat.Run("dockerbeat", "", beater.New())
+	err := beat.Run("dockerbeat", "1.0.0-rc1", beater.New())
 	if err != nil {
 		os.Exit(1)
 	}
