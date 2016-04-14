@@ -1,0 +1,4 @@
+beat_name: dockerbeat
+beat_url: 'https://github.com/ingensi'
+beat_repo: 'github.com/ingensi'
+beat_description: Sends dockerbeat metrics to Logstash or directly to Elasticsearch.

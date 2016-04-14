@@ -1,30 +1,43 @@
+sudo: required
+dist: trusty
+services:
+  - docker
+
 language: go
 
 go:
-  - 1.5.1
+  - 1.6
 
-sudo: false
+os:
+  - linux
+  - osx
+
+env:
+  matrix:
+    - TARGETS="check"
+    - TARGETS="-C dockerbeat testsuite"
+
+  global:
+    # Cross-compile for amd64 only to speed up testing.
+    - GOX_FLAGS="-arch amd64"
+
+addons:
+  apt:
+    packages:
+      - python-virtualenv
 
 before_install:
-  # Redo the travis setup but with the ingensi/dockerbeat path. This is needed so the package path is correct
-  - mkdir -p $HOME/gopath/src/github.com/ingensi/dockerbeat
-  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/ingensi/dockerbeat/
-  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/ingensi/dockerbeat
-  - cd $HOME/gopath/src/github.com/ingensi/dockerbeat
-  - go get github.com/stretchr/testify/...
+  # Redo the travis setup but with the elastic/libbeat path. This is needed so the package path is correct
+  - mkdir -p $HOME/gopath/src/github.com/elastic/beats/
+  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/elastic/beats/
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/elastic/beats/
+  - cd $HOME/gopath/src/github.com/elastic/beats/
 
 install:
-  - make
+  - true
 
 script:
-  - make cover
-
-notifications:
-  hipchat:
-    rooms:
-      secure:
+  - make $TARGETS
 
 after_success:
-  # Copy profile.cov to coverage.txt because codecov.io requires this file
-  - cp profile.cov coverage.txt
-  - bash <(curl -s https://codecov.io/bash)
+  # Copy full.cov to coverage.txt because codecov.io requires this file
