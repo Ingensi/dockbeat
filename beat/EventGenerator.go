@@ -4,8 +4,8 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
 	"strings"
-	"time"
 	"sync"
+	"time"
 )
 
 type EGNetworkStats struct {
