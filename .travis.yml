@@ -11,8 +11,8 @@ os:
 
 env:
   matrix:
-    - TARGETS="check"
-    - TARGETS="testsuite"
+    - TARGETS="update-deps check"
+    - TARGETS="update-deps testsuite"
 
   global:
     # Cross-compile for amd64 only to speed up testing.
