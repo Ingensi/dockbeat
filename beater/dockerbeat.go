@@ -15,16 +15,16 @@ import (
 
 	"github.com/fsouza/go-dockerclient"
 
+	"github.com/ingensi/dockerbeat/calculator"
 	"github.com/ingensi/dockerbeat/config"
 	"github.com/ingensi/dockerbeat/event"
-	"github.com/ingensi/dockerbeat/calculator"
 )
 
 // const for event logs
 const (
 	ERROR = "error"
-	WARN = "warning"
-	INFO = "info"
+	WARN  = "warning"
+	INFO  = "info"
 	DEBUG = "debug"
 	TRACE = "trace"
 )
@@ -137,7 +137,6 @@ func (bt *Dockerbeat) getDockerClient() (*docker.Client, error) {
 	return client, err
 }
 
-
 func (bt *Dockerbeat) Setup(b *beat.Beat) error {
 	var clientErr error
 	var err error
@@ -191,8 +190,6 @@ func (bt *Dockerbeat) Run(b *beat.Beat) error {
 			bt.publishLogEvent(WARN, "Ignoring tick(s) due to processing taking longer than one period")
 		}
 	}
-
-	return err
 }
 
 func (d *Dockerbeat) Cleanup(b *beat.Beat) error {
@@ -279,8 +276,8 @@ func (d *Dockerbeat) checkPrerequisites() error {
 
 		if !valid {
 			output = errors.New("Docker server is too old (version " +
-			strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
-			" and earlier is required)")
+				strconv.Itoa(d.minimalDockerVersion.major) + "." + strconv.Itoa(d.minimalDockerVersion.minor) + ".x" +
+				" and earlier is required)")
 		}
 
 	} else {
@@ -309,7 +306,7 @@ func (d *Dockerbeat) validVersion(version string) (bool, error) {
 	var output bool
 
 	if actualMajorVersion > d.minimalDockerVersion.major ||
-	(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
+		(actualMajorVersion == d.minimalDockerVersion.major && actualMinorVersion >= d.minimalDockerVersion.minor) {
 		output = true
 	} else {
 		output = false

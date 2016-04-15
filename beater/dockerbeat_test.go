@@ -3,12 +3,12 @@ package beater
 import (
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/publisher"
+	"github.com/ingensi/dockerbeat/calculator"
+	"github.com/ingensi/dockerbeat/config"
+	"github.com/ingensi/dockerbeat/event"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"github.com/ingensi/dockerbeat/config"
-	"github.com/ingensi/dockerbeat/event"
-	"github.com/ingensi/dockerbeat/calculator"
 )
 
 // DOCKERBEAT TYPE IS CURRENTLY NOT REALLY TESTABLE BECAUSE OF THE DOCKER GO CLIENT WICH DOES NOT DEFINE INTERFACE

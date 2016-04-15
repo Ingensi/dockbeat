@@ -3,10 +3,10 @@ package event
 import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
+	"github.com/ingensi/dockerbeat/calculator"
 	"strings"
 	"sync"
 	"time"
-	"github.com/ingensi/dockerbeat/calculator"
 )
 
 type EGNetworkStats struct {

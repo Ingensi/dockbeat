@@ -36,5 +36,5 @@ func (c BlkioCalculatorImpl) GetTotalPs() float64 {
 
 func (c BlkioCalculatorImpl) calculatePerSecond(oldValue uint64, newValue uint64) float64 {
 	duration := c.New.Time.Sub(c.Old.Time)
-	return float64(newValue - oldValue) / duration.Seconds()
+	return float64(newValue-oldValue) / duration.Seconds()
 }

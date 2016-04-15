@@ -3,11 +3,11 @@ package event
 import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
+	"github.com/ingensi/dockerbeat/calculator"
+	"github.com/ingensi/dockerbeat/calculator/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"github.com/ingensi/dockerbeat/calculator"
-	"github.com/ingensi/dockerbeat/calculator/mocks"
 )
 
 // NETWORK EVENT GENERATION
@@ -45,7 +45,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -126,7 +126,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	// calculator will no be called for em1 network, it will generate zero-values event for em1
 	mockedCalculatorFactory := new(mocks.CalculatorFactory)
 	mockedNetworkCalculatorEth0 := getMockedNetworkCalculator(1.0)
-	mockedCalculatorFactory.	On("NewNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
+	mockedCalculatorFactory.On("NewNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
 
 	// expected events
 	expectedEvents := []common.MapStr{}
@@ -228,7 +228,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -425,7 +425,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -562,7 +562,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -703,7 +703,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -792,7 +792,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -864,7 +864,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"name1", "name1/fake"},
@@ -949,7 +949,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -1044,7 +1044,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{1234, 4567, "portType", "123.456.879.1"}},
+		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -1161,37 +1161,37 @@ func TestEventGeneratorGetLogEvent(t *testing.T) {
 // NEEDED TYPES
 
 type MemoryStats struct {
-	Stats    struct {
-			 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-			 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-			 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-			 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-			 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-			 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-			 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-			 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-			 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-			 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-			 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-			 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-			 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-			 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-			 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-			 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-			 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-			 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-			 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-			 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-			 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-			 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-			 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-			 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-			 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-			 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-			 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-			 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-			 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-		 } `json:"stats,omitempty" yaml:"stats,omitempty"`
+	Stats struct {
+		TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+		Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+		MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+		TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+		Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+		Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+		TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+		Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+		Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+		Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+		TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+		Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+		TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+		TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+		TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+		TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+		RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+		HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+		TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+		TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+		ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+		TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+		TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+		TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+		InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+		ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+		Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+		InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+		TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+	} `json:"stats,omitempty" yaml:"stats,omitempty"`
 	MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 	Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
 	Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
@@ -1258,39 +1258,39 @@ func getMockedCPUCalculator(number float64) calculator.CPUCalculator {
 
 func getMemoryStats(read time.Time, number uint64) docker.Stats {
 	type memoryStats struct {
-		Stats    struct {
-				 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-				 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-				 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-				 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-				 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-				 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-				 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-				 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-				 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-				 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-				 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-				 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-				 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-				 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-				 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-				 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-				 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-				 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-				 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-				 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-				 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-				 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-				 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-				 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-				 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-				 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-				 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-				 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-				 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-				 HierarchicalMemswLimit  uint64 `json:"hierarchical_memsw_limit,omitempty" yaml:"hierarchical_memsw_limit,omitempty"`
-				 Swap                    uint64 `json:"swap,omitempty" yaml:"swap,omitempty"`
-			 } `json:"stats,omitempty" yaml:"stats,omitempty"`
+		Stats struct {
+			TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+			Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+			MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+			TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+			Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+			Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+			TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+			Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+			Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+			Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+			TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+			Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+			TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+			TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+			TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+			TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+			RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+			HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+			TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+			TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+			ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+			TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+			TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+			TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+			InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+			ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+			Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+			InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+			TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+			HierarchicalMemswLimit  uint64 `json:"hierarchical_memsw_limit,omitempty" yaml:"hierarchical_memsw_limit,omitempty"`
+			Swap                    uint64 `json:"swap,omitempty" yaml:"swap,omitempty"`
+		} `json:"stats,omitempty" yaml:"stats,omitempty"`
 		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
 		Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
@@ -1335,9 +1335,9 @@ func getBlkioStats(read time.Time, reads uint64, writes uint64, total uint64) do
 		Read: read,
 		BlkioStats: blkioStats{
 			IOServicedRecursive: []docker.BlkioStatsEntry{
-				docker.BlkioStatsEntry{0, 0, "Read", reads},
-				docker.BlkioStatsEntry{0, 0, "Write", writes},
-				docker.BlkioStatsEntry{0, 0, "Total", total},
+				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Read", Value: reads},
+				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Write", Value: writes},
+				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Total", Value: total},
 			},
 		},
 	}
