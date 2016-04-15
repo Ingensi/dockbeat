@@ -24,19 +24,22 @@
         "@timestamp": {
           "type": "date"
         },
-        "blkio": {
-          "properties": {}
-        },
         "container": {
           "properties": {
             "created": {
               "type": "date"
             },
-            "labels": {
-              "properties": {}
-            },
             "ports": {
-              "properties": {}
+              "properties": {
+                "privatePort": {
+                  "doc_values": "true",
+                  "type": "integer"
+                },
+                "publicPort": {
+                  "doc_values": "true",
+                  "type": "integer"
+                }
+              }
             },
             "sizeRootFs": {
               "doc_values": "true",
@@ -159,9 +162,6 @@
               "type": "float"
             }
           }
-        },
-        "log": {
-          "properties": {}
         },
         "memory": {
           "properties": {

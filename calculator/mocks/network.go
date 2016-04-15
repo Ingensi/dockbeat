@@ -1,12 +1,12 @@
-package calculator
+package mocks
 
 import "github.com/stretchr/testify/mock"
 
-type MockedNetworkCalculator struct {
+type NetworkCalculator struct {
 	mock.Mock
 }
 
-func (_m *MockedNetworkCalculator) GetRxBytesPerSecond() float64 {
+func (_m *NetworkCalculator) GetRxBytesPerSecond() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -18,7 +18,7 @@ func (_m *MockedNetworkCalculator) GetRxBytesPerSecond() float64 {
 
 	return r0
 }
-func (_m *MockedNetworkCalculator) GetRxDroppedPerSecond() float64 {
+func (_m *NetworkCalculator) GetRxDroppedPerSecond() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -30,7 +30,7 @@ func (_m *MockedNetworkCalculator) GetRxDroppedPerSecond() float64 {
 
 	return r0
 }
-func (_m *MockedNetworkCalculator) GetRxErrorsPerSecond() float64 {
+func (_m *NetworkCalculator) GetRxErrorsPerSecond() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -42,7 +42,7 @@ func (_m *MockedNetworkCalculator) GetRxErrorsPerSecond() float64 {
 
 	return r0
 }
-func (_m *MockedNetworkCalculator) GetRxPacketsPerSecond() float64 {
+func (_m *NetworkCalculator) GetRxPacketsPerSecond() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -54,7 +54,7 @@ func (_m *MockedNetworkCalculator) GetRxPacketsPerSecond() float64 {
 
 	return r0
 }
-func (_m *MockedNetworkCalculator) GetTxBytesPerSecond() float64 {
+func (_m *NetworkCalculator) GetTxBytesPerSecond() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -66,7 +66,7 @@ func (_m *MockedNetworkCalculator) GetTxBytesPerSecond() float64 {
 
 	return r0
 }
-func (_m *MockedNetworkCalculator) GetTxDroppedPerSecond() float64 {
+func (_m *NetworkCalculator) GetTxDroppedPerSecond() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -78,7 +78,7 @@ func (_m *MockedNetworkCalculator) GetTxDroppedPerSecond() float64 {
 
 	return r0
 }
-func (_m *MockedNetworkCalculator) GetTxErrorsPerSecond() float64 {
+func (_m *NetworkCalculator) GetTxErrorsPerSecond() float64 {
 	ret := _m.Called()
 
 	var r0 float64
@@ -90,7 +90,7 @@ func (_m *MockedNetworkCalculator) GetTxErrorsPerSecond() float64 {
 
 	return r0
 }
-func (_m *MockedNetworkCalculator) GetTxPacketsPerSecond() float64 {
+func (_m *NetworkCalculator) GetTxPacketsPerSecond() float64 {
 	ret := _m.Called()
 
 	var r0 float64
