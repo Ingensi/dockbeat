@@ -149,7 +149,7 @@ func getEmptyDockerbeat() Dockerbeat {
 			certPath:  "",
 			keyPath:   "",
 		},
-		beatConfig: config.Config{
+		beatConfig: &config.Config{
 			Dockerbeat: config.DockerbeatConfig{
 				Period: nil,
 				Socket: nil,

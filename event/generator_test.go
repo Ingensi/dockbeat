@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 	"github.com/ingensi/dockerbeat/calculator"
+	"github.com/ingensi/dockerbeat/calculator/mocks"
 )
 
 // NETWORK EVENT GENERATION
@@ -49,6 +50,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -110,10 +112,10 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	}
 	newNetworkData["em1"] = calculator.NetworkData{
 		Time:      newTimestamp,
-		TxBytes:   90,
-		TxDropped: 100,
-		TxErrors:  110,
-		TxPackets: 120,
+		RxBytes:   90,
+		RxDropped: 100,
+		RxErrors:  110,
+		RxPackets: 120,
 		TxBytes:   130,
 		TxDropped: 140,
 		TxErrors:  150,
@@ -122,9 +124,9 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 
 	// second - instantiate mock
 	// calculator will no be called for em1 network, it will generate zero-values event for em1
-	mockedCalculatorFactory := new(calculator.MockedCalculatorFactory)
+	mockedCalculatorFactory := new(mocks.CalculatorFactory)
 	mockedNetworkCalculatorEth0 := getMockedNetworkCalculator(1.0)
-	mockedCalculatorFactory.On("newNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
+	mockedCalculatorFactory.	On("NewNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
 
 	// expected events
 	expectedEvents := []common.MapStr{}
@@ -231,6 +233,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -314,11 +317,11 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	}
 
 	// second - instantiate mock
-	mockedCalculatorFactory := new(calculator.MockedCalculatorFactory)
+	mockedCalculatorFactory := new(mocks.CalculatorFactory)
 	mockedNetworkCalculatorEth0 := getMockedNetworkCalculator(1.0)
 	mockedNetworkCalculatorEm1 := getMockedNetworkCalculator(2.0)
-	mockedCalculatorFactory.On("newNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
-	mockedCalculatorFactory.On("newNetworkCalculator", oldNetworkData[containerId]["em1"], newNetworkData["em1"]).Return(mockedNetworkCalculatorEm1)
+	mockedCalculatorFactory.On("NewNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
+	mockedCalculatorFactory.On("NewNetworkCalculator", oldNetworkData[containerId]["em1"], newNetworkData["em1"]).Return(mockedNetworkCalculatorEm1)
 
 	// expected events
 	expectedEvents := []common.MapStr{}
@@ -427,6 +430,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -490,9 +494,9 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	}
 
 	// second - instantiate mock
-	mockedCalculatorFactory := new(calculator.MockedCalculatorFactory)
+	mockedCalculatorFactory := new(mocks.CalculatorFactory)
 	mockedNetworkCalculatorEth0 := getMockedNetworkCalculator(1.0)
-	mockedCalculatorFactory.On("newNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
+	mockedCalculatorFactory.On("NewNetworkCalculator", oldNetworkData[containerId]["eth0"], newNetworkData["eth0"]).Return(mockedNetworkCalculatorEth0)
 
 	// expected events
 	expectedEvents := []common.MapStr{}
@@ -563,6 +567,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	timestamp := time.Now()
@@ -629,6 +634,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	timestamp := time.Now()
@@ -702,6 +708,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// CPU stats from Docker API
@@ -732,9 +739,9 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 
 	// second - instantiate mock
 	// calculator will no be called for em1 network, it will generate zero-values event for em1
-	mockedCalculatorFactory := new(calculator.MockedCalculatorFactory)
+	mockedCalculatorFactory := new(mocks.CalculatorFactory)
 	mockedCPUCalculator := getMockedCPUCalculator(1.0)
-	mockedCalculatorFactory.On("newCPUCalculator", preCPUData, cpuData).Return(mockedCPUCalculator)
+	mockedCalculatorFactory.On("NewCPUCalculator", preCPUData, cpuData).Return(mockedCPUCalculator)
 
 	// expected events
 	expectedEvent := common.MapStr{
@@ -790,6 +797,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// main stats object
@@ -861,6 +869,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		456,
 		[]string{"name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// main stats object
@@ -945,6 +954,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// main stats object
@@ -969,9 +979,9 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	}
 
 	// second - instantiate mock
-	mockedCalculatorFactory := new(calculator.MockedCalculatorFactory)
+	mockedCalculatorFactory := new(mocks.CalculatorFactory)
 	mockedBlkioCalculator := getMockedBlkioCalculator(1)
-	mockedCalculatorFactory.On("newBlkioCalculator", oldBlkioData[containerId], newBlkioData).Return(mockedBlkioCalculator)
+	mockedCalculatorFactory.On("NewBlkioCalculator", oldBlkioData[containerId], newBlkioData).Return(mockedBlkioCalculator)
 
 	// expected events
 	expectedEvent := common.MapStr{
@@ -1039,6 +1049,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		456,
 		[]string{"/name1", "name1/fake"},
 		labels,
+		docker.NetworkList{},
 	}
 
 	// main stats object
@@ -1070,9 +1081,9 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	}
 
 	// second - instantiate mock
-	mockedCalculatorFactory := new(calculator.MockedCalculatorFactory)
+	mockedCalculatorFactory := new(mocks.CalculatorFactory)
 	mockedBlkioCalculator := getMockedBlkioCalculator(1)
-	mockedCalculatorFactory.On("newBlkioCalculator", oldBlkioData[containerId], newBlkioData).Return(mockedBlkioCalculator)
+	mockedCalculatorFactory.On("NewBlkioCalculator", oldBlkioData[containerId], newBlkioData).Return(mockedBlkioCalculator)
 
 	// expected events
 	expectedEvent := common.MapStr{
@@ -1189,16 +1200,16 @@ type MemoryStats struct {
 
 // UTILITY METHODS
 
-func getMockedNetworkCalculator(number float64) *calculator.MockedNetworkCalculator {
-	mock := new(calculator.MockedNetworkCalculator)
-	mock.On("getRxBytesPerSecond").Return(number)
-	mock.On("getRxDroppedPerSecond").Return(number * 2)
-	mock.On("getRxErrorsPerSecond").Return(number * 3)
-	mock.On("getRxPacketsPerSecond").Return(number * 4)
-	mock.On("getTxBytesPerSecond").Return(number * 5)
-	mock.On("getTxDroppedPerSecond").Return(number * 6)
-	mock.On("getTxErrorsPerSecond").Return(number * 7)
-	mock.On("getTxPacketsPerSecond").Return(number * 8)
+func getMockedNetworkCalculator(number float64) *mocks.NetworkCalculator {
+	mock := new(mocks.NetworkCalculator)
+	mock.On("GetRxBytesPerSecond").Return(number)
+	mock.On("GetRxDroppedPerSecond").Return(number * 2)
+	mock.On("GetRxErrorsPerSecond").Return(number * 3)
+	mock.On("GetRxPacketsPerSecond").Return(number * 4)
+	mock.On("GetTxBytesPerSecond").Return(number * 5)
+	mock.On("GetTxDroppedPerSecond").Return(number * 6)
+	mock.On("GetTxErrorsPerSecond").Return(number * 7)
+	mock.On("GetTxPacketsPerSecond").Return(number * 8)
 	return mock
 }
 
@@ -1229,18 +1240,18 @@ func getCPUStats(number uint64) docker.CPUStats {
 }
 
 func getMockedCPUCalculator(number float64) calculator.CPUCalculator {
-	mock := new(calculator.MockedCPUCalculator)
+	mock := new(mocks.CPUCalculator)
 	perCPUUsage := common.MapStr{
 		"cpu0": number,
 		"cpu1": number,
 		"cpu2": number,
 		"cpu3": number,
 	}
-	mock.On("perCpuUsage").Return(perCPUUsage)
-	mock.On("totalUsage").Return(number * 2)
-	mock.On("usageInKernelmode").Return(number * 3)
-	mock.On("usageInUsermode").Return(number * 4)
-	mock.On("calculateLoad").Return(number * 5)
+	mock.On("PerCpuUsage").Return(perCPUUsage)
+	mock.On("TotalUsage").Return(number * 2)
+	mock.On("UsageInKernelmode").Return(number * 3)
+	mock.On("UsageInUsermode").Return(number * 4)
+	mock.On("CalculateLoad").Return(number * 5)
 
 	return mock
 }
@@ -1277,6 +1288,8 @@ func getMemoryStats(read time.Time, number uint64) docker.Stats {
 				 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
 				 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
 				 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+				 HierarchicalMemswLimit  uint64 `json:"hierarchical_memsw_limit,omitempty" yaml:"hierarchical_memsw_limit,omitempty"`
+				 Swap                    uint64 `json:"swap,omitempty" yaml:"swap,omitempty"`
 			 } `json:"stats,omitempty" yaml:"stats,omitempty"`
 		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
@@ -1299,11 +1312,11 @@ func getMemoryStats(read time.Time, number uint64) docker.Stats {
 	return testStats
 }
 
-func getMockedBlkioCalculator(number float64) *calculator.MockedBlkioCalculator {
-	mock := new(calculator.MockedBlkioCalculator)
-	mock.On("getReadPs").Return(number)
-	mock.On("getWritePs").Return(number * 2)
-	mock.On("getTotalPs").Return(number * 3)
+func getMockedBlkioCalculator(number float64) *mocks.BlkioCalculator {
+	mock := new(mocks.BlkioCalculator)
+	mock.On("GetReadPs").Return(number)
+	mock.On("GetWritePs").Return(number * 2)
+	mock.On("GetTotalPs").Return(number * 3)
 	return mock
 }
 
