@@ -1,7 +1,4 @@
-sudo: required
 dist: trusty
-services:
-  - docker
 
 language: go
 
@@ -15,7 +12,7 @@ os:
 env:
   matrix:
     - TARGETS="check"
-    - TARGETS="-C dockerbeat testsuite"
+    - TARGETS="testsuite"
 
   global:
     # Cross-compile for amd64 only to speed up testing.
