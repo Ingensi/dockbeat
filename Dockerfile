@@ -5,13 +5,7 @@ MAINTAINER Ingensi labs <contact@ingensi.com>
 RUN cd /tmp && wget http://pyyaml.org/download/pyyaml/PyYAML-3.11.tar.gz && tar -zxvf PyYAML-3.11.tar.gz
 RUN cd /tmp/PyYAML-3.11 && python setup.py install
 # install glide
-RUN mkdir -p $GOPATH/src/github.com/Masterminds \
- && cd $GOPATH/src/github.com/Masterminds \
- && git clone https://github.com/Masterminds/glide.git \
- && cd glide \
- && git checkout 0.10.2 \
- && make \
- && mv glide $GOPATH/bin/
+RUN go get github.com/Masterminds/glide
 
 COPY . $GOPATH/src/github.com/ingensi/dockerbeat
 RUN cd $GOPATH/src/github.com/ingensi/dockerbeat && make && make
