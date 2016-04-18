@@ -11,8 +11,8 @@ os:
 
 env:
   matrix:
-    - TARGETS="update-deps check"
-    - TARGETS="update-deps testsuite"
+    - TARGETS="check"
+    - TARGETS="testsuite"
 
   global:
     # Cross-compile for amd64 only to speed up testing.
@@ -35,7 +35,7 @@ install:
   - true
 
 script:
-  - make $TARGETS
+  - make update-deps && make $TARGETS
 
 after_success:
   # Copy full.cov to coverage.txt because codecov.io requires this file
