@@ -29,6 +29,7 @@ before_install:
   - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/ingensi/dockerbeat/
   - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/ingensi/dockerbeat
   - cd $HOME/gopath/src/github.com/ingensi/dockerbeat
+  - go get glide
 
 install:
   - true
