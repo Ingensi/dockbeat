@@ -1,0 +1,12 @@
+package: github.com/ingensi/dockerbeat
+import:
+- package: github.com/elastic/beats
+  version: 05cd6641cf6e4fa12caa6e85588e181f8eefe1e6
+  subpackages:
+  - /libbeat/beat
+  - libbeat/cfgfile
+  - libbeat/common
+  - libbeat/logp
+- package: github.com/fsouza/go-dockerclient
+  version: 23c589186c2a92a8742da55f19aec4997dae5cbb
+- package: github.com/stretchr/testify

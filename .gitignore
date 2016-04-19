@@ -1,40 +1,10 @@
-# script python
-scripts/env
+/.idea
+/build
 
-# Compiled Object files, Static and Dynamic libs (Shared Objects)
-dockerbeat
-*.o
-*.a
-*.so
-*.swp
-*.swo
-*.iml
-
-
-*.dev.yml
-
-# Folders
-_obj
-_test
-
-# Architecture specific extensions/prefixes
-*.[568vq]
-[568vq].out
-
-*.cgo1.go
-*.cgo2.c
-_cgo_defun.c
-_cgo_gotypes.go
-_cgo_export.*
-
-_testmain.go
-
-*.exe
-*.test
-*.prof
-
-cover/
-profile.cov
-.idea
 .DS_Store
-/docs/html_docs
+/dockerbeat
+/dockerbeat.test
+*.pyc
+
+atlassian-ide-plugin.xml
+dockerbeat.iml

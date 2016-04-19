@@ -220,7 +220,7 @@ memory:
           type: float
           description: >
             Maximum memory used by the container in Bytes.
-            
+
         - name: totalRss
           type: float
           description: >
@@ -230,7 +230,7 @@ memory:
           type: float
           description: >
             "Current RSS (applications' Resident Set Size) memory consumption in percents between 0.0 and 1.0."
-            
+
         - name: usage
           type: float
           description: >
@@ -379,3 +379,12 @@ log:
           type: string
           description: >
             Log message.
+
+sections:
+  - ["env", "Common"]
+  - ["container", "Container information"]
+  - ["net", "Network usage"]
+  - ["memory", "Memory consumption"]
+  - ["blkio", "IO disk usage"]
+  - ["cpu", "CPU consumption"]
+  - ["log", "Logs about dockerbeat agent status"]
