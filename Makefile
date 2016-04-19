@@ -33,6 +33,11 @@ commit:
 update-deps:
 	glide update --no-recursive --strip-vcs
 
+.PHONY: fullupdate
+fullupdate:
+	$(MAKE) update
+	bash ./scripts/fullupdate.sh ${BEATNAME} ${BEAT_DIR}/${BEATNAME}
+
 # This is called by the beats packer before building starts
 .PHONY: before-build
 before-build:

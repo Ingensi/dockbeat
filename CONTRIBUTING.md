@@ -87,10 +87,16 @@ make
 
 Each beat has a template for the mapping in elasticsearch and a documentation for the fields
 which is automatically generated based on `etc/fields.yml`.
-To generate etc/dockerbeat.template.json and etc/dockerbeat.asciidoc
+To generate etc/dockerbeat.template.json, etc/dockerbeat.asciidoc and dockerbeat.yml configuration file
 
 ```
 make update
+```
+
+To ensure updating dockerbeat-docker.yml
+
+```
+make fullupdate
 ```
 
 
