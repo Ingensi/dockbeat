@@ -1,0 +1,45 @@
+beat:
+  build: .
+  links:
+    - redis
+    - elasticsearch
+    - logstash
+    - kafka
+  environment:
+    - REDIS_HOST=redis
+    - REDIS_PORT=6379
+    - LS_HOST=logstash
+    - LS_TCP_PORT=5044
+    - LS_TLS_PORT=5055
+    # Setup work environment
+    - LIBBEAT_PATH=/go/src/github.com/elastic/beats/libbeat
+    # TODO: Set to true as soon as stable release is out
+    - SHIELD=false
+    - KAFKA_HOST=kafka
+    - KAFKA_PORT=9092
+  env_file:
+    - build/test.env
+  volumes:
+    - ..:/go/src/github.com/elastic/beats/
+  working_dir: /go/src/github.com/elastic/beats/libbeat
+  command: make
+  entrypoint: /go/src/github.com/elastic/beats/libbeat/scripts/docker-entrypoint.sh
+elasticsearch:
+  build: ../testing/environments/docker/elasticsearch
+  dockerfile: Dockerfile-5.0.0-alpha1
+  command: elasticsearch -Ees.network.host=0.0.0.0
+redis:
+  image: redis:3.0.7
+# This host name is fixed because of the certificate
+logstash:
+  build: ../testing/environments/docker/logstash
+  dockerfile: Dockerfile-5.0.0-alpha1
+  env_file:
+    - build/test.env
+  links:
+    - elasticsearch
+kafka:
+  image: spotify/kafka
+  expose:
+    - 9092
+    - 2181

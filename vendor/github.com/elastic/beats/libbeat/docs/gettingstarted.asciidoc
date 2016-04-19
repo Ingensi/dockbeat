@@ -1,0 +1,387 @@
+[[getting-started]]
+== Getting Started with Beats and the Elastic Stack
+
+Looking for an "ELK tutorial" that shows how to set up the Elastic stack for Beats? You've
+come to the right place. The topics in this section describe how to install and configure
+the Elastic stack for Beats.
+
+A regular _Beats setup_ consists of:
+
+ * One or more Beats. You install the Beats on your servers to capture operational data.
+ * Elasticsearch for storage and indexing. See <<elasticsearch-installation>>.
+ * Logstash (optional) for inserting data into Elasticsearch. See <<logstash-installation,Installing Logstash>>.
+ * Kibana for the UI. See <<kibana-installation>>.
+ * Kibana dashboards for visualizing the data. See <<load-kibana-dashboards>>.
+ 
+See the https://www.elastic.co/support/matrix[Elastic Support Matrix] for information 
+about supported operating systems and product compatibility.
+
+NOTE: To get started, you can install Elasticsearch and Kibana on a
+single VM or even on your laptop. The only condition is that the machine must be
+accessible from the servers you want to monitor. As you add more Beats and
+your traffic grows, you'll want to replace the single Elasticsearch instance with
+a cluster. You'll probably also want to automate the installation process.
+
+
+[[elasticsearch-installation]]
+=== Installing Elasticsearch
+
+https://www.elastic.co/products/elasticsearch[Elasticsearch] is a real-time,
+distributed storage, search, and analytics engine. It can be used for many
+purposes, but one context where it excels is indexing streams of semi-structured
+data, such as logs or decoded network packets.
+
+The binary packages of Elasticsearch have only one dependency: Java. The minimum
+supported version is Java 7. To download and install
+Elasticsearch, use the commands that work with your system
+(<<deb, deb>> for Debian/Ubuntu, <<rpm, rpm>> for Redhat/Centos/Fedora, <<mac,
+mac>> for OS X, and <<win, win>> for Windows):
+
+[[deb]]*deb:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+sudo apt-get install openjdk-7-jre
+curl -L -O https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-{ES-version}.deb
+sudo dpkg -i elasticsearch-{ES-version}.deb
+sudo /etc/init.d/elasticsearch start
+----------------------------------------------------------------------
+
+[[rpm]]*rpm:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+sudo yum install java-1.7.0-openjdk
+curl -L -O https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-{ES-version}.rpm
+sudo rpm -i elasticsearch-{ES-version}.rpm
+sudo service elasticsearch start
+----------------------------------------------------------------------
+
+[[mac]]*mac:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+# install Java, e.g. from: https://www.java.com/en/download/manual.jsp
+curl -L -O https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-{ES-version}.zip
+unzip elasticsearch-{ES-version}.zip
+cd elasticsearch-{ES-version}
+./bin/elasticsearch
+----------------------------------------------------------------------
+
+[[win]]*win:*
+
+. If necessary, download and install the latest version of the Java from https://www.java.com[www.java.com].
+
+. Download the Elasticsearch {ES-version} Windows zip file from the
+https://www.elastic.co/downloads/elasticsearch[downloads page].
+
+. Extract the contents of the zip file to a directory on your computer, for example, `C:\Program Files`.
+
+. Open a command prompt as an Administrator and navigate to the directory that contains the extracted files, for example:
++
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+cd C:\Program Files\elasticsearch-{ES-version}
+----------------------------------------------------------------------
+
+. Run the following command to start Elasticsearch:
++
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+bin\elasticsearch.bat
+----------------------------------------------------------------------
+
+You can learn more about installing, configuring, and running Elasticsearch in the
+https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html[Elasticsearch Reference].
+
+==== Making Sure Elasticsearch is Up and Running
+
+
+To test that the Elasticsearch daemon is up and running, try sending an HTTP GET
+request on port 9200.
+
+[source,shell]
+----------------------------------------------------------------------
+curl http://127.0.0.1:9200
+----------------------------------------------------------------------
+
+On Windows, if you don't have cURL installed, simply point your browser to the URL.
+
+You should see a response similar to this:
+
+[source,shell]
+----------------------------------------------------------------------
+{
+  "name" : "Angela Del Toro",
+  "cluster_name" : "elasticsearch",
+  "version" : {
+    "number" : "2.2.0",
+    "build_hash" : "8ff36d139e16f8720f2947ef62c8167a888992fe",
+    "build_timestamp" : "2016-01-27T13:32:39Z",
+    "build_snapshot" : false,
+    "lucene_version" : "5.4.1"
+  },
+  "tagline" : "You Know, for Search"
+}
+----------------------------------------------------------------------
+
+[[logstash-installation]]
+=== Installing Logstash (Optional)
+
+The simplest architecture for the Beats platform setup consists of one or more Beats,
+Elasticsearch, and Kibana. This architecture is easy to get started
+with and sufficient for networks with low traffic. It also uses the minimum amount of
+servers: a single machine running Elasticsearch and Kibana. The Beats
+insert the transactions directly into the Elasticsearch instance. 
+
+If you want to perform additional processing or buffering on the data, however,
+you'll want to install Logstash. 
+
+An important advantage to this approach is that you can
+use Logstash to modify the data captured by Beats in any way you like. You can also
+use Logstash's many output plugins to integrate with other systems.
+
+image:./images/beats-logstash.png[Integration with Logstash]
+
+To download and install Logstash, use the commands that work
+with your system:
+
+*deb:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+sudo apt-get install openjdk-7-jre
+curl -L -O https://download.elastic.co/logstash/logstash/packages/debian/logstash_{LS-version}-1_all.deb
+sudo dpkg -i logstash_{LS-version}-1_all.deb
+----------------------------------------------------------------------
+
+*rpm:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+sudo yum install java-1.7.0-openjdk
+curl -L -O https://download.elastic.co/logstash/logstash/packages/centos/logstash-{LS-version}-1.noarch.rpm
+sudo rpm -i logstash-{LS-version}-1.noarch.rpm
+----------------------------------------------------------------------
+
+*mac:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+# install Java, e.g. from: https://www.java.com/en/download/manual.jsp
+curl -L -O https://download.elastic.co/logstash/logstash/logstash-{LS-version}.zip
+unzip logstash-{LS-version}.zip
+----------------------------------------------------------------------
+
+*win:*
+
+. If necessary, download and install the latest version of the Java from https://www.java.com[www.java.com].
+
+. Download the Logstash {LS-version} Windows zip file from the
+https://www.elastic.co/downloads/logstash[downloads page].
+
+. Extract the contents of the zip file to a directory on your computer, for example, `C:\Program Files`.
+
+Don't start Logstash yet. You need to set a couple of configuration options first.
+
+[[logstash-setup]]
+==== Setting Up Logstash
+
+In this setup, the Beat sends events to Logstash. Logstash receives
+these events by using the
+https://www.elastic.co/guide/en/logstash/current/plugins-inputs-beats.html[Beats input plugin for Logstash] and then sends the transaction to Elasticsearch by using the
+http://www.elastic.co/guide/en/logstash/current/plugins-outputs-elasticsearch.html[Elasticsearch
+output plugin for Logstash]. The Elasticsearch output plugin uses the bulk API, making
+indexing very efficient.
+
+To set up Logstash:
+
+. Make sure you have the latest compatible version of the Beats input plugin for
+Logstash installed.
++
+The Beats input plugin requires Logstash 1.5.4 or later. If you are using
+Logstash 1.5.4, you must install the Beats input plugin before applying this
+configuration because the plugin is not shipped with 1.5.4. 
++
+To install
+the required plugin, run the following command inside the logstash directory
+(for deb and rpm installs, the directory is `/opt/logstash`).
++
+*deb, rpm, and mac:*
++
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+./bin/logstash-plugin install logstash-input-beats
+----------------------------------------------------------------------
++
+*win:*
++
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+bin\logstash-plugin install logstash-input-beats
+----------------------------------------------------------------------
+
+. Configure Logstash to listen on port 5044 for incoming Beats connections
+and to index into Elasticsearch. You configure Logstash by creating a
+configuration file. For example, you can save the following example configuration
+to a file called `logstash.conf`:
++
+[source,ruby]
+------------------------------------------------------------------------------
+input {
+  beats {
+    port => 5044
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => "localhost:9200"
+    manage_template => false
+    index => "%{[@metadata][beat]}-%{+YYYY.MM.dd}"
+    document_type => "%{[@metadata][type]}"
+  }
+}
+------------------------------------------------------------------------------
++
+Logstash uses this configuration to index events in Elasticsearch in the same
+way that the Beat would, but you get additional buffering and other capabilities
+provided by Logstash.
+
+To use this setup, you'll also need to configure your Beat to use Logstash. For more information, see the documentation for the Beat.
+
+[[logstash-input-update]]
+==== Updating the Beats Input Plugin for Logstash
+
+Plugins have their own release cycle and are often released independent of
+Logstash’s core release cycle. To ensure that you have the latest version of
+the https://www.elastic.co/guide/en/logstash/current/plugins-inputs-beats.html[Beats input plugin for Logstash], 
+run the following command from your Logstash installation:
+
+*deb, rpm, and mac:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+./bin/logstash-plugin update logstash-input-beats
+----------------------------------------------------------------------
+
+*win:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+bin\logstash-plugin update logstash-input-beats
+----------------------------------------------------------------------
+
+Keep in mind that you can update to the latest version of the plugin without
+having to upgrade to a newer version of Logstash. More details about working
+with input plugins in Logstash are available
+https://www.elastic.co/guide/en/logstash/current/working-with-plugins.html[here].
+
+
+==== Starting Logstash
+
+Now you can start Logstash. Use the command that works with your system. If you
+installed Logstash as a deb or rpm package, make sure the config file is in the
+expected directory.
+
+*deb:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+sudo /etc/init.d/logstash start
+----------------------------------------------------------------------
+
+*rpm:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+sudo service logstash start
+----------------------------------------------------------------------
+
+*mac:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+./bin/logstash -f logstash.conf
+----------------------------------------------------------------------
+
+*win:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+bin\logstash.bat -f logstash.conf
+----------------------------------------------------------------------
+
+NOTE: The default configuration for Beats and Logstash uses plain TCP. For
+encryption you must explicitly enable TLS when you configure Beats and Logstash.
+
+You can learn more about installing, configuring, and running Logstash
+https://www.elastic.co/guide/en/logstash/current/getting-started-with-logstash.html[here].
+
+[[kibana-installation]]
+=== Installing Kibana
+
+https://www.elastic.co/products/kibana[Kibana] is a visualization application
+that gets its data from Elasticsearch. It provides a customizable and
+user-friendly UI in which you can combine various widget types to create your
+own dashboards. The dashboards can be easily saved, shared, and linked.
+
+For getting started, we recommend installing Kibana on the same server as
+Elasticsearch, but it is not required. If you install the products on different servers,
+you'll need to change the URL (IP:PORT) of the Elasticsearch server in the
+Kibana configuration file, `config/kibana.yml`, before starting Kibana.
+
+Use the following commands to download and run Kibana.
+
+*deb or rpm:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+curl -L -O https://download.elastic.co/kibana/kibana/kibana-{Kibana-version}-linux-x64.tar.gz
+tar xzvf kibana-{Kibana-version}-linux-x64.tar.gz
+cd kibana-{Kibana-version}-linux-x64/
+./bin/kibana
+----------------------------------------------------------------------
+
+*mac:*
+
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+curl -L -O https://download.elastic.co/kibana/kibana/kibana-{Kibana-version}-darwin-x64.tar.gz
+tar xzvf kibana-{Kibana-version}-darwin-x64.tar.gz
+cd kibana-{Kibana-version}-darwin-x64/
+./bin/kibana
+----------------------------------------------------------------------
+
+*win:*
+
+. Download the Kibana {Kibana-version} Windows zip file from the
+https://www.elastic.co/downloads/kibana[downloads page].
+
+. Extract the contents of the zip file to a directory on your computer, for example, `C:\Program Files`.
+
+. Open a command prompt as an Administrator and navigate to the directory that
+contains the extracted files, for example:
++
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+cd C:\Program Files\kibana-{Kibana-version}-windows
+----------------------------------------------------------------------
+
+. Run the following command to start Kibana:
++
+["source","sh",subs="attributes,callouts"]
+----------------------------------------------------------------------
+bin\kibana.bat
+----------------------------------------------------------------------
+
+You can find Kibana binaries for other operating systems on the
+https://www.elastic.co/downloads/kibana[Kibana downloads page].
+
+==== Launching the Kibana Web Interface
+
+To launch the Kibana web interface, point your browser to port 5601. For example, `http://127.0.0.1:5601`.
+
+You can learn more about Kibana in the
+http://www.elastic.co/guide/en/kibana/current/index.html[Kibana User Guide].
+
