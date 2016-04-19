@@ -33,11 +33,6 @@ commit:
 update-deps:
 	glide update --no-recursive --strip-vcs
 
-.PHONY: gofmt
-gofmt:
-	go get github.com/kardianos/govendor
-	govendor fmt +local
-
 # This is called by the beats packer before building starts
 .PHONY: before-build
 before-build:
