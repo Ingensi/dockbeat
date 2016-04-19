@@ -4,11 +4,10 @@ This file is generated! See etc/fields.yml and scripts/generate_field_docs.py
 ////
 
 [[exported-fields]]
-== Exported fields
+== Exported Fields
 
-This document describes the fields that are exported by the
-dockerbeat. They are grouped in the
-following categories:
+This document describes the fields that are exported by Dockerbeat. They are
+grouped in the following categories:
 
 * <<exported-fields-env>>
 * <<exported-fields-container>>
@@ -19,7 +18,7 @@ following categories:
 * <<exported-fields-log>>
 
 [[exported-fields-env]]
-=== Common fields fields
+=== Common Fields
 
 Contains common fields available in all event types.
 
@@ -92,24 +91,24 @@ The hostname as returned by the operating system on which the Beat is running.
 
 
 [[exported-fields-container]]
-=== Docker container informations fields
+=== Container information Fields
 
 Contains container informations. Details that you can get by running a *docker ps* command.
 
 
 
 [[exported-fields-container]]
-=== Docker container informations fields
+=== Container information Fields
 
 
-==== command
+==== container.command
 
 type: string
 
 Command used to run the Docker container.
 
 
-==== created
+==== container.created
 
 type: date
 
@@ -120,82 +119,81 @@ format: YYYY-MM-DDTHH:MM:SSZ
 Date of the Docker container creation.
 
 
-==== id
+==== container.id
 
 type: string
 
 ID of the Docker container.
 
 
-==== image
+==== container.image
 
 type: string
 
 Name of the Docker image from which contained has been launched.
 
 
-=== labels fields
+=== labels Fields
 
 Key value related to the label metadata of the Docker container.
 
 
-
-==== names
+==== container.names
 
 type: string
 
 Human readable names of the container.
 
 
-=== ports fields
+=== ports Fields
 
 List of published ports.
 
 
 
-==== ip
+==== container.ports.ip
 
 type: string
 
 Binding IP.
 
 
-==== privatePort
+==== container.ports.privatePort
 
 type: integer
 
 Private port (container side) of the binding.
 
 
-==== publicPort
+==== container.ports.publicPort
 
 type: integer
 
 Public port (host side) of the binding.
 
 
-==== type
+==== container.ports.type
 
 type: string
 
 Type of binding. Can be either *tcp* or *udp*.
 
 
-==== sizeRootFs
+==== container.sizeRootFs
 
 type: float
 
 TODO
 
 
-==== sizeRw
+==== container.sizeRw
 
 type: string
 
 TODO
 
 
-==== status
+==== container.status
 
 type: string
 
@@ -203,73 +201,73 @@ Status of the container.
 
 
 [[exported-fields-net]]
-=== Network container statistics fields
+=== Network usage Fields
 
 Gather container metrics about network (rx/tx)
 
 
 
 [[exported-fields-net]]
-=== Network container statistics fields
+=== Network usage Fields
 
 
-==== name
+==== net.name
 
 type: string
 
 Name of the network interface.
 
 
-==== rxBytes_ps
+==== net.rxBytes_ps
 
 type: float
 
 Average number of bytes received per second since the last event.
 
 
-==== rxDropped_ps
+==== net.rxDropped_ps
 
 type: float
 
 Average received dropped packets per second since the last event.
 
 
-==== rxErrors_ps
+==== net.rxErrors_ps
 
 type: float
 
 Average number of errors received per second since the last event.
 
 
-==== rxPackets_ps
+==== net.rxPackets_ps
 
 type: float
 
 Average number of packets received per second since the last event.
 
 
-==== txBytes_ps
+==== net.txBytes_ps
 
 type: float
 
 Average number of bytes transmitted per second since the last event.
 
 
-==== txDropped_ps
+==== net.txDropped_ps
 
 type: float
 
 Average transmitted dropped packets per second since the last event.
 
 
-==== txErrors_ps
+==== net.txErrors_ps
 
 type: float
 
 Average number of errors transmitted per second since the last event.
 
 
-==== txPackets_ps
+==== net.txPackets_ps
 
 type: float
 
@@ -277,59 +275,59 @@ Average number of packets transmitted per second since the last event.
 
 
 [[exported-fields-memory]]
-=== Memory container statistics fields
+=== Memory consumption Fields
 
 Contains metrics about container memory usage.
 
 
 
 [[exported-fields-memory]]
-=== Memory container statistics fields
+=== Memory consumption Fields
 
 
-==== failcnt
+==== memory.failcnt
 
 type: float
 
 TODO
 
 
-==== limit
+==== memory.limit
 
 type: float
 
 Limit of memory (max memory available) in Bytes.
 
 
-==== maxUsage
+==== memory.maxUsage
 
 type: float
 
 Maximum memory used by the container in Bytes.
 
 
-==== totalRss
+==== memory.totalRss
 
 type: float
 
 "Current RSS (applications' Resident Set Size) memory consumption in Bytes."
 
 
-==== totalRss_p
+==== memory.totalRss_p
 
 type: float
 
 "Current RSS (applications' Resident Set Size) memory consumption in percents between 0.0 and 1.0."
 
 
-==== usage
+==== memory.usage
 
 type: float
 
 Current memory consumption in Bytes.
 
 
-==== usage_p
+==== memory.usage_p
 
 type: float
 
@@ -337,31 +335,31 @@ Amount of memory used by the container in percents between 0.0 and 1.0.
 
 
 [[exported-fields-blkio]]
-=== Blkio (disk) container statistics fields
+=== IO disk usage Fields
 
 Gather disk usage of the current container.
 
 
 
 [[exported-fields-blkio]]
-=== Blkio (disk) container statistics fields
+=== IO disk usage Fields
 
 
-==== read_ps
+==== blkio.read_ps
 
 type: int
 
 It represents average amount of bytes read per second by the container on disk(s) during the period.
 
 
-==== write_ps
+==== blkio.write_ps
 
 type: int
 
 It represents average amount of bytes written per second by the container on disk(s) during the period.
 
 
-==== total_ps
+==== blkio.total_ps
 
 type: int
 
@@ -369,160 +367,161 @@ It represents average amount of bytes read and written per second by the contain
 
 
 [[exported-fields-cpu]]
-=== CPU container statistics fields
+=== CPU consumption Fields
 
 Gather cpu consumption of the current container.
 
 
 
 [[exported-fields-cpu]]
-=== CPU container statistics fields
+=== CPU consumption Fields
 
 
-==== totalUsage
+==== cpu.totalUsage
 
 type: float
 
 Total cpu consumption in percent. This value can be greater than 100%, depending on the number of available CPUs.
 
 
-==== usageInKernelmode
+==== cpu.usageInKernelmode
 
 type: float
 
 Same as *totalUsage*, but only the Kernel mode consumptions.
 
 
-==== usageInUsermode
+==== cpu.usageInUsermode
 
 type: float
 
 Same as *totalUsage*, but only the User mode consumptions.
 
 
-=== percpuUsage fields
+=== percpuUsage Fields
 
 Detailled cpu consumption per cpu (in percent).
 
 
 
-==== cpu0
+==== cpu.percpuUsage.cpu0
 
 type: float
 
-==== cpu1
+==== cpu.percpuUsage.cpu1
 
 type: float
 
-==== cpu2
+==== cpu.percpuUsage.cpu2
 
 type: float
 
-==== cpu3
+==== cpu.percpuUsage.cpu3
 
 type: float
 
-==== cpu4
+==== cpu.percpuUsage.cpu4
 
 type: float
 
-==== cpu5
+==== cpu.percpuUsage.cpu5
 
 type: float
 
-==== cpu6
+==== cpu.percpuUsage.cpu6
 
 type: float
 
-==== cpu7
+==== cpu.percpuUsage.cpu7
 
 type: float
 
-==== cpu8
+==== cpu.percpuUsage.cpu8
 
 type: float
 
-==== cpu9
+==== cpu.percpuUsage.cpu9
 
 type: float
 
-==== cpu10
+==== cpu.percpuUsage.cpu10
 
 type: float
 
-==== cpu11
+==== cpu.percpuUsage.cpu11
 
 type: float
 
-==== cpu12
+==== cpu.percpuUsage.cpu12
 
 type: float
 
-==== cpu13
+==== cpu.percpuUsage.cpu13
 
 type: float
 
-==== cpu14
+==== cpu.percpuUsage.cpu14
 
 type: float
 
-==== cpu15
+==== cpu.percpuUsage.cpu15
 
 type: float
 
-==== cpu16
+==== cpu.percpuUsage.cpu16
 
 type: float
 
-==== cpu17
+==== cpu.percpuUsage.cpu17
 
 type: float
 
-==== cpu18
+==== cpu.percpuUsage.cpu18
 
 type: float
 
-==== cpu19
+==== cpu.percpuUsage.cpu19
 
 type: float
 
-==== cpu20
+==== cpu.percpuUsage.cpu20
 
 type: float
 
-==== cpu21
+==== cpu.percpuUsage.cpu21
 
 type: float
 
-==== cpu22
+==== cpu.percpuUsage.cpu22
 
 type: float
 
-==== cpu23
+==== cpu.percpuUsage.cpu23
 
 type: float
 
 [[exported-fields-log]]
-=== Dockerbeat logs fields
+=== Logs about dockerbeat agent status Fields
 
 Special event sent by dockerbeat to log some events.
 
 
 
 [[exported-fields-log]]
-=== Dockerbeat logs fields
+=== Logs about dockerbeat agent status Fields
 
 
-==== level
+==== log.level
 
 type: string
 
 Log level (debug, info, warning, error, fatal).
 
 
-==== message
+==== log.message
 
 type: string
 
 Log message.
+
 
