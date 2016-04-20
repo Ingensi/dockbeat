@@ -90,6 +90,26 @@ Name of the Beat sending the events. If the shipper name is set in the configura
 The hostname as returned by the operating system on which the Beat is running.
 
 
+=== labels Fields
+
+Array of label metadata of the Docker container.
+
+
+
+==== labels.key
+
+type: string
+
+Key of the container label.
+
+
+==== labels.value
+
+type: string
+
+Value of the container label.
+
+
 [[exported-fields-container]]
 === Container information Fields
 
@@ -131,11 +151,6 @@ ID of the Docker container.
 type: string
 
 Name of the Docker image from which contained has been launched.
-
-
-=== labels Fields
-
-Key value related to the label metadata of the Docker container.
 
 
 ==== container.names

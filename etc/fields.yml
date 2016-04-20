@@ -64,6 +64,21 @@ env:
         The hostname as returned by the operating system on which the Beat is
         running.
 
+    - name: labels
+      type: group
+      description: >
+        Array of label metadata of the Docker container.
+      fields:
+        - name: key
+          type: string
+          description: >
+            Key of the container label.
+
+        - name: value
+          type: string
+          description: >
+            Value of the container label.
+
 container:
   type: group
   description: >
@@ -93,12 +108,6 @@ container:
           type: string
           description: >
             Name of the Docker image from which contained has been launched.
-
-        - name: labels
-          type: group
-          description: >
-            Key value related to the label metadata of the Docker container.
-          fields: []
 
         - name: names
           type: string
