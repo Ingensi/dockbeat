@@ -245,6 +245,7 @@ func (d *EventGenerator) GetBlkioEvent(container *docker.APIContainers, stats *d
 			"type":          "blkio",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
+			"containerLabels":     d.buildLabelArray(container.Labels),
 			"dockerSocket":  d.Socket,
 			"blkio": common.MapStr{
 				"read_ps":  float64(0),
@@ -345,14 +346,17 @@ func (d *EventGenerator) expiredSavedData(date time.Time) bool {
 	return !date.Add(2 * d.Period).After(time.Now())
 }
 
-func (d *EventGenerator) buildLabelArray(labels map[string]string) []Label {
+func (d *EventGenerator) buildLabelArray(labels map[string]string) []common.MapStr {
 
-	output_labels := make([]Label, len(labels))
+	output_labels := make([]common.MapStr, len(labels))
 
 	i := 0
 	for k, v := range labels {
 		label := strings.Replace(k, ".", "_", -1)
-		output_labels[i] = Label{label, v}
+		output_labels[i] = common.MapStr{
+			"key" : label,
+			"value" : v,
+		}
 		i++
 	}
 

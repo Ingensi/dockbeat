@@ -35,7 +35,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	newTimestamp := oldTimestamp.Add(period)
 
 	// a container
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
@@ -136,6 +136,16 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"containerLabels": []common.MapStr{
+				common.MapStr{
+					"key" : "label1",
+					"value" : "value1",
+				},
+				common.MapStr{
+					"key" : "label2",
+					"value" : "value2",
+				},
+			},
 			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "eth0",
@@ -153,6 +163,16 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"containerLabels": []common.MapStr{
+				common.MapStr{
+					"key" : "label1",
+					"value" : "value1",
+				},
+				common.MapStr{
+					"key" : "label2",
+					"value" : "value2",
+				},
+			},
 			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "em1",
@@ -185,7 +205,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			}
 		}
 		if !checked {
-			assert.Fail(t, "unable to find network in events: %s", expectedEvents[i].String())
+			assert.Fail(t, "unable to find network in events: %v", expectedEvents[i].String())
 		}
 	}
 
@@ -218,7 +238,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	newTimestamp := oldTimestamp.Add(period)
 
 	// a container
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
@@ -331,6 +351,16 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"containerLabels": []common.MapStr{
+				common.MapStr{
+					"key" : "label1",
+					"value" : "value1",
+				},
+				common.MapStr{
+					"key" : "label2",
+					"value" : "value2",
+				},
+			},
 			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "eth0",
@@ -348,6 +378,16 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"containerLabels": []common.MapStr{
+				common.MapStr{
+					"key" : "label1",
+					"value" : "value1",
+				},
+				common.MapStr{
+					"key" : "label2",
+					"value" : "value2",
+				},
+			},
 			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "em1",
@@ -374,13 +414,13 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	for i, _ := range expectedEvents {
 		checked := false
 		for j, _ := range events {
-			if expectedEvents[i].String() == events[j].String() {
+			if equalEvent(expectedEvents[i], events[j]) {
 				checked = true
 				break
 			}
 		}
 		if !checked {
-			assert.Fail(t, "unable to find network in events: %s", expectedEvents[i].String())
+			assert.Fail(t, "unable to find network in events: %v", expectedEvents[i].String())
 		}
 	}
 
@@ -415,7 +455,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	newTimestamp := oldTimestamp.Add(period)
 
 	// a container
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
@@ -506,6 +546,16 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": "name1",
+			"containerLabels": []common.MapStr{
+				common.MapStr{
+					"key" : "label1",
+					"value" : "value1",
+				},
+				common.MapStr{
+					"key" : "label2",
+					"value" : "value2",
+				},
+			},
 			"dockerSocket":  &socket,
 			"net": common.MapStr{
 				"name":         "eth0",
@@ -527,7 +577,9 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 
 	// THEN
 	// check returned events
-	assert.Equal(t, expectedEvents, events)
+	for i := 0; i < len(expectedEvents); i++ {
+		assert.True(t, equalEvent(expectedEvents[i], events[i]))
+	}
 
 	// check that new stats saved
 	assert.Equal(t, eventGenerator.NetworkStats.M[container.ID]["eth0"], newNetworkData["eth0"])
@@ -552,7 +604,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	// docker socket
 	socket := "unix:///some/docker/socket"
 
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	labels["label3.with.dots"] = "value3"
@@ -576,24 +628,31 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, calculator.CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
-	// sanitized lables expected
-	labels_expected := make(map[string]string)
-	labels_expected["label1"] = "value1"
-	labels_expected["label2"] = "value2"
-	labels_expected["label3_with_dots"] = "value3"
-
 	expectedEvent := common.MapStr{
 		"@timestamp":    common.Time(timestamp),
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"containerLabels": []common.MapStr{
+			common.MapStr{
+				"key" : "label1",
+				"value" : "value1",
+			},
+			common.MapStr{
+				"key" : "label2",
+				"value" : "value2",
+			},
+			common.MapStr{
+				"key" : "label3_with_dots",
+				"value" : "value3",
+			},
+		},
 		"dockerSocket":  &socket,
 		"container": common.MapStr{
 			"id":      container.ID,
 			"command": container.Command,
 			"created": time.Unix(container.Created, 0),
 			"image":   container.Image,
-			"labels":  labels_expected,
 			"names":   container.Names,
 			"ports": []map[string]interface{}{common.MapStr{
 				"ip":          container.Ports[0].IP,
@@ -611,7 +670,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	event := eventGenerator.GetContainerEvent(&container, stats)
 
 	// THEN
-	assert.Equal(t, expectedEvent, event)
+	assert.True(t, equalEvent(expectedEvent, event))
 }
 
 func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
@@ -619,7 +678,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	// docker socket
 	socket := "unix:///some/docker/socket"
 
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	labels["label3.with.dots"] = "value3"
@@ -643,24 +702,31 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, calculator.CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
-	// sanitized lables expected
-	labels_expected := make(map[string]string)
-	labels_expected["label1"] = "value1"
-	labels_expected["label2"] = "value2"
-	labels_expected["label3_with_dots"] = "value3"
-
 	expectedEvent := common.MapStr{
 		"@timestamp":    common.Time(timestamp),
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"containerLabels": []common.MapStr{
+			common.MapStr{
+				"key" : "label1",
+				"value" : "value1",
+			},
+			common.MapStr{
+				"key" : "label2",
+				"value" : "value2",
+			},
+			common.MapStr{
+				"key" : "label3_with_dots",
+				"value" : "value3",
+			},
+		},
 		"dockerSocket":  &socket,
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
 			"created":    time.Unix(container.Created, 0),
 			"image":      container.Image,
-			"labels":     labels_expected,
 			"names":      container.Names,
 			"ports":      []map[string]interface{}{},
 			"sizeRootFs": container.SizeRootFs,
@@ -673,7 +739,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	event := eventGenerator.GetContainerEvent(&container, stats)
 
 	// THEN
-	assert.Equal(t, expectedEvent, event)
+	assert.True(t, equalEvent(expectedEvent, event))
 }
 
 // CPU EVENT GENERATION
@@ -693,7 +759,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	socket := "unix:///some/docker/socket"
 
 	// a container
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
@@ -749,6 +815,16 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		"type":          "cpu",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"containerLabels": []common.MapStr{
+			common.MapStr{
+				"key" : "label1",
+				"value" : "value1",
+			},
+			common.MapStr{
+				"key" : "label2",
+				"value" : "value2",
+			},
+		},
 		"dockerSocket":  &socket,
 		"cpu": common.MapStr{
 			"percpuUsage":       mockedCPUCalculator.PerCpuUsage(),
@@ -766,7 +842,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 
 	// THEN
 	// check returned events
-	assert.Equal(t, expectedEvent, event)
+	assert.True(t, equalEvent(expectedEvent, event))
 }
 
 // MEMORY EVENT GENERATION
@@ -782,7 +858,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	socket := "unix:///some/docker/socket"
 
 	// a container
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
@@ -809,6 +885,16 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"type":          "memory",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"containerLabels": []common.MapStr{
+			common.MapStr{
+				"key" : "label1",
+				"value" : "value1",
+			},
+			common.MapStr{
+				"key" : "label2",
+				"value" : "value2",
+			},
+		},
 		"dockerSocket":  &socket,
 		"memory": common.MapStr{
 			"failcnt":    stats.MemoryStats.Failcnt,
@@ -829,7 +915,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 
 	// THEN
 	// check returned events
-	assert.Equal(t, expectedEvent, event)
+	assert.True(t, equalEvent(expectedEvent, event))
 }
 
 // BLKIO EVENT GENERATION
@@ -854,7 +940,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	newTimestamp := time.Now()
 
 	// a container
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
@@ -896,6 +982,16 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"containerLabels": []common.MapStr{
+			common.MapStr{
+				"key" : "label1",
+				"value" : "value1",
+			},
+			common.MapStr{
+				"key" : "label2",
+				"value" : "value2",
+			},
+		},
 		"dockerSocket":  &socket,
 		"blkio": common.MapStr{
 			"read_ps":  float64(0),
@@ -912,7 +1008,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 
 	// THEN
 	// check returned events
-	assert.Equal(t, expectedEvent, event)
+	assert.True(t, equalEvent(expectedEvent, event))
 
 	assert.Equal(t, eventGenerator.BlkioStats.M[container.ID], newBlkioData)
 }
@@ -939,7 +1035,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	newTimestamp := oldTimestamp.Add(period)
 
 	// a container
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
@@ -989,6 +1085,16 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"containerLabels": []common.MapStr{
+			common.MapStr{
+				"key" : "label1",
+				"value" : "value1",
+			},
+			common.MapStr{
+				"key" : "label2",
+				"value" : "value2",
+			},
+		},
 		"dockerSocket":  &socket,
 		"blkio": common.MapStr{
 			"read_ps":  mockedBlkioCalculator.GetReadPs(),
@@ -1005,7 +1111,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 
 	// THEN
 	// check returned events
-	assert.Equal(t, expectedEvent, event)
+	assert.True(t, equalEvent(expectedEvent, event))
 
 	// check that new stats saved
 	assert.Equal(t, eventGenerator.BlkioStats.M[container.ID], newBlkioData)
@@ -1033,7 +1139,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	newTimestamp := oldTimestamp.Add(period)
 
 	// a container
-	labels := make(map[string]string)
+	labels := map[string]string{}
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
@@ -1091,6 +1197,16 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		"type":          "blkio",
 		"containerID":   container.ID,
 		"containerName": "name1",
+		"containerLabels": []common.MapStr{
+			common.MapStr{
+				"key" : "label1",
+				"value" : "value1",
+			},
+			common.MapStr{
+				"key" : "label2",
+				"value" : "value2",
+			},
+		},
 		"dockerSocket":  &socket,
 		"blkio": common.MapStr{
 			"read_ps":  mockedBlkioCalculator.GetReadPs(),
@@ -1107,7 +1223,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 
 	// THEN
 	// check returned events
-	assert.Equal(t, expectedEvent, event)
+	assert.True(t, equalEvent(expectedEvent, event))
 
 	// check that new stats saved
 	assert.Equal(t, eventGenerator.BlkioStats.M[container.ID], newBlkioData)
@@ -1155,43 +1271,43 @@ func TestEventGeneratorGetLogEvent(t *testing.T) {
 
 	// THEN
 	// check returned events
-	assert.Equal(t, expectedEvent, event)
+	assert.True(t, equalEvent(expectedEvent, event))
 }
 
 // NEEDED TYPES
 
 type MemoryStats struct {
-	Stats struct {
-		TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-		Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-		MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-		TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-		Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-		Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-		TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-		Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-		Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-		Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-		TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-		Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-		TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-		TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-		TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-		TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-		RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-		HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-		TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-		TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-		ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-		TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-		TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-		TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-		InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-		ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-		Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-		InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-		TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-	} `json:"stats,omitempty" yaml:"stats,omitempty"`
+	Stats    struct {
+			 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+			 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+			 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+			 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+			 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+			 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+			 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+			 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+			 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+			 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+			 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+			 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+			 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+			 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+			 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+			 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+			 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+			 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+			 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+			 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+			 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+			 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+			 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+			 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+			 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+			 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+			 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+			 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+			 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+		 } `json:"stats,omitempty" yaml:"stats,omitempty"`
 	MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 	Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
 	Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
@@ -1258,39 +1374,39 @@ func getMockedCPUCalculator(number float64) calculator.CPUCalculator {
 
 func getMemoryStats(read time.Time, number uint64) docker.Stats {
 	type memoryStats struct {
-		Stats struct {
-			TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
-			Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
-			MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
-			TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
-			Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
-			Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
-			TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
-			Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
-			Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
-			Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
-			TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
-			Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
-			TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
-			TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
-			TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
-			TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
-			RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
-			HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
-			TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
-			TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
-			ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
-			TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
-			TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
-			TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
-			InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
-			ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
-			Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
-			InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
-			TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
-			HierarchicalMemswLimit  uint64 `json:"hierarchical_memsw_limit,omitempty" yaml:"hierarchical_memsw_limit,omitempty"`
-			Swap                    uint64 `json:"swap,omitempty" yaml:"swap,omitempty"`
-		} `json:"stats,omitempty" yaml:"stats,omitempty"`
+		Stats    struct {
+				 TotalPgmafault          uint64 `json:"total_pgmafault,omitempty" yaml:"total_pgmafault,omitempty"`
+				 Cache                   uint64 `json:"cache,omitempty" yaml:"cache,omitempty"`
+				 MappedFile              uint64 `json:"mapped_file,omitempty" yaml:"mapped_file,omitempty"`
+				 TotalInactiveFile       uint64 `json:"total_inactive_file,omitempty" yaml:"total_inactive_file,omitempty"`
+				 Pgpgout                 uint64 `json:"pgpgout,omitempty" yaml:"pgpgout,omitempty"`
+				 Rss                     uint64 `json:"rss,omitempty" yaml:"rss,omitempty"`
+				 TotalMappedFile         uint64 `json:"total_mapped_file,omitempty" yaml:"total_mapped_file,omitempty"`
+				 Writeback               uint64 `json:"writeback,omitempty" yaml:"writeback,omitempty"`
+				 Unevictable             uint64 `json:"unevictable,omitempty" yaml:"unevictable,omitempty"`
+				 Pgpgin                  uint64 `json:"pgpgin,omitempty" yaml:"pgpgin,omitempty"`
+				 TotalUnevictable        uint64 `json:"total_unevictable,omitempty" yaml:"total_unevictable,omitempty"`
+				 Pgmajfault              uint64 `json:"pgmajfault,omitempty" yaml:"pgmajfault,omitempty"`
+				 TotalRss                uint64 `json:"total_rss,omitempty" yaml:"total_rss,omitempty"`
+				 TotalRssHuge            uint64 `json:"total_rss_huge,omitempty" yaml:"total_rss_huge,omitempty"`
+				 TotalWriteback          uint64 `json:"total_writeback,omitempty" yaml:"total_writeback,omitempty"`
+				 TotalInactiveAnon       uint64 `json:"total_inactive_anon,omitempty" yaml:"total_inactive_anon,omitempty"`
+				 RssHuge                 uint64 `json:"rss_huge,omitempty" yaml:"rss_huge,omitempty"`
+				 HierarchicalMemoryLimit uint64 `json:"hierarchical_memory_limit,omitempty" yaml:"hierarchical_memory_limit,omitempty"`
+				 TotalPgfault            uint64 `json:"total_pgfault,omitempty" yaml:"total_pgfault,omitempty"`
+				 TotalActiveFile         uint64 `json:"total_active_file,omitempty" yaml:"total_active_file,omitempty"`
+				 ActiveAnon              uint64 `json:"active_anon,omitempty" yaml:"active_anon,omitempty"`
+				 TotalActiveAnon         uint64 `json:"total_active_anon,omitempty" yaml:"total_active_anon,omitempty"`
+				 TotalPgpgout            uint64 `json:"total_pgpgout,omitempty" yaml:"total_pgpgout,omitempty"`
+				 TotalCache              uint64 `json:"total_cache,omitempty" yaml:"total_cache,omitempty"`
+				 InactiveAnon            uint64 `json:"inactive_anon,omitempty" yaml:"inactive_anon,omitempty"`
+				 ActiveFile              uint64 `json:"active_file,omitempty" yaml:"active_file,omitempty"`
+				 Pgfault                 uint64 `json:"pgfault,omitempty" yaml:"pgfault,omitempty"`
+				 InactiveFile            uint64 `json:"inactive_file,omitempty" yaml:"inactive_file,omitempty"`
+				 TotalPgpgin             uint64 `json:"total_pgpgin,omitempty" yaml:"total_pgpgin,omitempty"`
+				 HierarchicalMemswLimit  uint64 `json:"hierarchical_memsw_limit,omitempty" yaml:"hierarchical_memsw_limit,omitempty"`
+				 Swap                    uint64 `json:"swap,omitempty" yaml:"swap,omitempty"`
+			 } `json:"stats,omitempty" yaml:"stats,omitempty"`
 		MaxUsage uint64 `json:"max_usage,omitempty" yaml:"max_usage,omitempty"`
 		Usage    uint64 `json:"usage,omitempty" yaml:"usage,omitempty"`
 		Failcnt  uint64 `json:"failcnt,omitempty" yaml:"failcnt,omitempty"`
@@ -1341,4 +1457,18 @@ func getBlkioStats(read time.Time, reads uint64, writes uint64, total uint64) do
 			},
 		},
 	}
+}
+
+func equalEvent(expectedEvent common.MapStr, event common.MapStr) bool {
+	// Remove labels to test
+	// expectedLabels := expectedEvent["containerLabels"]
+	// labels := event["containerLabels"]
+	expectedEvent["containerLabels"] = []common.MapStr{}
+	event["containerLabels"] = []common.MapStr{}
+
+	// test equality
+	return expectedEvent.String() == event.String()
+
+	// TODO test labels
+
 }
