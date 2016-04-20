@@ -199,7 +199,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	for i, _ := range expectedEvents {
 		checked := false
 		for j, _ := range events {
-			if expectedEvents[i].String() == events[j].String() {
+			if equalEvent(expectedEvents[i], events[j]) {
 				checked = true
 				break
 			}

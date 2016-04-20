@@ -23,6 +23,14 @@ dockerbeat:
 
     # Path to the key file
     key_path: ${DOCKER_KEY_PATH}
+
+  # Enable or disable stats shipping
+  stats:
+    container: true
+    net: true
+    memory: true
+    blkio: true
+    cpu: true
 ###############################################################################
 ############################# Libbeat Config ##################################
 # Base config file used by all other beats for using libbeat features
