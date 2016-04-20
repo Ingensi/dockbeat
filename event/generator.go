@@ -19,6 +19,11 @@ type EGBlkioStats struct {
 	M map[string]calculator.BlkioData
 }
 
+type Label struct {
+	key   string
+	value string
+}
+
 type EventGenerator struct {
 	Socket            *string
 	NetworkStats      EGNetworkStats
@@ -33,13 +38,13 @@ func (d *EventGenerator) GetContainerEvent(container *docker.APIContainers, stat
 		"type":          "container",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
+		"containerLabels":     d.buildLabelArray(container.Labels),
 		"dockerSocket":  d.Socket,
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
 			"created":    time.Unix(container.Created, 0),
 			"image":      container.Image,
-			"labels":     d.sanitizeLabelNames(container.Labels),
 			"names":      container.Names,
 			"ports":      d.convertContainerPorts(&container.Ports),
 			"sizeRootFs": container.SizeRootFs,
@@ -72,6 +77,7 @@ func (d *EventGenerator) GetCpuEvent(container *docker.APIContainers, stats *doc
 		"type":          "cpu",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
+		"containerLabels":     d.buildLabelArray(container.Labels),
 		"dockerSocket":  d.Socket,
 		"cpu": common.MapStr{
 			"percpuUsage":       calculator.PerCpuUsage(),
@@ -141,6 +147,7 @@ func (d *EventGenerator) GetNetworkEvent(container *docker.APIContainers, time t
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
+			"containerLabels":     d.buildLabelArray(container.Labels),
 			"dockerSocket":  d.Socket,
 			"net": common.MapStr{
 				"name":         network,
@@ -160,6 +167,7 @@ func (d *EventGenerator) GetNetworkEvent(container *docker.APIContainers, time t
 			"type":          "net",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
+			"containerLabels":     d.buildLabelArray(container.Labels),
 			"dockerSocket":  d.Socket,
 			"net": common.MapStr{
 				"name":         network,
@@ -191,6 +199,7 @@ func (d *EventGenerator) GetMemoryEvent(container *docker.APIContainers, stats *
 		"type":          "memory",
 		"containerID":   container.ID,
 		"containerName": d.extractContainerName(container.Names),
+		"containerLabels":     d.buildLabelArray(container.Labels),
 		"dockerSocket":  d.Socket,
 		"memory": common.MapStr{
 			"failcnt":    stats.MemoryStats.Failcnt,
@@ -222,6 +231,7 @@ func (d *EventGenerator) GetBlkioEvent(container *docker.APIContainers, stats *d
 			"type":          "blkio",
 			"containerID":   container.ID,
 			"containerName": d.extractContainerName(container.Names),
+			"containerLabels":     d.buildLabelArray(container.Labels),
 			"dockerSocket":  d.Socket,
 			"blkio": common.MapStr{
 				"read_ps":  calculator.GetReadPs(),
@@ -335,12 +345,16 @@ func (d *EventGenerator) expiredSavedData(date time.Time) bool {
 	return !date.Add(2 * d.Period).After(time.Now())
 }
 
-func (d *EventGenerator) sanitizeLabelNames(labels map[string]string) map[string]string {
+func (d *EventGenerator) buildLabelArray(labels map[string]string) []Label {
 
-	labels_sanitized := make(map[string]string)
+	output_labels := make([]Label, len(labels))
+
+	i := 0
 	for k, v := range labels {
-		labels_sanitized[strings.Replace(k, ".", "_", -1)] = v
+		label := strings.Replace(k, ".", "_", -1)
+		output_labels[i] = Label{label, v}
+		i++
 	}
 
-	return labels_sanitized
+	return output_labels
 }

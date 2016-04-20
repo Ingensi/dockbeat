@@ -53,18 +53,7 @@ env:
         URI to the monitored docker daemon.
       required: true
 
-    - name: beat.name
-      description: >
-        Name of the Beat sending the events. If the shipper name is set
-        in the configuration file, then that value is used. If it is not set,
-        the hostname is used.
-
-    - name: beat.hostname
-      description: >
-        The hostname as returned by the operating system on which the Beat is
-        running.
-
-    - name: labels
+    - name: containerLabels
       type: group
       description: >
         Array of label metadata of the Docker container.
@@ -78,6 +67,17 @@ env:
           type: string
           description: >
             Value of the container label.
+
+    - name: beat.name
+      description: >
+        Name of the Beat sending the events. If the shipper name is set
+        in the configuration file, then that value is used. If it is not set,
+        the hostname is used.
+
+    - name: beat.hostname
+      description: >
+        The hostname as returned by the operating system on which the Beat is
+        running.
 
 container:
   type: group
