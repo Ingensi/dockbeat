@@ -53,6 +53,21 @@ env:
         URI to the monitored docker daemon.
       required: true
 
+    - name: containerLabels
+      type: group
+      description: >
+        Array of label metadata of the Docker container.
+      fields:
+        - name: key
+          type: string
+          description: >
+            Key of the container label.
+
+        - name: value
+          type: string
+          description: >
+            Value of the container label.
+
     - name: beat.name
       description: >
         Name of the Beat sending the events. If the shipper name is set
@@ -93,12 +108,6 @@ container:
           type: string
           description: >
             Name of the Docker image from which contained has been launched.
-
-        - name: labels
-          type: group
-          description: >
-            Key value related to the label metadata of the Docker container.
-          fields: []
 
         - name: names
           type: string

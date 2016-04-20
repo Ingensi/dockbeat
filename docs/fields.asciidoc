@@ -80,6 +80,26 @@ required: True
 URI to the monitored docker daemon.
 
 
+=== containerLabels Fields
+
+Array of label metadata of the Docker container.
+
+
+
+==== containerLabels.key
+
+type: string
+
+Key of the container label.
+
+
+==== containerLabels.value
+
+type: string
+
+Value of the container label.
+
+
 ==== beat.name
 
 Name of the Beat sending the events. If the shipper name is set in the configuration file, then that value is used. If it is not set, the hostname is used.
@@ -131,11 +151,6 @@ ID of the Docker container.
 type: string
 
 Name of the Docker image from which contained has been launched.
-
-
-=== labels Fields
-
-Key value related to the label metadata of the Docker container.
 
 
 ==== container.names
