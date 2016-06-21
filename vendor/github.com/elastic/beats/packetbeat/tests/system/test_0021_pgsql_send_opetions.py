@@ -1,4 +1,4 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 """
 Tests for the pgsql's send_request and send_response
@@ -6,7 +6,7 @@ options.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     def test_default_settings(self):
         """

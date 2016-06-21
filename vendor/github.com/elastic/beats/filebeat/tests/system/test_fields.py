@@ -1,4 +1,4 @@
-from filebeat import BaseTest
+from filebeat import TestCase
 import os
 import socket
 
@@ -7,28 +7,26 @@ Tests for the custom fields functionality.
 """
 
 
-class Test(BaseTest):
-
+class Test(TestCase):
     def test_custom_fields(self):
         """
         Tests that custom fields show up in the output dict.
         """
         self.render_config_template(
             path=os.path.abspath(self.working_dir) + "/test.log",
-            fields={"hello": "world", "number": 2}
+            fields={"hello": "world"}
         )
 
         with open(self.working_dir + "/test.log", "w") as f:
             f.write("test message\n")
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
         self.wait_until(lambda: self.output_has(lines=1))
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
         doc = output[0]
         assert doc["fields.hello"] == "world"
-        assert doc["fields.number"] == 2
 
     def test_custom_fields_under_root(self):
         """
@@ -48,16 +46,16 @@ class Test(BaseTest):
         with open(self.working_dir + "/test.log", "w") as f:
             f.write("test message\n")
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
         self.wait_until(lambda: self.output_has(lines=1))
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
         doc = output[0]
         print doc
         assert doc["hello"] == "world"
         assert doc["type"] == "log2"
-        assert doc["timestamp"] == 2
+        assert doc["timestamp"] == "2"
         assert "fields" not in doc
 
     def test_beat_fields(self):
@@ -73,12 +71,11 @@ class Test(BaseTest):
         with open(self.working_dir + "/test.log", "w") as f:
             f.write("test message\n")
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
         self.wait_until(lambda: self.output_has(lines=1))
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
         doc = output[0]
         assert doc["beat.name"] == "testShipperName"
         assert doc["beat.hostname"] == socket.gethostname()
-        assert "fields" not in doc

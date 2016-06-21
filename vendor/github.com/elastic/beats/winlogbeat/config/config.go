@@ -4,12 +4,10 @@ package config
 import (
 	"fmt"
 	"net"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/elastic/beats/libbeat/common"
 	"github.com/joeshaw/multierror"
 )
 
@@ -29,41 +27,15 @@ type Validator interface {
 
 // Settings is the root of the Winlogbeat configuration data hierarchy.
 type Settings struct {
-	Winlogbeat WinlogbeatConfig       `config:"winlogbeat"`
-	All        map[string]interface{} `config:",inline"`
-}
-
-// Validate validates the Settings data and returns an error describing
-// all problems or nil if there are none.
-func (s Settings) Validate() error {
-	validKeys := []string{"winlogbeat", "output", "shipper", "logging"}
-	sort.Strings(validKeys)
-
-	// Check for invalid top-level keys.
-	var errs multierror.Errors
-	for k := range s.All {
-		k = strings.ToLower(k)
-		i := sort.SearchStrings(validKeys, k)
-		if i >= len(validKeys) || validKeys[i] != k {
-			errs = append(errs, fmt.Errorf("Invalid top-level key '%s' "+
-				"found. Valid keys are %s", k, strings.Join(validKeys, ", ")))
-		}
-	}
-
-	err := s.Winlogbeat.Validate()
-	if err != nil {
-		errs = append(errs, err)
-	}
-
-	return errs.Err()
+	Winlogbeat WinlogbeatConfig
 }
 
 // WinlogbeatConfig contains all of Winlogbeat configuration data.
 type WinlogbeatConfig struct {
-	IgnoreOlder  string           `config:"ignore_older"`
-	EventLogs    []EventLogConfig `config:"event_logs"`
-	Metrics      MetricsConfig    `config:"metrics"`
-	RegistryFile string           `config:"registry_file"`
+	IgnoreOlder  string           `yaml:"ignore_older"`
+	EventLogs    []EventLogConfig `yaml:"event_logs"`
+	Metrics      MetricsConfig    `yaml:"metrics"`
+	RegistryFile string           `yaml:"registry_file"`
 }
 
 // Validate validates the WinlogbeatConfig data and returns an error describing
@@ -133,10 +105,9 @@ func (mc MetricsConfig) Validate() error {
 // EventLogConfig holds the configuration data that specifies which event logs
 // to monitor.
 type EventLogConfig struct {
-	common.EventMetadata `config:",inline"`
-	Name                 string
-	IgnoreOlder          string `config:"ignore_older"`
-	API                  string
+	Name        string
+	IgnoreOlder string `yaml:"ignore_older"`
+	API         string
 }
 
 // Validate validates the EventLogConfig data and returns an error describing

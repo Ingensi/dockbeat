@@ -1,11 +1,11 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 """
 Tests for checking the hide_keywords options.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     def test_http_hide_post(self):
         """

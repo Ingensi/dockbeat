@@ -10,24 +10,25 @@ import (
 )
 
 func init() {
-	outputs.RegisterOutputPlugin("console", New)
+	outputs.RegisterOutputPlugin("console", plugin{})
+}
+
+type plugin struct{}
+
+func (p plugin) NewOutput(
+	config *outputs.MothershipConfig,
+	topologyExpire int,
+) (outputs.Outputer, error) {
+	pretty := config.Pretty != nil && *config.Pretty
+	return newConsole(pretty), nil
 }
 
 type console struct {
-	config config
-}
-
-func New(config *common.Config, _ int) (outputs.Outputer, error) {
-	c := &console{config: defaultConfig}
-	err := config.Unpack(&c.config)
-	if err != nil {
-		return nil, err
-	}
-	return c, nil
+	pretty bool
 }
 
 func newConsole(pretty bool) *console {
-	return &console{config{pretty}}
+	return &console{pretty}
 }
 
 func writeBuffer(buf []byte) error {
@@ -43,11 +44,6 @@ func writeBuffer(buf []byte) error {
 	return nil
 }
 
-// Implement Outputer
-func (c *console) Close() error {
-	return nil
-}
-
 func (c *console) PublishEvent(
 	s outputs.Signaler,
 	opts outputs.Options,
@@ -56,7 +52,7 @@ func (c *console) PublishEvent(
 	var jsonEvent []byte
 	var err error
 
-	if c.config.Pretty {
+	if c.pretty {
 		jsonEvent, err = json.MarshalIndent(event, "", "  ")
 	} else {
 		jsonEvent, err = json.Marshal(event)

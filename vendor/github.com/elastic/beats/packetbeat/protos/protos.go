@@ -56,69 +56,100 @@ func validatePorts(ports []int) error {
 	return nil
 }
 
+// Functions to be exported by a protocol plugin
+type ProtocolPlugin interface {
+	// Called to initialize the Plugin
+	Init(test_mode bool, results publish.Transactions) error
+
+	// Called to return the configured ports
+	GetPorts() []int
+}
+
+type TcpProtocolPlugin interface {
+	ProtocolPlugin
+
+	// Called when TCP payload data is available for parsing.
+	Parse(pkt *Packet, tcptuple *common.TcpTuple,
+		dir uint8, private ProtocolData) ProtocolData
+
+	// Called when the FIN flag is seen in the TCP stream.
+	ReceivedFin(tcptuple *common.TcpTuple, dir uint8,
+		private ProtocolData) ProtocolData
+
+	// Called when a packets are missing from the tcp
+	// stream.
+	GapInStream(tcptuple *common.TcpTuple, dir uint8, nbytes int,
+		private ProtocolData) (priv ProtocolData, drop bool)
+
+	// ConnectionTimeout returns the per stream connection timeout.
+	// Return <=0 to set default tcp module transaction timeout.
+	ConnectionTimeout() time.Duration
+}
+
+type UdpProtocolPlugin interface {
+	ProtocolPlugin
+
+	// ParseUdp is invoked when UDP payload data is available for parsing.
+	ParseUdp(pkt *Packet)
+}
+
+// Protocol identifier.
+type Protocol uint16
+
+// Protocol constants.
+const (
+	UnknownProtocol Protocol = iota
+	HttpProtocol
+	MysqlProtocol
+	RedisProtocol
+	PgsqlProtocol
+	ThriftProtocol
+	MongodbProtocol
+	DnsProtocol
+	MemcacheProtocol
+)
+
+// Protocol names
+var ProtocolNames = []string{
+	"unknown",
+	"http",
+	"mysql",
+	"redis",
+	"pgsql",
+	"thrift",
+	"mongodb",
+	"dns",
+	"memcache",
+}
+
+func (p Protocol) String() string {
+	if int(p) >= len(ProtocolNames) {
+		return "impossible"
+	}
+	return ProtocolNames[p]
+}
+
 type Protocols interface {
 	BpfFilter(with_vlans bool, with_icmp bool) string
-	GetTcp(proto Protocol) TcpPlugin
-	GetUdp(proto Protocol) UdpPlugin
-	GetAll() map[Protocol]Plugin
-	GetAllTcp() map[Protocol]TcpPlugin
-	GetAllUdp() map[Protocol]UdpPlugin
-	// Register(proto Protocol, plugin ProtocolPlugin)
+	GetTcp(proto Protocol) TcpProtocolPlugin
+	GetUdp(proto Protocol) UdpProtocolPlugin
+	GetAll() map[Protocol]ProtocolPlugin
+	GetAllTcp() map[Protocol]TcpProtocolPlugin
+	GetAllUdp() map[Protocol]UdpProtocolPlugin
+	Register(proto Protocol, plugin ProtocolPlugin)
 }
 
 // list of protocol plugins
 type ProtocolsStruct struct {
-	all map[Protocol]Plugin
-	tcp map[Protocol]TcpPlugin
-	udp map[Protocol]UdpPlugin
+	all map[Protocol]ProtocolPlugin
+	tcp map[Protocol]TcpProtocolPlugin
+	udp map[Protocol]UdpProtocolPlugin
 }
 
 // Singleton of Protocols type.
-var Protos = ProtocolsStruct{
-	all: map[Protocol]Plugin{},
-	tcp: map[Protocol]TcpPlugin{},
-	udp: map[Protocol]UdpPlugin{},
-}
+var Protos ProtocolsStruct
 
-func (protocols ProtocolsStruct) Init(
-	testMode bool,
-	results publish.Transactions,
-	configs map[string]*common.Config,
-) error {
-	for proto := range protocolSyms {
-		logp.Info("registered protocol plugin: %v", proto)
-	}
-
-	for name, config := range configs {
-		// XXX: icmp is special, ignore here :/
-		if name == "icmp" {
-			continue
-		}
-
-		proto, exists := protocolSyms[name]
-		if !exists {
-			logp.Err("Unknown protocol plugin: %v", name)
-			continue
-		}
-
-		plugin, exists := protocolPlugins[proto]
-		if !exists {
-			logp.Err("Protocol plugin '%v' not registered (%v).", name, proto.String())
-		}
-
-		inst, err := plugin(testMode, results, config)
-		if err != nil {
-			logp.Err("Failed to register protocol plugin: %v", err)
-			return err
-		}
-
-		protocols.register(proto, inst)
-	}
-
-	return nil
-}
-
-func (protocols ProtocolsStruct) GetTcp(proto Protocol) TcpPlugin {
+func (protocols ProtocolsStruct) GetTcp(proto Protocol) TcpProtocolPlugin {
 	plugin, exists := protocols.tcp[proto]
 	if !exists {
 		return nil
@@ -127,7 +158,7 @@ func (protocols ProtocolsStruct) GetTcp(proto Protocol) TcpPlugin {
 	return plugin
 }
 
-func (protocols ProtocolsStruct) GetUdp(proto Protocol) UdpPlugin {
+func (protocols ProtocolsStruct) GetUdp(proto Protocol) UdpProtocolPlugin {
 	plugin, exists := protocols.udp[proto]
 	if !exists {
 		return nil
@@ -136,15 +167,15 @@ func (protocols ProtocolsStruct) GetUdp(proto Protocol) UdpPlugin {
 	return plugin
 }
 
-func (protocols ProtocolsStruct) GetAll() map[Protocol]Plugin {
+func (protocols ProtocolsStruct) GetAll() map[Protocol]ProtocolPlugin {
 	return protocols.all
 }
 
-func (protocols ProtocolsStruct) GetAllTcp() map[Protocol]TcpPlugin {
+func (protocols ProtocolsStruct) GetAllTcp() map[Protocol]TcpProtocolPlugin {
 	return protocols.tcp
 }
 
-func (protocols ProtocolsStruct) GetAllUdp() map[Protocol]UdpPlugin {
+func (protocols ProtocolsStruct) GetAllUdp() map[Protocol]UdpProtocolPlugin {
 	return protocols.udp
 }
 
@@ -165,20 +196,20 @@ func (protocols ProtocolsStruct) BpfFilter(with_vlans bool, with_icmp bool) stri
 		proto := Protocol(key)
 		plugin := protocols.all[proto]
 		for _, port := range plugin.GetPorts() {
-			hasTCP := false
-			hasUDP := false
+			has_tcp := false
+			has_udp := false
 
 			if _, present := protocols.tcp[proto]; present {
-				hasTCP = true
+				has_tcp = true
 			}
 			if _, present := protocols.udp[proto]; present {
-				hasUDP = true
+				has_udp = true
 			}
 
 			var expr string
-			if hasTCP && !hasUDP {
+			if has_tcp && !has_udp {
 				expr = "tcp port %d"
-			} else if !hasTCP && hasUDP {
+			} else if !has_tcp && has_udp {
 				expr = "udp port %d"
 			} else {
 				expr = "port %d"
@@ -188,34 +219,30 @@ func (protocols ProtocolsStruct) BpfFilter(with_vlans bool, with_icmp bool) stri
 		}
 	}
 
-	if with_icmp {
-		expressions = append(expressions, "icmp", "icmp6")
-	}
-
 	filter := strings.Join(expressions, " or ")
+	if with_icmp {
+		filter = fmt.Sprintf("%s or icmp or icmp6", filter)
+	}
 	if with_vlans {
 		filter = fmt.Sprintf("%s or (vlan and (%s))", filter, filter)
 	}
 	return filter
 }
 
-func (protos ProtocolsStruct) register(proto Protocol, plugin Plugin) {
-	if _, exists := protos.all[proto]; exists {
-		logp.Warn("Protocol (%s) plugin will overwritten by another plugin", proto.String())
-	}
-
+func (protos ProtocolsStruct) Register(proto Protocol, plugin ProtocolPlugin) {
 	protos.all[proto] = plugin
-
-	success := false
-	if tcp, ok := plugin.(TcpPlugin); ok {
+	if tcp, ok := plugin.(TcpProtocolPlugin); ok {
 		protos.tcp[proto] = tcp
-		success = true
 	}
-	if udp, ok := plugin.(UdpPlugin); ok {
+	if udp, ok := plugin.(UdpProtocolPlugin); ok {
 		protos.udp[proto] = udp
-		success = true
 	}
-	if !success {
-		logp.Warn("Protocol (%s) register failed, port: %v", proto.String(), plugin.GetPorts())
-	}
+}
+
+func init() {
+	logp.Debug("protos", "Initializing Protos")
+	Protos = ProtocolsStruct{}
+	Protos.all = make(map[Protocol]ProtocolPlugin)
+	Protos.tcp = make(map[Protocol]TcpProtocolPlugin)
+	Protos.udp = make(map[Protocol]UdpProtocolPlugin)
 }

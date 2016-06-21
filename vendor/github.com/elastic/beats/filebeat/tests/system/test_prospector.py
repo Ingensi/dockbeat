@@ -1,4 +1,4 @@
-from filebeat import BaseTest
+from filebeat import TestCase
 import os
 import time
 
@@ -7,7 +7,7 @@ Tests for the prospector functionality.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     def test_ignore_old_files(self):
         """
@@ -32,7 +32,7 @@ class Test(BaseTest):
         # sleep for more than ignore older
         time.sleep(2)
 
-        proc = self.start_beat()
+        proc = self.start_filebeat()
 
         # wait for the "Skipping file" log message
         self.wait_until(
@@ -40,7 +40,7 @@ class Test(BaseTest):
                 "Skipping file (older than ignore older of 1s"),
             max_timeout=10)
 
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
     def test_not_ignore_old_files(self):
         """
@@ -62,12 +62,14 @@ class Test(BaseTest):
             file.write("\n")  # 1 char
         file.close()
 
-        proc = self.start_beat()
+        proc = self.start_filebeat()
 
         self.wait_until(
-            lambda: self.output_has(lines=iterations), max_timeout=10)
+            lambda: self.log_contains(
+                "Processing 5 events"),
+            max_timeout=10)
 
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
         objs = self.read_output()
         assert len(objs) == 5
@@ -80,7 +82,7 @@ class Test(BaseTest):
             input_type="stdin"
         )
 
-        proc = self.start_beat()
+        proc = self.start_filebeat()
 
         self.wait_until(
             lambda: self.log_contains(
@@ -100,18 +102,18 @@ class Test(BaseTest):
             os.write(proc.stdin_write, "Hello World\n")
 
         self.wait_until(
-            lambda: self.output_has(lines=iterations1 + iterations2),
+            lambda: self.output_has(lines=iterations1+iterations2),
             max_timeout=15)
 
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
         objs = self.read_output()
-        assert len(objs) == iterations1 + iterations2
+        assert len(objs) == iterations1+iterations2
 
-    def test_rotating_ignore_older_larger_write_rate(self):
+    def test_rotating_close_older_larger_write_rate(self):
         self.render_config_template(
             path=os.path.abspath(self.working_dir) + "/log/*",
-            ignoreOlder="1s",
+            ignoreOlder="10s",
             closeOlder="1s",
             scan_frequency="0.1s",
         )
@@ -119,7 +121,7 @@ class Test(BaseTest):
         os.mkdir(self.working_dir + "/log/")
         testfile = self.working_dir + "/log/test.log"
 
-        proc = self.start_beat()
+        proc = self.start_filebeat(debug_selectors=['*'])
         time.sleep(1)
 
         rotations = 2
@@ -137,7 +139,7 @@ class Test(BaseTest):
             lambda: self.output_count(lambda x: x >= lines),
             max_timeout=15)
 
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
     def test_exclude_files(self):
 
@@ -157,7 +159,7 @@ class Test(BaseTest):
         file.write("line in log file\n")
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(lines=1),
@@ -166,7 +168,7 @@ class Test(BaseTest):
         # TODO: Find better solution when filebeat did crawl the file
         # Idea: Special flag to filebeat so that filebeat is only doing and
         # crawl and then finishes
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
 
@@ -174,140 +176,6 @@ class Test(BaseTest):
         assert 1 == len(output)
         assert output[0]["message"] == "line in log file"
 
-    def test_rotating_ignore_older_low_write_rate(self):
-        self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-            ignoreOlder="1s",
-            closeOlder="1s",
-            scan_frequency="0.1s",
-        )
-
-        os.mkdir(self.working_dir + "/log/")
-        testfile = self.working_dir + "/log/test.log"
-
-        filebeat = self.start_beat()
-
-        # wait for first  "Start next scan" log message
-        self.wait_until(
-            lambda: self.log_contains(
-                "Start next scan"),
-            max_timeout=10)
-
-        lines = 0
-
-        # write first line
-        lines += 1
-        with open(testfile, 'a') as file:
-            file.write("Line {}\n".format(lines))
-
-        # wait for log to be read
-        self.wait_until(
-            lambda: self.output_has(lines=lines),
-            max_timeout=15)
-
-        # log rotate
-        os.rename(testfile, testfile + ".1")
-        open(testfile, 'w').close()
-
-        # wait for file to be closed due to ignore_older
-        self.wait_until(
-            lambda: self.log_contains(
-                "Stopping harvester, closing file: {}\n".format(os.path.abspath(testfile))),
-            max_timeout=10)
-
-        # wait a bit longer (on 1.0.1 this would cause the harvester
-        # to get in a state that resulted in it watching the wrong
-        # inode for changes)
-        time.sleep(2)
-
-        # write second line
-        lines += 1
-        with open(testfile, 'a') as file:
-            file.write("Line {}\n".format(lines))
-
-        self.wait_until(
-            # allow for events to be send multiple times due to log rotation
-            lambda: self.output_count(lambda x: x >= lines),
-            max_timeout=5)
-
-        filebeat.check_kill_and_wait()
-
-    def test_shutdown_no_prospectors(self):
-        """
-        In case no prospectors are defined, filebeat must shut down and report an error
-        """
-        self.render_config_template(
-            prospectors=False,
-        )
-
-        filebeat = self.start_beat()
-
-        # wait for first  "Start next scan" log message
-        self.wait_until(
-            lambda: self.log_contains(
-                "No prospectors defined"),
-            max_timeout=10)
-
-        self.wait_until(
-            lambda: self.log_contains(
-                "shutting down"),
-            max_timeout=10)
-
-        filebeat.check_kill_and_wait(exit_code=1)
-
-    def test_no_paths_defined(self):
-        """
-        In case a prospector is defined but doesn't contain any paths, prospector must return error which
-        leads to shutdown of filebeat because of configuration error
-        """
-        self.render_config_template(
-        )
-
-        filebeat = self.start_beat()
-
-        # wait for first  "Start next scan" log message
-        self.wait_until(
-            lambda: self.log_contains(
-                "No paths were defined for prospector"),
-            max_timeout=10)
-
-        self.wait_until(
-            lambda: self.log_contains(
-                "shutting down"),
-            max_timeout=10)
-
-        filebeat.check_kill_and_wait(exit_code=1)
-
-
-    def test_files_added_late(self):
-        """
-        Tests that prospectors stay running even though no harvesters are started yet
-        """
-        self.render_config_template(
-            path=os.path.abspath(self.working_dir) + "/log/*",
-        )
-
-        os.mkdir(self.working_dir + "/log/")
-
-        filebeat = self.start_beat()
-
-        # wait until events are sent for the first time
-        self.wait_until(
-            lambda: self.log_contains(
-                "Events flushed"),
-            max_timeout=10)
-
-        testfile = self.working_dir + "/log/test.log"
-        with open(testfile, 'a') as file:
-            file.write("Hello World1\n")
-            file.write("Hello World2\n")
-
-        # wait for log to be read
-        self.wait_until(
-            lambda: self.output_has(lines=2),
-            max_timeout=15)
-
-        filebeat.check_kill_and_wait()
 
     def test_close_older(self):
         """
@@ -324,7 +192,7 @@ class Test(BaseTest):
         os.mkdir(self.working_dir + "/log/")
         testfile = self.working_dir + "/log/test.log"
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat(debug_selectors=['*'])
 
         # wait for first  "Start next scan" log message
         self.wait_until(
@@ -347,7 +215,7 @@ class Test(BaseTest):
         # wait for file to be closed due to close_older
         self.wait_until(
                 lambda: self.log_contains(
-                        "Stopping harvester, closing file: {}\n".format(os.path.abspath(testfile))),
+                        "Closing file: {}\n".format(os.path.abspath(testfile))),
                 max_timeout=10)
 
         # write second line
@@ -360,156 +228,4 @@ class Test(BaseTest):
                 lambda: self.output_count(lambda x: x >= lines),
                 max_timeout=5)
 
-        filebeat.check_kill_and_wait()
-
-    def test_close_older_file_removal(self):
-        """
-        Test that close_older still applies also if the file to close was removed
-        """
-        self.render_config_template(
-                path=os.path.abspath(self.working_dir) + "/log/*",
-                ignoreOlder="1h",
-                closeOlder="3s",
-                scan_frequency="0.1s",
-        )
-
-        os.mkdir(self.working_dir + "/log/")
-        testfile = self.working_dir + "/log/test.log"
-
-        filebeat = self.start_beat()
-
-        # wait for first  "Start next scan" log message
-        self.wait_until(
-                lambda: self.log_contains(
-                        "Start next scan"),
-                max_timeout=10)
-
-        lines = 0
-
-        # write first line
-        lines += 1
-        with open(testfile, 'a') as file:
-            file.write("Line {}\n".format(lines))
-
-        # wait for log to be read
-        self.wait_until(
-                lambda: self.output_has(lines=lines),
-                max_timeout=15)
-
-        os.remove(testfile)
-
-        # wait for file to be closed due to close_older
-        self.wait_until(
-                lambda: self.log_contains(
-                        "Stopping harvester, closing file: {}\n".format(os.path.abspath(testfile))),
-                max_timeout=10)
-
-        filebeat.check_kill_and_wait()
-
-
-    def test_close_older_file_rotation_and_removal(self):
-        """
-        Test that close_older still applies also if the file to close was removed
-        """
-        self.render_config_template(
-                path=os.path.abspath(self.working_dir) + "/log/test.log",
-                ignoreOlder="1h",
-                closeOlder="3s",
-                scan_frequency="0.1s",
-        )
-
-        os.mkdir(self.working_dir + "/log/")
-        testfile = self.working_dir + "/log/test.log"
-        renamed_file = self.working_dir + "/log/test_renamed.log"
-
-        filebeat = self.start_beat()
-
-        # wait for first  "Start next scan" log message
-        self.wait_until(
-                lambda: self.log_contains(
-                        "Start next scan"),
-                max_timeout=10)
-
-        lines = 0
-
-        # write first line
-        lines += 1
-        with open(testfile, 'a') as file:
-            file.write("Line {}\n".format(lines))
-
-        # wait for log to be read
-        self.wait_until(
-                lambda: self.output_has(lines=lines),
-                max_timeout=15)
-
-        os.rename(testfile, renamed_file)
-        os.remove(renamed_file)
-
-        # wait for file to be closed due to close_older
-        self.wait_until(
-                lambda: self.log_contains(
-                    # Still checking for old file name as filename does not change in harvester
-                    "Closing file: {}\n".format(os.path.abspath(testfile))),
-                max_timeout=10)
-
-        filebeat.check_kill_and_wait()
-
-
-    def test_close_older_file_rotation_and_removal(self):
-        """
-        Test that close_older still applies also if file was rotated,
-        new file created, and rotated file removed.
-        """
-        self.render_config_template(
-                path=os.path.abspath(self.working_dir) + "/log/test.log",
-                ignoreOlder="1h",
-                closeOlder="3s",
-                scan_frequency="0.1s",
-        )
-
-        os.mkdir(self.working_dir + "/log/")
-        testfile = self.working_dir + "/log/test.log"
-        renamed_file = self.working_dir + "/log/test_renamed.log"
-
-        filebeat = self.start_beat()
-
-        # wait for first  "Start next scan" log message
-        self.wait_until(
-                lambda: self.log_contains(
-                        "Start next scan"),
-                max_timeout=10)
-
-        lines = 0
-
-        # write first line
-        lines += 1
-        with open(testfile, 'a') as file:
-            file.write("Line {}\n".format(lines))
-
-        # wait for log to be read
-        self.wait_until(
-                lambda: self.output_has(lines=lines),
-                max_timeout=15)
-
-        os.rename(testfile, renamed_file)
-
-        # write second line
-        lines += 1
-        with open(testfile, 'a') as file:
-            file.write("Line {}\n".format(lines))
-
-        # wait for log to be read
-        self.wait_until(
-                lambda: self.output_has(lines=lines),
-                max_timeout=15)
-
-        os.remove(renamed_file)
-
-        # Wait until both files are closed
-        self.wait_until(
-                lambda: self.log_contains_count(
-                        # Checking if two files were closed
-                        "Stopping harvester, closing file: ") == 2,
-                max_timeout=10)
-
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()

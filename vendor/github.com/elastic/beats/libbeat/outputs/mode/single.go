@@ -1,7 +1,6 @@
 package mode
 
 import (
-	"errors"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
@@ -17,17 +16,14 @@ type SingleConnectionMode struct {
 
 	closed bool // mode closed flag to break publisher loop
 
-	timeout time.Duration // connection timeout
-	backoff *backoff
+	timeout      time.Duration // connection timeout
+	waitRetry    time.Duration // wait time until reconnect
+	maxWaitRetry time.Duration // Maximum send/retry timeout in backoff case.
 
 	// maximum number of configured send attempts. If set to 0, publisher will
 	// block until event has been successfully published.
 	maxAttempts int
 }
-
-var (
-	errNeedBackoff = errors.New("need to backoff")
-)
 
 // NewSingleConnectionMode creates a new single connection mode using exactly one
 // ProtocolClient connection.
@@ -39,8 +35,10 @@ func NewSingleConnectionMode(
 	s := &SingleConnectionMode{
 		conn: client,
 
-		timeout:     timeout,
-		backoff:     newBackoff(nil, waitRetry, maxWaitRetry),
+		timeout:      timeout,
+		waitRetry:    waitRetry,
+		maxWaitRetry: maxWaitRetry,
+
 		maxAttempts: maxAttempts,
 	}
 
@@ -115,6 +113,7 @@ func (s *SingleConnectionMode) publish(
 	send func() (ok bool, resetFail bool),
 ) error {
 	fails := 0
+	var backoffCount uint
 	var err error
 
 	guaranteed := opts.Guaranteed || s.maxAttempts == 0
@@ -134,14 +133,10 @@ func (s *SingleConnectionMode) publish(
 		}
 
 		debug("send completed")
-		s.backoff.Reset()
 		outputs.SignalCompleted(signaler)
 		return nil
 
 	sendFail:
-		logp.Info("send fail")
-		s.backoff.Wait()
-
 		fails++
 		if resetFail {
 			debug("reset fails")
@@ -153,6 +148,16 @@ func (s *SingleConnectionMode) publish(
 			debug("max number of attempts reached")
 			break
 		}
+
+		logp.Info("send fail")
+		backoff := time.Duration(int64(s.waitRetry) * (1 << backoffCount))
+		if backoff > s.maxWaitRetry {
+			backoff = s.maxWaitRetry
+		} else {
+			backoffCount++
+		}
+		logp.Info("backoff retry: %v", backoff)
+		time.Sleep(backoff)
 	}
 
 	debug("messages dropped")

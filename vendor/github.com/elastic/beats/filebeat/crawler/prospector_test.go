@@ -1,5 +1,3 @@
-// +build !integration
-
 package crawler
 
 import (
@@ -76,7 +74,6 @@ func TestProspectorInitNotSet(t *testing.T) {
 	assert.Equal(t, config.DefaultBackoffFactor, prospector.ProspectorConfig.Harvester.BackoffFactor)
 	assert.Equal(t, config.DefaultMaxBackoff, prospector.ProspectorConfig.Harvester.MaxBackoffDuration)
 	assert.Equal(t, config.DefaultForceCloseFiles, prospector.ProspectorConfig.Harvester.ForceCloseFiles)
-	assert.Equal(t, config.DefaultMaxBytes, prospector.ProspectorConfig.Harvester.MaxBytes)
 }
 
 func TestProspectorInitScanFrequency0(t *testing.T) {
@@ -99,9 +96,7 @@ func TestProspectorInitScanFrequency0(t *testing.T) {
 func TestProspectorInitCloseOlder0(t *testing.T) {
 
 	prospectorConfig := config.ProspectorConfig{
-		Harvester: config.HarvesterConfig{
-			CloseOlder: "0",
-		},
+		CloseOlder: "0",
 	}
 
 	prospector := Prospector{
@@ -112,7 +107,7 @@ func TestProspectorInitCloseOlder0(t *testing.T) {
 
 	var zero time.Duration = 0
 	// 0 expected
-	assert.Equal(t, zero, prospector.ProspectorConfig.Harvester.CloseOlderDuration)
+	assert.Equal(t, zero, prospector.ProspectorConfig.CloseOlderDuration)
 }
 
 func TestProspectorInitInvalidScanFrequency(t *testing.T) {
@@ -146,7 +141,6 @@ func TestProspectorInitInvalidIgnoreOlder(t *testing.T) {
 func TestProspectorInitInputTypeLog(t *testing.T) {
 
 	prospectorConfig := config.ProspectorConfig{
-		Paths: []string{"testpath1", "testpath2"},
 		Harvester: config.HarvesterConfig{
 			InputType: "log",
 		},
@@ -159,23 +153,6 @@ func TestProspectorInitInputTypeLog(t *testing.T) {
 	err := prospector.Init()
 	assert.Nil(t, err)
 	assert.Equal(t, "log", prospector.ProspectorConfig.Harvester.InputType)
-}
-
-func TestProspectorInitInputTypeLogError(t *testing.T) {
-
-	prospectorConfig := config.ProspectorConfig{
-		Harvester: config.HarvesterConfig{
-			InputType: "log",
-		},
-	}
-
-	prospector := Prospector{
-		ProspectorConfig: prospectorConfig,
-	}
-
-	err := prospector.Init()
-	// Error should be returned because no path is set
-	assert.Error(t, err)
 }
 
 func TestProspectorInitInputTypeStdin(t *testing.T) {
@@ -226,9 +203,8 @@ func TestProspectorFileExclude(t *testing.T) {
 	}
 
 	prospector.Init()
-	prospectorer := prospector.prospectorer.(*ProspectorLog)
 
-	assert.True(t, prospectorer.isFileExcluded("/tmp/log/logw.gz"))
-	assert.False(t, prospectorer.isFileExcluded("/tmp/log/logw.log"))
+	assert.True(t, prospector.isFileExcluded("/tmp/log/logw.gz"))
+	assert.False(t, prospector.isFileExcluded("/tmp/log/logw.log"))
 
 }

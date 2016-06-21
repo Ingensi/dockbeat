@@ -21,7 +21,7 @@ _testmain.go
 *.out
 *.log
 *.bak
-*.winlogbeat.yml
+*.winlogbeat.yaml
 etc/*.dev.yml
 
 cover/

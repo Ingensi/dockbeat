@@ -1,23 +1,13 @@
-// +build !integration
-
 package publisher
 
 import (
 	"fmt"
 	"sync/atomic"
-	"testing"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/outputs"
 )
-
-func enableLogging(selectors []string) {
-	if testing.Verbose() {
-		logp.LogInit(logp.LOG_DEBUG, "", false, true, selectors)
-	}
-}
 
 // testMessageHandler receives messages and acknowledges them through
 // their Signaler.
@@ -142,24 +132,25 @@ const (
 )
 
 func newTestPublisher(bulkSize int, response OutputResponse) *testPublisher {
-	pub := &PublisherType{}
-	pub.wsOutput.Init()
-	pub.wsPublisher.Init()
-
 	mh := &testMessageHandler{
 		msgs:     make(chan message, 10),
 		response: response,
 	}
 
 	ow := &outputWorker{}
-	ow.config.BulkMaxSize = bulkSize
+	ow.config.BulkMaxSize = &bulkSize
 	ow.handler = mh
-	ow.messageWorker.init(&pub.wsOutput, defaultChanSize, defaultBulkChanSize, mh)
+	ws := workerSignal{}
+	ow.messageWorker.init(&ws, defaultChanSize, defaultBulkChanSize, mh)
 
-	pub.Output = []*outputWorker{ow}
-
+	pub := &PublisherType{
+		Output:   []*outputWorker{ow},
+		wsOutput: ws,
+	}
+	pub.wsOutput.Init()
+	pub.wsPublisher.Init()
 	pub.syncPublisher = newSyncPublisher(pub, defaultChanSize, defaultBulkChanSize)
-	pub.asyncPublisher = newAsyncPublisher(pub, defaultChanSize, defaultBulkChanSize, &pub.wsPublisher)
+	pub.asyncPublisher = newAsyncPublisher(pub, defaultChanSize, defaultBulkChanSize)
 	return &testPublisher{
 		pub:              pub,
 		outputMsgHandler: mh,
