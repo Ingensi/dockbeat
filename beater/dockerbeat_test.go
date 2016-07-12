@@ -149,6 +149,13 @@ func getEmptyDockerbeat() Dockerbeat {
 			certPath:  "",
 			keyPath:   "",
 		},
+		statsConfig: StatsConfig{
+			Container: true,
+			Cpu:       true,
+			Net:       true,
+			Blkio:     true,
+			Memory:    true,
+		},
 		beatConfig: &config.Config{
 			Dockerbeat: config.DockerbeatConfig{
 				Period: nil,
@@ -158,6 +165,13 @@ func getEmptyDockerbeat() Dockerbeat {
 					CaPath:   nil,
 					CertPath: nil,
 					KeyPath:  nil,
+				},
+				Stats: config.StatsConfig{
+					Container: nil,
+					Cpu:       nil,
+					Net:       nil,
+					Blkio:     nil,
+					Memory:    nil,
 				},
 			},
 		},

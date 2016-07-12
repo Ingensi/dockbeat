@@ -14,8 +14,17 @@ type TlsConfig struct {
 	KeyPath  *string `config:"key_path"`
 }
 
+type StatsConfig struct {
+	Container *bool `config:"container"`
+	Net       *bool `config:"net"`
+	Memory    *bool `config:"memory"`
+	Blkio     *bool `config:"blkio"`
+	Cpu       *bool `config:"cpu"`
+}
+
 type DockerbeatConfig struct {
 	Period *int64
 	Socket *string
 	Tls    TlsConfig
+	Stats  StatsConfig
 }

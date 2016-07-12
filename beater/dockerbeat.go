@@ -42,10 +42,19 @@ type SocketConfig struct {
 	keyPath   string
 }
 
+type StatsConfig struct {
+	Container bool
+	Net       bool
+	Memory    bool
+	Blkio     bool
+	Cpu       bool
+}
+
 type Dockerbeat struct {
 	done                 chan struct{}
 	period               time.Duration
 	socketConfig         SocketConfig
+	statsConfig          StatsConfig
 	beatConfig           *config.Config
 	dockerClient         *docker.Client
 	events               publisher.Client
@@ -106,6 +115,31 @@ func (bt *Dockerbeat) Config(b *beat.Beat) error {
 		if bt.beatConfig.Dockerbeat.Tls.KeyPath != nil {
 			bt.socketConfig.keyPath = *bt.beatConfig.Dockerbeat.Tls.KeyPath
 		}
+	}
+
+	// init the stats statsConfig
+	bt.statsConfig = StatsConfig{
+		Container: true,
+		Net:       true,
+		Memory:    true,
+		Blkio:     true,
+		Cpu:       true,
+	}
+
+	if bt.beatConfig.Dockerbeat.Stats.Container != nil && !*bt.beatConfig.Dockerbeat.Stats.Container {
+		bt.statsConfig.Container = false
+	}
+	if bt.beatConfig.Dockerbeat.Stats.Net != nil && !*bt.beatConfig.Dockerbeat.Stats.Net {
+		bt.statsConfig.Net = false
+	}
+	if bt.beatConfig.Dockerbeat.Stats.Memory != nil && !*bt.beatConfig.Dockerbeat.Stats.Memory {
+		bt.statsConfig.Memory = false
+	}
+	if bt.beatConfig.Dockerbeat.Stats.Blkio != nil && !*bt.beatConfig.Dockerbeat.Stats.Blkio {
+		bt.statsConfig.Blkio = false
+	}
+	if bt.beatConfig.Dockerbeat.Stats.Cpu != nil && !*bt.beatConfig.Dockerbeat.Stats.Cpu {
+		bt.statsConfig.Cpu = false
 	}
 
 	logp.Info("dockerbeat", "Init dockerbeat")
@@ -243,14 +277,29 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 		err := <-errC
 
 		if err == nil && stats != nil {
-			events := []common.MapStr{
-				d.eventGenerator.GetContainerEvent(&container, stats),
-				d.eventGenerator.GetCpuEvent(&container, stats),
-				d.eventGenerator.GetMemoryEvent(&container, stats),
-				d.eventGenerator.GetBlkioEvent(&container, stats),
+			events := []common.MapStr{}
+
+			// export events if it is enabled in the configuration
+
+			if d.statsConfig.Container {
+				events = append(events, d.eventGenerator.GetContainerEvent(&container, stats))
 			}
 
-			events = append(events, d.eventGenerator.GetNetworksEvent(&container, stats)...)
+			if d.statsConfig.Cpu {
+				events = append(events, d.eventGenerator.GetCpuEvent(&container, stats))
+			}
+
+			if d.statsConfig.Memory {
+				events = append(events, d.eventGenerator.GetMemoryEvent(&container, stats))
+			}
+
+			if d.statsConfig.Blkio {
+				events = append(events, d.eventGenerator.GetBlkioEvent(&container, stats))
+			}
+
+			if d.statsConfig.Net {
+				events = append(events, d.eventGenerator.GetNetworksEvent(&container, stats)...)
+			}
 
 			d.events.PublishEvents(events)
 		} else if err == nil && stats == nil {
