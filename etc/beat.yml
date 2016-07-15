@@ -1,0 +1,33 @@
+################### Dockerbeat Configuration Example #########################
+
+############################# Dockerbeat ######################################
+
+dockerbeat:
+  # Defines how often a docker stat is sent to the output
+  period: ${PERIOD:5}
+
+  # Defines the docker socket path
+  # By default, this will get the unix:///var/run/docker.sock
+  socket: ${DOCKER_SOCKET:unix:///var/run/docker.sock}
+
+  # If dockerbeat has to deal with a TLS-enabled docker daemon, you need to enable TLS and configure path for key and certificates.
+  tls:
+    # By default, TLS is disabled
+    enable: ${DOCKER_ENABLE_TLS:false}
+
+    # Path to the ca file
+    ca_path: ${DOCKER_CA_PATH}
+
+    # Path to the cert file
+    cert_path: ${DOCKER_CERT_PATH}
+
+    # Path to the key file
+    key_path: ${DOCKER_KEY_PATH}
+
+  # Enable or disable stats shipping
+  stats:
+    container: true
+    net: true
+    memory: true
+    blkio: true
+    cpu: true

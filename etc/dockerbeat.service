@@ -1,6 +1,6 @@
 [Unit]
 Description=dockerbeat
-Documentation=https://github.com/Ingensi/dockerbeat
+Documentation=https://github.com/ingensi/dockerbeat
 Wants=network-online.target
 After=network-online.target
 

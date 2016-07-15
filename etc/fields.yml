@@ -53,6 +53,21 @@ env:
         URI to the monitored docker daemon.
       required: true
 
+    - name: containerLabels
+      type: group
+      description: >
+        Array of label metadata of the Docker container.
+      fields:
+        - name: key
+          type: string
+          description: >
+            Key of the container label.
+
+        - name: value
+          type: string
+          description: >
+            Value of the container label.
+
     - name: beat.name
       description: >
         Name of the Beat sending the events. If the shipper name is set
@@ -93,12 +108,6 @@ container:
           type: string
           description: >
             Name of the Docker image from which contained has been launched.
-
-        - name: labels
-          type: group
-          description: >
-            Key value related to the label metadata of the Docker container.
-          fields: []
 
         - name: names
           type: string
@@ -220,7 +229,7 @@ memory:
           type: float
           description: >
             Maximum memory used by the container in Bytes.
-            
+
         - name: totalRss
           type: float
           description: >
@@ -230,7 +239,7 @@ memory:
           type: float
           description: >
             "Current RSS (applications' Resident Set Size) memory consumption in percents between 0.0 and 1.0."
-            
+
         - name: usage
           type: float
           description: >
@@ -379,3 +388,12 @@ log:
           type: string
           description: >
             Log message.
+
+sections:
+  - ["env", "Common"]
+  - ["container", "Container information"]
+  - ["net", "Network usage"]
+  - ["memory", "Memory consumption"]
+  - ["blkio", "IO disk usage"]
+  - ["cpu", "CPU consumption"]
+  - ["log", "Logs about dockerbeat agent status"]
