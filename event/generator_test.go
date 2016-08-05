@@ -45,7 +45,7 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -137,11 +137,11 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -164,11 +164,11 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -196,9 +196,9 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	// check returned events
 	assert.Equal(t, len(expectedEvents), 2)
 
-	for i, _ := range expectedEvents {
+	for i := range expectedEvents {
 		checked := false
-		for j, _ := range events {
+		for j := range events {
 			if equalEvent(expectedEvents[i], events[j]) {
 				checked = true
 				break
@@ -248,7 +248,7 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -352,11 +352,11 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -379,11 +379,11 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -411,9 +411,9 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// check returned events
 	assert.Equal(t, len(expectedEvents), 2)
 
-	for i, _ := range expectedEvents {
+	for i := range expectedEvents {
 		checked := false
-		for j, _ := range events {
+		for j := range events {
 			if equalEvent(expectedEvents[i], events[j]) {
 				checked = true
 				break
@@ -465,7 +465,7 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -547,11 +547,11 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -614,7 +614,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -634,15 +634,15 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
-			common.MapStr{
+			{
 				"key":   "label3_with_dots",
 				"value": "value3",
 			},
@@ -651,7 +651,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"container": common.MapStr{
 			"id":      container.ID,
 			"command": container.Command,
-			"created": time.Unix(container.Created, 0),
+			"created": common.Time(time.Unix(container.Created, 0)),
 			"image":   container.Image,
 			"names":   container.Names,
 			"ports": []map[string]interface{}{common.MapStr{
@@ -708,15 +708,15 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
-			common.MapStr{
+			{
 				"key":   "label3_with_dots",
 				"value": "value3",
 			},
@@ -725,7 +725,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
-			"created":    time.Unix(container.Created, 0),
+			"created":    common.Time(time.Unix(container.Created, 0)),
 			"image":      container.Image,
 			"names":      container.Names,
 			"ports":      []map[string]interface{}{},
@@ -769,7 +769,7 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -816,11 +816,11 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -868,7 +868,7 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -886,11 +886,11 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -950,7 +950,7 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"name1", "name1/fake"},
@@ -983,11 +983,11 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -1045,7 +1045,7 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -1086,11 +1086,11 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -1150,7 +1150,7 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		"container command",
 		9876543210,
 		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
 		123,
 		456,
 		[]string{"/name1", "name1/fake"},
@@ -1198,11 +1198,11 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -1451,9 +1451,9 @@ func getBlkioStats(read time.Time, reads uint64, writes uint64, total uint64) do
 		Read: read,
 		BlkioStats: blkioStats{
 			IOServicedRecursive: []docker.BlkioStatsEntry{
-				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Read", Value: reads},
-				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Write", Value: writes},
-				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Total", Value: total},
+				{Major: 0, Minor: 0, Op: "Read", Value: reads},
+				{Major: 0, Minor: 0, Op: "Write", Value: writes},
+				{Major: 0, Minor: 0, Op: "Total", Value: total},
 			},
 		},
 	}

@@ -2,6 +2,7 @@ package event
 
 import (
 	"github.com/elastic/beats/libbeat/common"
+	"github.com/elastic/beats/libbeat/logp"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/ingensi/dockerbeat/calculator"
 	"strings"
@@ -33,6 +34,7 @@ type EventGenerator struct {
 }
 
 func (d *EventGenerator) GetContainerEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
+	logp.Debug("generator", "Generate container event %v", container.ID)
 	event := common.MapStr{
 		"@timestamp":      common.Time(stats.Read),
 		"type":            "container",
@@ -43,7 +45,7 @@ func (d *EventGenerator) GetContainerEvent(container *docker.APIContainers, stat
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
-			"created":    time.Unix(container.Created, 0),
+			"created":    common.Time(time.Unix(container.Created, 0)),
 			"image":      container.Image,
 			"names":      container.Names,
 			"ports":      d.convertContainerPorts(&container.Ports),
@@ -56,7 +58,7 @@ func (d *EventGenerator) GetContainerEvent(container *docker.APIContainers, stat
 }
 
 func (d *EventGenerator) GetCpuEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
-
+	logp.Debug("generator", "Generate cpu event %v", container.ID)
 	calculator := d.CalculatorFactory.NewCPUCalculator(
 		calculator.CPUData{
 			PerCpuUsage:       stats.PreCPUStats.CPUUsage.PercpuUsage,
@@ -91,6 +93,7 @@ func (d *EventGenerator) GetCpuEvent(container *docker.APIContainers, stats *doc
 }
 
 func (d *EventGenerator) GetNetworksEvent(container *docker.APIContainers, stats *docker.Stats) []common.MapStr {
+	logp.Debug("generator", "Generate network events %v", container.ID)
 	events := []common.MapStr{}
 
 	for netName, netStats := range stats.Networks {
@@ -121,7 +124,7 @@ func (d *EventGenerator) GetNetworksEvent(container *docker.APIContainers, stats
 }
 
 func (d *EventGenerator) GetNetworkEvent(container *docker.APIContainers, time time.Time, network string, networkStats *docker.NetworkStats) common.MapStr {
-
+	logp.Debug("generator", "Generate network event %v", container.ID)
 	newNetworkData := calculator.NetworkData{
 		Time:      time,
 		RxBytes:   networkStats.RxBytes,
@@ -194,6 +197,7 @@ func (d *EventGenerator) GetNetworkEvent(container *docker.APIContainers, time t
 }
 
 func (d *EventGenerator) GetMemoryEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
+	logp.Debug("generator", "Generate memory event %v", container.ID)
 	event := common.MapStr{
 		"@timestamp":      common.Time(stats.Read),
 		"type":            "memory",
@@ -216,6 +220,7 @@ func (d *EventGenerator) GetMemoryEvent(container *docker.APIContainers, stats *
 }
 
 func (d *EventGenerator) GetBlkioEvent(container *docker.APIContainers, stats *docker.Stats) common.MapStr {
+	logp.Debug("generator", "Generate blkio event %v", container.ID)
 	blkioStats := d.buildStats(stats.Read, stats.BlkioStats.IOServicedRecursive)
 
 	var event common.MapStr
@@ -270,7 +275,7 @@ func (d *EventGenerator) GetBlkioEvent(container *docker.APIContainers, stats *d
 }
 
 func (d *EventGenerator) GetLogEvent(level string, message string) common.MapStr {
-
+	logp.Debug("generator", "Generate log event with message: %v", message)
 	event := common.MapStr{
 		"@timestamp":   common.Time(time.Now()),
 		"type":         "log",
@@ -301,7 +306,7 @@ func (d *EventGenerator) convertContainerPorts(ports *[]docker.APIPort) []map[st
 func (d *EventGenerator) CleanOldStats(containers []docker.APIContainers) {
 	found := false
 	d.NetworkStats.Lock()
-	for containerStatKey, _ := range d.NetworkStats.M {
+	for containerStatKey := range d.NetworkStats.M {
 		for _, container := range containers {
 			if container.ID == containerStatKey {
 				found = true
