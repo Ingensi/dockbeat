@@ -45,7 +45,7 @@ func (d *EventGenerator) GetContainerEvent(container *docker.APIContainers, stat
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
-			"created":    time.Unix(container.Created, 0),
+			"created":    common.Time(time.Unix(container.Created, 0)),
 			"image":      container.Image,
 			"names":      container.Names,
 			"ports":      d.convertContainerPorts(&container.Ports),
