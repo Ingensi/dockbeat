@@ -23,8 +23,8 @@ type StatsConfig struct {
 }
 
 type DockerbeatConfig struct {
-	Period *int64
-	Socket *string
-	Tls    TlsConfig
-	Stats  StatsConfig
+	Period *int64      `config:"period"`
+	Socket *string     `config:"socket"`
+	Tls    TlsConfig   `config:"tls"`
+	Stats  StatsConfig `config:"stats"`
 }
