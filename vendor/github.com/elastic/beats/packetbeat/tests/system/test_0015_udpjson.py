@@ -1,9 +1,9 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 from nose.tools import nottest
 import socket
 
 
-class Test(BaseTest):
+class Test(TestCase):
     @nottest
     def test_udpjson_config(self):
         """

@@ -2,31 +2,12 @@ package common
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"strings"
 	"time"
 )
 
-const (
-	EventMetadataKey = "_event_metadata"
-	FieldsKey        = "fields"
-	TagsKey          = "tags"
-)
-
-var ErrorFieldsIsNotMapStr = errors.New("the value stored in fields is not a MapStr")
-var ErrorTagsIsNotStringArray = errors.New("the value stored in tags is not a []string")
-
 // Commonly used map of things, used in JSON creation and the like.
 type MapStr map[string]interface{}
-
-// EventMetadata contains fields and tags that can be added to an event via
-// configuration.
-type EventMetadata struct {
-	Fields          MapStr
-	FieldsUnderRoot bool `config:"fields_under_root"`
-	Tags            []string
-}
 
 // Eventer defines a type its ability to fill a MapStr.
 type Eventer interface {
@@ -56,110 +37,6 @@ func (m MapStr) Update(d MapStr) {
 	for k, v := range d {
 		m[k] = v
 	}
-}
-
-func (m MapStr) Delete(key string) error {
-	keyParts := strings.Split(key, ".")
-	keysLen := len(keyParts)
-
-	mapp := m
-	for i := 0; i < keysLen-1; i++ {
-		keyPart := keyParts[i]
-
-		if _, ok := mapp[keyPart]; ok {
-			mapp, ok = mapp[keyPart].(MapStr)
-			if !ok {
-				return fmt.Errorf("unexpected type of %s key", keyPart)
-			}
-		} else {
-			return fmt.Errorf("unknown key %s", keyPart)
-		}
-	}
-	delete(mapp, keyParts[keysLen-1])
-	return nil
-}
-
-func (m MapStr) CopyFieldsTo(to MapStr, key string) error {
-
-	keyParts := strings.Split(key, ".")
-	keysLen := len(keyParts)
-
-	toPointer := to
-	fromPointer := m
-
-	for i := 0; i < keysLen-1; i++ {
-		keyPart := keyParts[i]
-		var success bool
-
-		if _, ok := fromPointer[keyPart]; ok {
-			if _, already := toPointer[keyPart]; !already {
-				toPointer[keyPart] = MapStr{}
-			}
-
-			fromPointer, success = fromPointer[keyPart].(MapStr)
-			if !success {
-				return fmt.Errorf("Unexpected type of %s key", keyPart)
-			}
-
-			toPointer, success = toPointer[keyPart].(MapStr)
-			if !success {
-				return fmt.Errorf("Unexpected type of %s key", keyPart)
-			}
-		} else {
-			return nil
-		}
-	}
-
-	if _, ok := fromPointer[keyParts[keysLen-1]]; ok {
-		toPointer[keyParts[keysLen-1]] = fromPointer[keyParts[keysLen-1]]
-	} else {
-		return nil
-	}
-	return nil
-}
-
-func (m MapStr) Clone() MapStr {
-	result := MapStr{}
-
-	for k, v := range m {
-		mapstr, ok := v.(MapStr)
-		if ok {
-			v = mapstr.Clone()
-		}
-		result[k] = v
-	}
-
-	return result
-}
-
-func (m MapStr) HasKey(key string) (bool, error) {
-	keyParts := strings.Split(key, ".")
-	keyPartsLen := len(keyParts)
-
-	mapp := m
-	for i := 0; i < keyPartsLen; i++ {
-		keyPart := keyParts[i]
-
-		if _, ok := mapp[keyPart]; ok {
-			if i < keyPartsLen-1 {
-				mapp, ok = mapp[keyPart].(MapStr)
-				if !ok {
-					return false, fmt.Errorf("Unknown type of %s key", keyPart)
-				}
-			}
-		} else {
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
-func (m MapStr) StringToPrint() string {
-	json, err := json.MarshalIndent(m, "", "  ")
-	if err != nil {
-		return fmt.Sprintf("Not valid json: %v", err)
-	}
-	return string(json)
 }
 
 // Checks if a timestamp field exists and if it doesn't it adds
@@ -192,7 +69,6 @@ func (m MapStr) EnsureTimestampField(now func() time.Time) error {
 	return fmt.Errorf("Don't know how to convert %v to a Time value", ts)
 }
 
-// EnsureCountField sets the 'count' field to 1 if count does not already exist.
 func (m MapStr) EnsureCountField() error {
 	_, exists := m["count"]
 	if !exists {
@@ -201,7 +77,7 @@ func (m MapStr) EnsureCountField() error {
 	return nil
 }
 
-// String returns the MapStr as a JSON string.
+// Prints the dict as a json
 func (m MapStr) String() string {
 	bytes, err := json.Marshal(m)
 	if err != nil {
@@ -210,60 +86,51 @@ func (m MapStr) String() string {
 	return string(bytes)
 }
 
-// MergeFields merges the top-level keys and values in each source hash (it does
-// not perform a deep merge). If the same key exists in both, the value in
-// fields takes precedence. If underRoot is true then the contents of the fields
-// MapStr is merged with the value of the 'fields' key in ms.
+// UnmarshalYAML helps out with the YAML unmarshalling when the target
+// variable is a MapStr. The default behavior is to unmarshal nested
+// maps to map[interface{}]interface{} values, and such values can't
+// be marshalled as JSON.
 //
-// An error is returned if underRoot is true and the value of ms.fields is not a
-// MapStr.
-func MergeFields(ms, fields MapStr, underRoot bool) error {
-	if ms == nil || fields == nil {
-		return nil
+// The keys of map[interface{}]interface{} maps will be converted to
+// strings with a %v format string, as will any scalar values that
+// aren't already strings (i.e. numbers and boolean values).
+//
+// Since we want to modify the receiver it needs to be a pointer.
+func (ms *MapStr) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var result map[interface{}]interface{}
+	err := unmarshal(&result)
+	if err != nil {
+		panic(err)
 	}
-
-	fieldsMS := ms
-	if !underRoot {
-		f, ok := ms[FieldsKey]
-		if !ok {
-			fieldsMS = make(MapStr, len(fields))
-			ms[FieldsKey] = fieldsMS
-		} else {
-			// Use existing 'fields' value.
-			fieldsMS, ok = f.(MapStr)
-			if !ok {
-				return ErrorFieldsIsNotMapStr
-			}
-		}
-	}
-
-	// Add fields and override.
-	for k, v := range fields {
-		fieldsMS[k] = v
-	}
-
+	*ms = cleanUpInterfaceMap(result)
 	return nil
 }
 
-// AddTag appends a tag to the tags field of ms. If the tags field does not
-// exist then it will be created. If the tags field exists and is not a []string
-// then an error will be returned. It does not deduplicate the list of tags.
-func AddTags(ms MapStr, tags []string) error {
-	if ms == nil || len(tags) == 0 {
-		return nil
+func cleanUpInterfaceArray(in []interface{}) []interface{} {
+	result := make([]interface{}, len(in))
+	for i, v := range in {
+		result[i] = cleanUpMapValue(v)
 	}
+	return result
+}
 
-	tagsIfc, ok := ms[TagsKey]
-	if !ok {
-		ms[TagsKey] = tags
-		return nil
+func cleanUpInterfaceMap(in map[interface{}]interface{}) MapStr {
+	result := make(MapStr)
+	for k, v := range in {
+		result[fmt.Sprintf("%v", k)] = cleanUpMapValue(v)
 	}
+	return result
+}
 
-	existingTags, ok := tagsIfc.([]string)
-	if !ok {
-		return ErrorTagsIsNotStringArray
+func cleanUpMapValue(v interface{}) interface{} {
+	switch v := v.(type) {
+	case []interface{}:
+		return cleanUpInterfaceArray(v)
+	case map[interface{}]interface{}:
+		return cleanUpInterfaceMap(v)
+	case string:
+		return v
+	default:
+		return fmt.Sprintf("%v", v)
 	}
-
-	ms[TagsKey] = append(existingTags, tags...)
-	return nil
 }

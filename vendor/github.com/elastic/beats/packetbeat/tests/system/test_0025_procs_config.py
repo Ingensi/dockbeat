@@ -1,11 +1,11 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 """
 Tests for checking the procs monitoring configuration.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     MsgNotOnLinux = "Disabled /proc/ reading because not on linux"
     MsgEnabled = "Process matching enabled"

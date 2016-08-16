@@ -1,11 +1,11 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 """
 Tests based on the MySQL integration test suite.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     def test_string_operations(self):
         self.render_config_template(

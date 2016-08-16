@@ -4,17 +4,11 @@ package eventlog
 // to event message files.
 
 import (
-	"expvar"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-	"github.com/elastic/beats/winlogbeat/sys"
-)
-
-// Stats for the message file caches.
-var (
-	cacheStats = expvar.NewMap("msgFileCacheStats")
+	"github.com/elastic/beats/winlogbeat/sys/eventlogging"
 )
 
 // Constants that control the cache behavior.
@@ -26,7 +20,7 @@ const (
 
 // Function type for loading event message files associated with the given
 // event log and source name.
-type messageFileLoaderFunc func(eventLogName, sourceName string) sys.MessageFiles
+type messageFileLoaderFunc func(eventLogName, sourceName string) eventlogging.MessageFiles
 
 // Function type for freeing Handles.
 type freeHandleFunc func(handle uintptr) error
@@ -37,11 +31,6 @@ type messageFilesCache struct {
 	loader       messageFileLoaderFunc
 	freer        freeHandleFunc
 	eventLogName string
-
-	// Cache metrics.
-	hit  func() // Increments number of cache hits.
-	miss func() // Increments number of cache misses.
-	size func() // Sets the current cache size.
 }
 
 // newHandleCache creates and returns a new handleCache that has been
@@ -50,24 +39,14 @@ type messageFilesCache struct {
 func newMessageFilesCache(eventLogName string, loader messageFileLoaderFunc,
 	freer freeHandleFunc) *messageFilesCache {
 
-	size := &expvar.Int{}
-	cacheStats.Set(eventLogName+"Size", size)
-
 	hc := &messageFilesCache{
 		loader:       loader,
 		freer:        freer,
 		eventLogName: eventLogName,
-		hit:          func() { cacheStats.Add(eventLogName+"Hits", 1) },
-		miss:         func() { cacheStats.Add(eventLogName+"Misses", 1) },
 	}
 	hc.cache = common.NewCacheWithRemovalListener(expirationTimeout,
 		initialSize, hc.evictionHandler)
 	hc.cache.StartJanitor(janitorInterval)
-	hc.size = func() {
-		s := hc.cache.Size()
-		size.Set(int64(s))
-		debugf("messageFilesCache[%s] size=%d", hc.eventLogName, s)
-	}
 	return hc
 }
 
@@ -75,11 +54,9 @@ func newMessageFilesCache(eventLogName string, loader messageFileLoaderFunc,
 // If no item is cached, then one is loaded, stored, and returned.
 // Callers should check the MessageFiles.Err value to see if an error occurred
 // while loading the message files.
-func (hc *messageFilesCache) get(sourceName string) sys.MessageFiles {
+func (hc *messageFilesCache) get(sourceName string) eventlogging.MessageFiles {
 	v := hc.cache.Get(sourceName)
 	if v == nil {
-		hc.miss()
-
 		// Handle to event message file for sourceName is not cached. Attempt
 		// to load the Handles into the cache.
 		v = hc.loader(hc.eventLogName, sourceName)
@@ -88,47 +65,37 @@ func (hc *messageFilesCache) get(sourceName string) sys.MessageFiles {
 		// check if a value was already loaded.
 		existing := hc.cache.PutIfAbsent(sourceName, v)
 		if existing != nil {
-			// A value was already loaded, so free the handles we just created.
-			messageFiles, _ := v.(sys.MessageFiles)
-			hc.freeHandles(messageFiles)
-
-			// Return the existing cached value.
-			messageFiles, _ = existing.(sys.MessageFiles)
-			return messageFiles
+			// A value was already loaded, so free the handles we created.
+			existingMessageFiles, _ := existing.(eventlogging.MessageFiles)
+			hc.freeHandles(existingMessageFiles)
+			return existingMessageFiles
 		}
-		hc.size()
-	} else {
-		hc.hit()
 	}
 
-	messageFiles, _ := v.(sys.MessageFiles)
+	messageFiles, _ := v.(eventlogging.MessageFiles)
 	return messageFiles
 }
 
 // evictionHandler is the callback handler that receives notifications when
 // a key-value pair is evicted from the messageFilesCache.
 func (hc *messageFilesCache) evictionHandler(k common.Key, v common.Value) {
-	// Update the size on a different goroutine after the callback completes.
-	defer func() { go hc.size() }()
-
-	messageFiles, ok := v.(sys.MessageFiles)
+	messageFiles, ok := v.(eventlogging.MessageFiles)
 	if !ok {
 		return
 	}
 
-	debugf("messageFilesCache[%s] Evicting messageFiles %+v for sourceName %v.",
-		hc.eventLogName, messageFiles, k)
+	logp.Debug("eventlog", "Evicting messageFiles %+v for sourceName %v.",
+		messageFiles, k)
 	hc.freeHandles(messageFiles)
 }
 
 // freeHandles free the event message file Handles so that the modules can
 // be unloaded. The Handles are no longer valid after being freed.
-func (hc *messageFilesCache) freeHandles(mf sys.MessageFiles) {
+func (hc *messageFilesCache) freeHandles(mf eventlogging.MessageFiles) {
 	for _, fh := range mf.Handles {
 		err := hc.freer(fh.Handle)
 		if err != nil {
-			logp.Warn("messageFilesCache[%s] FreeLibrary error for handle %v",
-				hc.eventLogName, fh.Handle)
+			logp.Warn("FreeLibrary error for handle %v", fh.Handle)
 		}
 	}
 }

@@ -1,15 +1,15 @@
-from topbeat import BaseTest
-
-import getpass
 import re
 import os
+import getpass
+from topbeat import TestCase
+
 
 """
 Contains tests for per process statistics.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
     def test_procs(self):
         """
         Checks that the per proc stats are found in the output and
@@ -21,9 +21,9 @@ class Test(BaseTest):
             filesystem_stats=False,
             proc_patterns=["(?i)topbeat.test"]  # monitor itself
         )
-        topbeat = self.start_beat()
-        self.wait_until(lambda: self.output_count(lambda x: x >= 1))
-        topbeat.check_kill_and_wait()
+        topbeat = self.start_topbeat()
+        self.wait_until(lambda: self.output_has(lines=1))
+        topbeat.kill_and_wait()
 
         output = self.read_output()[0]
 
@@ -47,7 +47,7 @@ class Test(BaseTest):
             assert type(output[key]) is int
 
         for key in [
-            "proc.cpu.total_p",
+            "proc.cpu.user_p",
             "proc.mem.rss_p",
         ]:
             assert type(output[key]) in [int, float]

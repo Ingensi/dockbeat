@@ -1,31 +1,34 @@
-// +build !integration
-
 package logstash
 
+// TODO:
+//  - test window increase for multiple sends
+//  - test window decrease on timeout
+//  - test with connection timeout
+
 import (
+	"compress/zlib"
+	"encoding/json"
+	"errors"
+	"io"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/common/streambuf"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/outputs/mode"
 
 	"github.com/stretchr/testify/assert"
 )
+
+type mockAddr string
 
 const (
 	driverCmdQuit = iota
 	driverCmdPublish
 )
-
-type testClientDriver interface {
-	Stop()
-	Publish(events []common.MapStr)
-	Returns() []testClientReturn
-}
-
-type clientFactory func(TransportClient) testClientDriver
 
 type testClientReturn struct {
 	n   int
@@ -37,77 +40,308 @@ type testDriverCommand struct {
 	events []common.MapStr
 }
 
-func newLumberjackTestClient(conn TransportClient) *client {
-	c, err := newLumberjackClient(conn, 3, testMaxWindowSize, 100*time.Millisecond)
+type testClientDriver struct {
+	client  mode.ProtocolClient
+	ch      chan testDriverCommand
+	returns []testClientReturn
+}
+
+const (
+	cmdError = iota
+	cmdOK
+	cmdMessage
+)
+
+type mockTransportCommand struct {
+	code    uint8
+	message []byte
+	err     error
+}
+
+type mockTransport struct {
+	buf     streambuf.Buffer
+	ch      chan []byte
+	control chan mockTransportCommand
+}
+
+func newLumberjackTestClient(conn TransportClient) *lumberjackClient {
+	c, err := newLumberjackClient(conn, 3, testMaxWindowSize, 5*time.Second, "test")
 	if err != nil {
 		panic(err)
 	}
 	return c
 }
 
-func enableLogging(selectors []string) {
-	if testing.Verbose() {
-		logp.LogInit(logp.LOG_DEBUG, "", false, true, selectors)
+func newClientTestDriver(client mode.ProtocolClient) *testClientDriver {
+	driver := &testClientDriver{
+		client:  client,
+		ch:      make(chan testDriverCommand),
+		returns: nil,
 	}
+
+	go func() {
+		for {
+			cmd, ok := <-driver.ch
+			if !ok {
+				return
+			}
+
+			switch cmd.code {
+			case driverCmdQuit:
+				close(driver.ch)
+				return
+			case driverCmdPublish:
+				events, err := driver.client.PublishEvents(cmd.events)
+				n := len(cmd.events) - len(events)
+				driver.returns = append(driver.returns, testClientReturn{n, err})
+			}
+		}
+	}()
+
+	return driver
+}
+
+func (t *testClientDriver) Stop() {
+	t.ch <- testDriverCommand{code: driverCmdQuit}
+}
+
+func (t *testClientDriver) Publish(events []common.MapStr) {
+	t.ch <- testDriverCommand{code: driverCmdPublish, events: events}
+}
+
+func (a mockAddr) Network() string { return "fake" }
+func (a mockAddr) String() string  { return string(a) }
+
+func newMockTransport() *mockTransport {
+	return &mockTransport{
+		ch:      make(chan []byte),
+		control: make(chan mockTransportCommand),
+	}
+}
+
+func (m *mockTransport) Connect(timeout time.Duration) error {
+	return nil
+}
+
+func (m *mockTransport) IsConnected() bool {
+	return true
+}
+
+func (m *mockTransport) Close() error {
+	close(m.ch)
+	close(m.control)
+	return nil
+}
+
+func (m *mockTransport) Read(b []byte) (n int, err error) {
+	cmd := <-m.control
+	switch cmd.code {
+	case cmdError:
+		return 0, cmd.err
+	case cmdOK:
+		return 0, nil
+	case cmdMessage:
+		m.buf.Write(cmd.message)
+		return m.buf.Read(b)
+	}
+	return 0, nil
+}
+
+func (m *mockTransport) Write(b []byte) (int, error) {
+	m.ch <- b
+	cmd := <-m.control
+	switch cmd.code {
+	case cmdError:
+		return 0, cmd.err
+	case cmdOK:
+		return len(b), nil
+	case cmdMessage:
+		m.buf.Write(cmd.message)
+		return len(b), nil
+	}
+	return 0, nil
+}
+
+func (m *mockTransport) recv(into io.Writer) {
+	bytes, ok := <-m.ch
+	if ok && len(bytes) > 0 {
+		into.Write(bytes)
+	}
+}
+
+func (m *mockTransport) sendError(e error) {
+	m.control <- mockTransportCommand{code: cmdError, err: e}
+}
+
+func (m *mockTransport) sendOK() {
+	m.control <- mockTransportCommand{code: cmdOK}
+}
+
+func (m *mockTransport) sendBytes(b []byte) {
+	m.control <- mockTransportCommand{code: cmdMessage, message: b}
+}
+
+func (m *mockTransport) LocalAddr() net.Addr  { return mockAddr("client") }
+func (m *mockTransport) RemoteAddr() net.Addr { return mockAddr("server") }
+
+func (m *mockTransport) SetDeadline(t time.Time) error      { return nil }
+func (m *mockTransport) SetReadDeadline(t time.Time) error  { return nil }
+func (m *mockTransport) SetWriteDeadline(t time.Time) error { return nil }
+
+type message struct {
+	code   uint8
+	size   uint32
+	seq    uint32
+	events []*message
+	doc    document
+}
+
+type document map[string]interface{}
+
+func (d document) get(path string) interface{} {
+	doc := d
+	elems := strings.Split(path, ".")
+	for i := 0; i < len(elems)-1; i++ {
+		doc = doc[elems[i]].(map[string]interface{})
+	}
+	return doc[elems[len(elems)-1]]
+}
+
+func readMessage(buf *streambuf.Buffer) (*message, error) {
+	if !buf.Avail(2) {
+		return nil, nil
+	}
+
+	version, _ := buf.ReadNetUint8At(0)
+	if version != '2' {
+		return nil, errors.New("version error")
+	}
+
+	code, _ := buf.ReadNetUint8At(1)
+	switch code {
+	case 'W':
+		if !buf.Avail(6) {
+			return nil, nil
+		}
+		size, _ := buf.ReadNetUint32At(2)
+		buf.Advance(6)
+		buf.Reset()
+		return &message{code: code, size: size}, buf.Err()
+	case 'C':
+		if !buf.Avail(6) {
+			return nil, nil
+		}
+		len, _ := buf.ReadNetUint32At(2)
+		if !buf.Avail(int(len) + 6) {
+			return nil, nil
+		}
+		buf.Advance(6)
+
+		tmp, _ := buf.Collect(int(len))
+		buf.Reset()
+
+		dataBuf := streambuf.New(nil)
+		// decompress data
+		decomp, err := zlib.NewReader(streambuf.NewFixed(tmp))
+		if err != nil {
+			return nil, err
+		}
+		// dataBuf.ReadFrom(streambuf.NewFixed(tmp))
+		dataBuf.ReadFrom(decomp)
+		decomp.Close()
+
+		// unpack data
+		dataBuf.Fix()
+		var events []*message
+		for dataBuf.Len() > 0 {
+			version, _ := dataBuf.ReadNetUint8()
+			if version != '2' {
+				return nil, errors.New("version error 2")
+			}
+
+			code, _ := dataBuf.ReadNetUint8()
+			if code != 'J' {
+				return nil, errors.New("expected json data frame")
+			}
+
+			seq, _ := dataBuf.ReadNetUint32()
+			payloadLen, _ := dataBuf.ReadNetUint32()
+			jsonRaw, _ := dataBuf.Collect(int(payloadLen))
+
+			var doc interface{}
+			err = json.Unmarshal(jsonRaw, &doc)
+			if err != nil {
+				return nil, err
+			}
+
+			events = append(events, &message{
+				code: code,
+				seq:  seq,
+				doc:  doc.(map[string]interface{}),
+			})
+		}
+		return &message{code: 'C', events: events}, nil
+	default:
+		return nil, errors.New("unknown code")
+	}
+}
+
+func recvMessage(buf *streambuf.Buffer, transp *mockTransport) (*message, error) {
+	for {
+		transp.recv(buf)
+		resp, err := readMessage(buf)
+		transp.sendOK()
+		if resp != nil || err != nil {
+			return resp, err
+		}
+	}
+}
+
+func sendAck(transp *mockTransport, seq uint32) {
+	buf := streambuf.New(nil)
+	buf.WriteByte('2')
+	buf.WriteByte('A')
+	buf.WriteNetUint32(seq)
+	transp.sendBytes(buf.Bytes())
 }
 
 const testMaxWindowSize = 64
 
-func testSendZero(t *testing.T, factory clientFactory) {
-	enableLogging([]string{"*"})
-
-	server := newMockServerTCP(t, 1*time.Second, "", nil)
-	defer server.Close()
-
-	sock, transp, err := server.connectPair(1 * time.Second)
-	if err != nil {
-		t.Fatalf("Failed to connect server and client: %v", err)
-	}
-
-	client := factory(transp)
-	defer sock.Close()
-	defer transp.Close()
+func TestSendZero(t *testing.T) {
+	transp := newMockTransport()
+	client := newClientTestDriver(newLumberjackTestClient(transp))
 
 	client.Publish(make([]common.MapStr, 0))
 
 	client.Stop()
-	returns := client.Returns()
+	transp.Close()
 
-	assert.Equal(t, 1, len(returns))
-	if len(returns) == 1 {
-		assert.Equal(t, 0, returns[0].n)
-		assert.Nil(t, returns[0].err)
-	}
+	assert.Equal(t, 1, len(client.returns))
+	assert.Equal(t, 0, client.returns[0].n)
+	assert.Nil(t, client.returns[0].err)
 }
 
-func testSimpleEvent(t *testing.T, factory clientFactory) {
-	enableLogging([]string{"*"})
-	server := newMockServerTCP(t, 1*time.Second, "", nil)
+func TestSimpleEvent(t *testing.T) {
+	transp := newMockTransport()
+	client := newClientTestDriver(newLumberjackTestClient(transp))
 
-	sock, transp, err := server.connectPair(1 * time.Second)
-	if err != nil {
-		t.Fatalf("Failed to connect server and client: %v", err)
-	}
-	client := factory(transp)
-	conn := &mockConn{sock, streambuf.New(nil)}
-	defer transp.Close()
-	defer sock.Close()
-
-	event := common.MapStr{"name": "me", "line": 10}
+	event := common.MapStr{"type": "test", "name": "me", "line": 10}
 	client.Publish([]common.MapStr{event})
 
 	// receive window message
-	err = sock.SetReadDeadline(time.Now().Add(1 * time.Second))
-	win, err := conn.recvMessage()
+	buf := streambuf.New(nil)
+	win, err := recvMessage(buf, transp)
 	assert.Nil(t, err)
 
 	// receive data message
-	msg, err := conn.recvMessage()
+	msg, err := recvMessage(buf, transp)
 	assert.Nil(t, err)
 
 	// send ack
-	conn.sendACK(1)
+	sendAck(transp, 1)
 
+	// stop test driver
+	transp.Close()
 	client.Stop()
 
 	// validate
@@ -119,20 +353,11 @@ func testSimpleEvent(t *testing.T, factory clientFactory) {
 	assert.Equal(t, 10.0, msg.doc["line"])
 }
 
-func testStructuredEvent(t *testing.T, factory clientFactory) {
-	enableLogging([]string{"*"})
-	server := newMockServerTCP(t, 1*time.Second, "", nil)
-
-	sock, transp, err := server.connectPair(1 * time.Second)
-	if err != nil {
-		t.Fatalf("Failed to connect server and client: %v", err)
-	}
-	client := factory(transp)
-	conn := &mockConn{sock, streambuf.New(nil)}
-	defer transp.Close()
-	defer sock.Close()
-
+func TestStructuredEvent(t *testing.T) {
+	transp := newMockTransport()
+	client := newClientTestDriver(newLumberjackTestClient(transp))
 	event := common.MapStr{
+		"type": "test",
 		"name": "test",
 		"struct": common.MapStr{
 			"field1": 1,
@@ -152,14 +377,17 @@ func testStructuredEvent(t *testing.T, factory clientFactory) {
 	}
 	client.Publish([]common.MapStr{event})
 
-	win, err := conn.recvMessage()
+	buf := streambuf.New(nil)
+	win, err := recvMessage(buf, transp)
 	assert.Nil(t, err)
 
-	msg, err := conn.recvMessage()
+	msg, err := recvMessage(buf, transp)
 	assert.Nil(t, err)
 
-	conn.sendACK(1)
-	defer client.Stop()
+	sendAck(transp, 1)
+
+	transp.Close()
+	client.Stop()
 
 	// validate
 	assert.NotNil(t, win)
@@ -172,111 +400,59 @@ func testStructuredEvent(t *testing.T, factory clientFactory) {
 	assert.Equal(t, 2.0, msg.doc.get("struct.field5.sub1"))
 }
 
-func testCloseAfterWindowSize(t *testing.T, factory clientFactory) {
-	enableLogging([]string{"*"})
-	server := newMockServerTCP(t, 100*time.Millisecond, "", nil)
-
-	sock, transp, err := server.connectPair(100 * time.Millisecond)
-	if err != nil {
-		t.Fatalf("Failed to connect server and client: %v", err)
-	}
-	client := factory(transp)
-	conn := &mockConn{sock, streambuf.New(nil)}
-	defer transp.Close()
-	defer sock.Close()
-	defer client.Stop()
-
-	client.Publish([]common.MapStr{common.MapStr{
-		"message": "hello world",
-	}})
-
-	_, err = conn.recvMessage()
-	if err != nil {
-		t.Fatalf("failed to read window size message: %v", err)
-	}
-
+func enableLogging(selectors []string) {
+	logp.LogInit(logp.LOG_DEBUG, "", false, true, selectors)
 }
 
-func testMultiFailMaxTimeouts(t *testing.T, factory clientFactory) {
-	enableLogging([]string{"*"})
+func TestGrowWindowSizeUpToBatchSizes(t *testing.T) {
+	batchSize := 114
+	windowSize := 1024
+	testGrowWindowSize(t, 10, 0, windowSize, batchSize, batchSize)
+}
 
-	server := newMockServerTCP(t, 100*time.Millisecond, "", nil)
-	transp, err := server.transp()
-	if err != nil {
-		t.Fatalf("Failed to connect server and client: %v", err)
+func TestGrowWindowSizeUpToMax(t *testing.T) {
+	batchSize := 114
+	windowSize := 64
+	testGrowWindowSize(t, 10, 0, windowSize, batchSize, windowSize)
+}
+
+func TestGrowWindowSizeOf1(t *testing.T) {
+	batchSize := 114
+	windowSize := 1024
+	testGrowWindowSize(t, 1, 0, windowSize, batchSize, batchSize)
+}
+
+func TestGrowWindowSizeToMaxOKOnly(t *testing.T) {
+	batchSize := 114
+	windowSize := 1024
+	maxOK := 71
+	testGrowWindowSize(t, 1, maxOK, windowSize, batchSize, maxOK)
+}
+
+func testGrowWindowSize(t *testing.T,
+	initial, maxOK, windowSize, batchSize, expected int,
+) {
+	enableLogging([]string{"logstash"})
+	c, _ := newLumberjackClient(nil, 3, windowSize, 1*time.Second, "test")
+	c.windowSize = initial
+	c.maxOkWindowSize = maxOK
+	for i := 0; i < 100; i++ {
+		c.tryGrowWindowSize(batchSize)
 	}
 
-	N := 8
-	client := factory(transp)
-	defer transp.Close()
-	defer client.Stop()
+	assert.Equal(t, expected, c.windowSize)
+	assert.Equal(t, expected, c.maxOkWindowSize)
+}
 
-	event := common.MapStr{"name": "me", "line": 10}
+func TestShrinkWindowSizeNeverZero(t *testing.T) {
+	enableLogging([]string{"logstash"})
 
-	for i := 0; i < N; i++ {
-		await := server.await()
-		err = transp.Connect(100 * time.Millisecond)
-		if err != nil {
-			t.Fatalf("Transport client Failed to connect: %v", err)
-		}
-		sock := <-await
-		conn := &mockConn{sock, streambuf.New(nil)}
-
-		// close socket only once test has finished
-		// so no EOF error can be generated
-		defer sock.Close()
-
-		// publish event. With client returning on timeout, we have to send
-		// messages again
-		client.Publish([]common.MapStr{event})
-
-		// read window
-		msg, err := conn.recvMessage()
-		if err != nil {
-			t.Errorf("Failed receiving window size: %v", err)
-			break
-		}
-		if msg.code != 'W' {
-			t.Errorf("expected window size message")
-			break
-		}
-
-		// read message
-		msg, err = conn.recvMessage()
-		if err != nil {
-			t.Errorf("Failed receiving data message: %v", err)
-			break
-		}
-		if msg.code != 'C' {
-			t.Errorf("expected data message")
-			break
-		}
-		// do not respond -> enforce timeout
-
-		// check connection being closed,
-		// timeout required in case of sender not closing the connection
-		// correctly
-		sock.SetDeadline(time.Now().Add(30 * time.Second))
-		msg, err = conn.recvMessage()
-		if msg != nil {
-			t.Errorf("Received message on connection expected to be closed")
-			break
-		}
-		if nerr, ok := err.(net.Error); ok && nerr.Timeout() {
-			t.Errorf("Unexpected timeout error (client did not close connection in time?): %v", err)
-			break
-		}
+	windowSize := 124
+	c, _ := newLumberjackClient(nil, 3, windowSize, 1*time.Second, "test")
+	c.windowSize = windowSize
+	for i := 0; i < 100; i++ {
+		c.shrinkWindow()
 	}
 
-	client.Stop()
-
-	returns := client.Returns()
-	if len(returns) != N {
-		t.Fatalf("PublishEvents did not return")
-	}
-
-	for _, ret := range returns {
-		assert.Equal(t, 0, ret.n)
-		assert.NotNil(t, ret.err)
-	}
+	assert.Equal(t, 1, c.windowSize)
 }

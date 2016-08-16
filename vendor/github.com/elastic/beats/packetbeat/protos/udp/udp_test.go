@@ -1,5 +1,3 @@
-// +build !integration
-
 package udp
 
 import (
@@ -12,11 +10,6 @@ import (
 	"github.com/elastic/beats/packetbeat/protos"
 	"github.com/elastic/beats/packetbeat/publish"
 
-	// import plugins for testing
-	_ "github.com/elastic/beats/packetbeat/protos/http"
-	_ "github.com/elastic/beats/packetbeat/protos/mysql"
-	_ "github.com/elastic/beats/packetbeat/protos/redis"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,41 +19,35 @@ const (
 	PORT  = 1234
 )
 
-var (
-	httpProtocol  = protos.Lookup("http")
-	mysqlProtocol = protos.Lookup("mysql")
-	redisProtocol = protos.Lookup("redis")
-)
-
 type TestProtocols struct {
-	udp map[protos.Protocol]protos.UdpPlugin
+	udp map[protos.Protocol]protos.UdpProtocolPlugin
 }
 
 func (p TestProtocols) BpfFilter(with_vlans bool, with_icmp bool) string {
 	return "mock bpf filter"
 }
 
-func (p TestProtocols) GetTcp(proto protos.Protocol) protos.TcpPlugin {
+func (p TestProtocols) GetTcp(proto protos.Protocol) protos.TcpProtocolPlugin {
 	return nil
 }
 
-func (p TestProtocols) GetUdp(proto protos.Protocol) protos.UdpPlugin {
+func (p TestProtocols) GetUdp(proto protos.Protocol) protos.UdpProtocolPlugin {
 	return p.udp[proto]
 }
 
-func (p TestProtocols) GetAll() map[protos.Protocol]protos.Plugin {
+func (p TestProtocols) GetAll() map[protos.Protocol]protos.ProtocolPlugin {
 	return nil
 }
 
-func (p TestProtocols) GetAllTcp() map[protos.Protocol]protos.TcpPlugin {
+func (p TestProtocols) GetAllTcp() map[protos.Protocol]protos.TcpProtocolPlugin {
 	return nil
 }
 
-func (p TestProtocols) GetAllUdp() map[protos.Protocol]protos.UdpPlugin {
+func (p TestProtocols) GetAllUdp() map[protos.Protocol]protos.UdpProtocolPlugin {
 	return p.udp
 }
 
-func (p TestProtocols) Register(proto protos.Protocol, plugin protos.Plugin) {
+func (p TestProtocols) Register(proto protos.Protocol, plugin protos.ProtocolPlugin) {
 	return
 }
 
@@ -94,7 +81,7 @@ func testSetup(t *testing.T) *TestStruct {
 	}
 
 	protocols := &TestProtocols{}
-	protocols.udp = make(map[protos.Protocol]protos.UdpPlugin)
+	protocols.udp = make(map[protos.Protocol]protos.UdpProtocolPlugin)
 	plugin := &TestProtocol{Ports: []int{PORT}}
 	protocols.udp[PROTO] = plugin
 
@@ -107,8 +94,9 @@ func testSetup(t *testing.T) *TestStruct {
 }
 
 func Test_buildPortsMap(t *testing.T) {
+
 	type configTest struct {
-		Input  map[protos.Protocol]protos.UdpPlugin
+		Input  map[protos.Protocol]protos.UdpProtocolPlugin
 		Output map[uint16]protos.Protocol
 	}
 
@@ -116,39 +104,39 @@ func Test_buildPortsMap(t *testing.T) {
 	// for testing purposes.
 	config_tests := []configTest{
 		{
-			Input: map[protos.Protocol]protos.UdpPlugin{
-				httpProtocol: &TestProtocol{Ports: []int{80, 8080}},
+			Input: map[protos.Protocol]protos.UdpProtocolPlugin{
+				protos.HttpProtocol: &TestProtocol{Ports: []int{80, 8080}},
 			},
 			Output: map[uint16]protos.Protocol{
-				80:   httpProtocol,
-				8080: httpProtocol,
+				80:   protos.HttpProtocol,
+				8080: protos.HttpProtocol,
 			},
 		},
 		{
-			Input: map[protos.Protocol]protos.UdpPlugin{
-				httpProtocol:  &TestProtocol{Ports: []int{80, 8080}},
-				mysqlProtocol: &TestProtocol{Ports: []int{3306}},
-				redisProtocol: &TestProtocol{Ports: []int{6379, 6380}},
+			Input: map[protos.Protocol]protos.UdpProtocolPlugin{
+				protos.HttpProtocol:  &TestProtocol{Ports: []int{80, 8080}},
+				protos.MysqlProtocol: &TestProtocol{Ports: []int{3306}},
+				protos.RedisProtocol: &TestProtocol{Ports: []int{6379, 6380}},
 			},
 			Output: map[uint16]protos.Protocol{
-				80:   httpProtocol,
-				8080: httpProtocol,
-				3306: mysqlProtocol,
-				6379: redisProtocol,
-				6380: redisProtocol,
+				80:   protos.HttpProtocol,
+				8080: protos.HttpProtocol,
+				3306: protos.MysqlProtocol,
+				6379: protos.RedisProtocol,
+				6380: protos.RedisProtocol,
 			},
 		},
 
 		// should ignore duplicate ports in the same protocol
 		{
-			Input: map[protos.Protocol]protos.UdpPlugin{
-				httpProtocol:  &TestProtocol{Ports: []int{80, 8080, 8080}},
-				mysqlProtocol: &TestProtocol{Ports: []int{3306}},
+			Input: map[protos.Protocol]protos.UdpProtocolPlugin{
+				protos.HttpProtocol:  &TestProtocol{Ports: []int{80, 8080, 8080}},
+				protos.MysqlProtocol: &TestProtocol{Ports: []int{3306}},
 			},
 			Output: map[uint16]protos.Protocol{
-				80:   httpProtocol,
-				8080: httpProtocol,
-				3306: mysqlProtocol,
+				80:   protos.HttpProtocol,
+				8080: protos.HttpProtocol,
+				3306: protos.MysqlProtocol,
 			},
 		},
 	}
@@ -164,7 +152,7 @@ func Test_buildPortsMap(t *testing.T) {
 // for the same port number.
 func Test_buildPortsMap_portOverlapError(t *testing.T) {
 	type errTest struct {
-		Input map[protos.Protocol]protos.UdpPlugin
+		Input map[protos.Protocol]protos.UdpProtocolPlugin
 		Err   string
 	}
 
@@ -173,10 +161,10 @@ func Test_buildPortsMap_portOverlapError(t *testing.T) {
 	tests := []errTest{
 		{
 			// Should raise error on duplicate port
-			Input: map[protos.Protocol]protos.UdpPlugin{
-				httpProtocol:  &TestProtocol{Ports: []int{80, 8080}},
-				mysqlProtocol: &TestProtocol{Ports: []int{3306}},
-				redisProtocol: &TestProtocol{Ports: []int{6379, 6380, 3306}},
+			Input: map[protos.Protocol]protos.UdpProtocolPlugin{
+				protos.HttpProtocol:  &TestProtocol{Ports: []int{80, 8080}},
+				protos.MysqlProtocol: &TestProtocol{Ports: []int{3306}},
+				protos.RedisProtocol: &TestProtocol{Ports: []int{6379, 6380, 3306}},
 			},
 			Err: "Duplicate port (3306) exists",
 		},
@@ -226,7 +214,7 @@ func TestProcess_emptyPayload(t *testing.T) {
 		net.ParseIP("192.168.0.1"), PORT,
 		net.ParseIP("10.0.0.1"), 34898)
 	emptyPkt := &protos.Packet{Ts: time.Now(), Tuple: tuple, Payload: []byte{}}
-	test.udp.Process(nil, emptyPkt)
+	test.udp.Process(emptyPkt)
 	assert.Nil(t, test.plugin.pkt)
 }
 
@@ -239,6 +227,6 @@ func TestProcess_nonEmptyPayload(t *testing.T) {
 		net.ParseIP("10.0.0.1"), 34898)
 	payload := []byte{1}
 	pkt := &protos.Packet{Ts: time.Now(), Tuple: tuple, Payload: payload}
-	test.udp.Process(nil, pkt)
+	test.udp.Process(pkt)
 	assert.Equal(t, pkt, test.plugin.pkt)
 }

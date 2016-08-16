@@ -13,6 +13,7 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 
+	"github.com/elastic/beats/packetbeat/config"
 	"github.com/elastic/beats/packetbeat/procs"
 	"github.com/elastic/beats/packetbeat/protos"
 	"github.com/elastic/beats/packetbeat/protos/tcp"
@@ -157,54 +158,7 @@ type Thrift struct {
 	Idl          *ThriftIdl
 }
 
-func init() {
-	protos.Register("thrift", New)
-}
-
-func New(
-	testMode bool,
-	results publish.Transactions,
-	cfg *common.Config,
-) (protos.Plugin, error) {
-	p := &Thrift{}
-	config := defaultConfig
-	if !testMode {
-		if err := cfg.Unpack(&config); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := p.init(testMode, results, &config); err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-
-func (thrift *Thrift) init(
-	testMode bool,
-	results publish.Transactions,
-	config *thriftConfig,
-) error {
-	thrift.InitDefaults()
-
-	err := thrift.readConfig(config)
-	if err != nil {
-		return err
-	}
-
-	thrift.transactions = common.NewCache(
-		thrift.transactionTimeout,
-		protos.DefaultTransactionHashSize)
-	thrift.transactions.StartJanitor(thrift.transactionTimeout)
-
-	if !testMode {
-		thrift.PublishQueue = make(chan *ThriftTransaction, 1000)
-		thrift.results = results
-		go thrift.publishTransactions()
-	}
-
-	return nil
-}
+var ThriftMod Thrift
 
 func (thrift *Thrift) getTransaction(k common.HashableTcpTuple) *ThriftTransaction {
 	v := thrift.transactions.Get(k)
@@ -228,40 +182,56 @@ func (thrift *Thrift) InitDefaults() {
 	thrift.transactionTimeout = protos.DefaultTransactionExpiration
 }
 
-func (thrift *Thrift) readConfig(config *thriftConfig) error {
+func (thrift *Thrift) readConfig(config config.Thrift) error {
 	var err error
 
 	thrift.Ports = config.Ports
-	thrift.Send_request = config.SendRequest
-	thrift.Send_response = config.SendResponse
 
-	thrift.StringMaxSize = config.StringMaxSize
-	thrift.CollectionMaxSize = config.CollectionMaxSize
-	thrift.DropAfterNStructFields = config.DropAfterNStructFields
-	thrift.CaptureReply = config.CaptureReply
-	thrift.ObfuscateStrings = config.ObfuscateStrings
-
-	switch config.TransportType {
-	case "socket":
-		thrift.TransportType = ThriftTSocket
-	case "framed":
-		thrift.TransportType = ThriftTFramed
-	default:
-		return fmt.Errorf("Transport type `%s` not known", config.TransportType)
+	if config.String_max_size != nil {
+		thrift.StringMaxSize = *config.String_max_size
 	}
-
-	switch config.ProtocolType {
-	case "binary":
-		thrift.ProtocolType = ThriftTBinary
-	default:
-		return fmt.Errorf("Protocol type `%s` not known", config.ProtocolType)
+	if config.Collection_max_size != nil {
+		thrift.CollectionMaxSize = *config.Collection_max_size
 	}
-
-	if len(config.IdlFiles) > 0 {
-		thrift.Idl, err = NewThriftIdl(config.IdlFiles)
+	if config.Drop_after_n_struct_fields != nil {
+		thrift.DropAfterNStructFields = *config.Drop_after_n_struct_fields
+	}
+	if config.Transport_type != nil {
+		switch *config.Transport_type {
+		case "socket":
+			thrift.TransportType = ThriftTSocket
+		case "framed":
+			thrift.TransportType = ThriftTFramed
+		default:
+			return fmt.Errorf("Transport type `%s` not known", *config.Transport_type)
+		}
+	}
+	if config.Protocol_type != nil {
+		switch *config.Protocol_type {
+		case "binary":
+			thrift.ProtocolType = ThriftTBinary
+		default:
+			return fmt.Errorf("Protocol type `%s` not known", *config.Protocol_type)
+		}
+	}
+	if config.Capture_reply != nil {
+		thrift.CaptureReply = *config.Capture_reply
+	}
+	if config.Obfuscate_strings != nil {
+		thrift.ObfuscateStrings = *config.Obfuscate_strings
+	}
+	if len(config.Idl_files) > 0 {
+		thrift.Idl, err = NewThriftIdl(config.Idl_files)
 		if err != nil {
 			return err
 		}
+	}
+
+	if config.SendRequest != nil {
+		thrift.Send_request = *config.SendRequest
+	}
+	if config.SendResponse != nil {
+		thrift.Send_response = *config.SendResponse
 	}
 
 	return nil
@@ -269,6 +239,31 @@ func (thrift *Thrift) readConfig(config *thriftConfig) error {
 
 func (thrift *Thrift) GetPorts() []int {
 	return thrift.Ports
+}
+
+func (thrift *Thrift) Init(test_mode bool, results publish.Transactions) error {
+
+	thrift.InitDefaults()
+
+	if !test_mode {
+		err := thrift.readConfig(config.ConfigSingleton.Protocols.Thrift)
+		if err != nil {
+			return err
+		}
+	}
+
+	thrift.transactions = common.NewCache(
+		thrift.transactionTimeout,
+		protos.DefaultTransactionHashSize)
+	thrift.transactions.StartJanitor(thrift.transactionTimeout)
+
+	if !test_mode {
+		thrift.PublishQueue = make(chan *ThriftTransaction, 1000)
+		thrift.results = results
+		go thrift.publishTransactions()
+	}
+
+	return nil
 }
 
 func (m *ThriftMessage) String() string {

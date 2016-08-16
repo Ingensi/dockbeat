@@ -1,4 +1,4 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 # import pprint
 #
@@ -9,7 +9,7 @@ from packetbeat import BaseTest
 #     pp.pprint(*k, **kw)
 
 
-class Test(BaseTest):
+class Test(TestCase):
     def _run(self, pcap):
         self.render_config_template()
         self.run_packetbeat(pcap=pcap,

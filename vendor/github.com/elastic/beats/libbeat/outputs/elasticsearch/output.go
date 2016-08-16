@@ -1,33 +1,21 @@
 package elasticsearch
 
 import (
-	"bytes"
 	"crypto/tls"
 	"errors"
-	"io/ioutil"
 	"net/url"
 	"strings"
 	"time"
 
+	"bytes"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/outputs"
 	"github.com/elastic/beats/libbeat/outputs/mode"
+	"io/ioutil"
 )
 
-type elasticsearchOutput struct {
-	index string
-	mode  mode.ConnectionMode
-	topology
-}
-
-func init() {
-	outputs.RegisterOutputPlugin("elasticsearch", New)
-}
-
-var (
-	debug = logp.MakeDebug("elasticsearch")
-)
+var debug = logp.MakeDebug("elasticsearch")
 
 var (
 	// ErrNotConnected indicates failure due to client having no valid connection
@@ -40,14 +28,41 @@ var (
 	ErrResponseRead = errors.New("bulk item status parse failed.")
 )
 
+const (
+	defaultMaxRetries = 3
+
+	defaultBulkSize = 50
+
+	elasticsearchDefaultTimeout = 90 * time.Second
+)
+
+func init() {
+	outputs.RegisterOutputPlugin("elasticsearch", elasticsearchOutputPlugin{})
+}
+
+type elasticsearchOutputPlugin struct{}
+
+type elasticsearchOutput struct {
+	index string
+	mode  mode.ConnectionMode
+
+	topology
+}
+
 // NewOutput instantiates a new output plugin instance publishing to elasticsearch.
-func New(cfg *common.Config, topologyExpire int) (outputs.Outputer, error) {
-	if !cfg.HasField("bulk_max_size") {
-		cfg.SetInt("bulk_max_size", 0, defaultBulkSize)
+func (f elasticsearchOutputPlugin) NewOutput(
+	config *outputs.MothershipConfig,
+	topologyExpire int,
+) (outputs.Outputer, error) {
+
+	// configure bulk size in config in case it is not set
+	if config.BulkMaxSize == nil {
+		bulkSize := defaultBulkSize
+		config.BulkMaxSize = &bulkSize
 	}
 
 	output := &elasticsearchOutput{}
-	err := output.init(cfg, topologyExpire)
+	err := output.init(*config, topologyExpire)
 	if err != nil {
 		return nil, err
 	}
@@ -55,25 +70,29 @@ func New(cfg *common.Config, topologyExpire int) (outputs.Outputer, error) {
 }
 
 func (out *elasticsearchOutput) init(
-	cfg *common.Config,
+	config outputs.MothershipConfig,
 	topologyExpire int,
 ) error {
-	config := defaultConfig
-	if err := cfg.Unpack(&config); err != nil {
-		return err
-	}
-
 	tlsConfig, err := outputs.LoadTLSConfig(config.TLS)
 	if err != nil {
 		return err
 	}
 
-	clients, err := mode.MakeClients(cfg, makeClientFactory(tlsConfig, &config))
+	clients, err := mode.MakeClients(config, makeClientFactory(tlsConfig, config))
+
 	if err != nil {
 		return err
 	}
 
-	maxRetries := config.MaxRetries
+	timeout := elasticsearchDefaultTimeout
+	if config.Timeout != 0 {
+		timeout = time.Duration(config.Timeout) * time.Second
+	}
+
+	maxRetries := defaultMaxRetries
+	if config.MaxRetries != nil {
+		maxRetries = *config.MaxRetries
+	}
 	maxAttempts := maxRetries + 1 // maximum number of send attempts (-1 = infinite)
 	if maxRetries < 0 {
 		maxAttempts = 0
@@ -82,17 +101,28 @@ func (out *elasticsearchOutput) init(
 	var waitRetry = time.Duration(1) * time.Second
 	var maxWaitRetry = time.Duration(60) * time.Second
 
+	var m mode.ConnectionMode
 	out.clients = clients
-	loadBalance := config.LoadBalance
-	m, err := mode.NewConnectionMode(clients, !loadBalance,
-		maxAttempts, waitRetry, config.Timeout, maxWaitRetry)
+	if len(clients) == 1 {
+		client := clients[0]
+		m, err = mode.NewSingleConnectionMode(client, maxAttempts,
+			waitRetry, timeout, maxWaitRetry)
+	} else {
+		loadBalance := config.LoadBalance == nil || *config.LoadBalance
+		if loadBalance {
+			m, err = mode.NewLoadBalancerMode(clients, maxAttempts,
+				waitRetry, timeout, maxWaitRetry)
+		} else {
+			m, err = mode.NewFailOverConnectionMode(clients, maxAttempts, waitRetry, timeout)
+		}
+	}
 	if err != nil {
 		return err
 	}
 
 	loadTemplate(config.Template, clients)
 
-	if config.SaveTopology {
+	if config.Save_topology {
 		err := out.EnableTTL()
 		if err != nil {
 			logp.Err("Fail to set _ttl mapping: %s", err)
@@ -123,7 +153,7 @@ func (out *elasticsearchOutput) init(
 
 // loadTemplate checks if the index mapping template should be loaded
 // In case template loading is enabled, template is written to index
-func loadTemplate(config Template, clients []mode.ProtocolClient) {
+func loadTemplate(config outputs.Template, clients []mode.ProtocolClient) {
 	// Check if template should be loaded
 	// Not being able to load the template will output an error but will not stop execution
 	if config.Name != "" && len(clients) > 0 {
@@ -163,7 +193,7 @@ func loadTemplate(config Template, clients []mode.ProtocolClient) {
 
 func makeClientFactory(
 	tls *tls.Config,
-	config *elasticsearchConfig,
+	config outputs.MothershipConfig,
 ) func(string) (mode.ProtocolClient, error) {
 	return func(host string) (mode.ProtocolClient, error) {
 		esURL, err := getURL(config.Protocol, config.Path, host)
@@ -188,20 +218,9 @@ func makeClientFactory(
 			logp.Info("Using proxy URL: %s", proxyURL)
 		}
 
-		params := config.Params
-		if len(params) == 0 {
-			params = nil
-		}
-		client := NewClient(
-			esURL, config.Index, proxyURL, tls,
-			config.Username, config.Password,
-			params)
+		client := NewClient(esURL, config.Index, proxyURL, tls, config.Username, config.Password)
 		return client, nil
 	}
-}
-
-func (out *elasticsearchOutput) Close() error {
-	return out.mode.Close()
 }
 
 func (out *elasticsearchOutput) PublishEvent(

@@ -13,7 +13,6 @@ configuration settings, you need to restart Winlogbeat to pick up the changes.
 * <<elasticsearch-output>>
 * <<logstash-output>>
 * <<redis-output>>
-* <<kafka-output>>
 * <<file-output>>
 * <<console-output>>
 * <<configuration-shipper>>

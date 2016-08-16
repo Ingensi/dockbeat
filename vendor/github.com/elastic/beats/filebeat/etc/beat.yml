@@ -5,15 +5,7 @@ filebeat:
   # List of prospectors to fetch data.
   prospectors:
     # Each - is a prospector. Below are the prospector specific configurations
-
-      # Type of the files. Based on this the way the file is read is decided.
-      # The different types cannot be mixed in one prospector
-      #
-      # Possible options are:
-      # * log: Reads every line of the log file (default)
-      # * stdin: Reads the standard in
-    - input_type: log
-
+    -
       # Paths that should be crawled and fetched. Glob based paths.
       # To fetch all ".log" files from a specific level of subdirectories
       # /var/log/*/*.log can be used.
@@ -30,41 +22,27 @@ filebeat:
       #    hz-gb-2312, euc-kr, euc-jp, iso-2022-jp, shift-jis, ...
       #encoding: plain
 
-
-      # Decode JSON options. Enable this if your logs are structured in JSON.
-      #json:
-        # JSON key on which to apply the line filtering and multiline settings. This key
-        # must be top level and its value must be string, otherwise it is ignored. If
-        # no text key is defined, the line filtering and multiline features cannot be used.
-        #message_key:
-
-        # By default, the decoded JSON is placed under a "json" key in the output document.
-        # If you enable this setting, the keys are copied top level in the output document.
-        #keys_under_root: false
-
-        # If keys_under_root and this setting are enabled, then the values from the decoded
-        # JSON object overwrite the fields that Filebeat normally adds (type, source, offset, etc.)
-        # in case of conflicts.
-        #overwrite_keys: false
-
-        # If this setting is enabled, Filebeat adds a "json_error" key in case of JSON
-        # unmarshaling errors or when a text key is defined in the configuration but cannot
-        # be used.
-        #add_error_key: false
+      # Type of the files. Based on this the way the file is read is decided.
+      # The different types cannot be mixed in one prospector
+      #
+      # Possible options are:
+      # * log: Reads every line of the log file (default)
+      # * stdin: Reads the standard in
+      input_type: log
 
       # Exclude lines. A list of regular expressions to match. It drops the lines that are
       # matching any regular expression from the list. The include_lines is called before
       # exclude_lines. By default, no lines are dropped.
-      #exclude_lines: ["^DBG"]
+      # exclude_lines: ["^DBG"]
 
       # Include lines. A list of regular expressions to match. It exports the lines that are
       # matching any regular expression from the list. The include_lines is called before
       # exclude_lines. By default, all the lines are exported.
-      #include_lines: ["^ERR", "^WARN"]
+      # include_lines: ["^ERR", "^WARN"]
 
       # Exclude files. A list of regular expressions to match. Filebeat drops the files that
       # are matching any regular expression from the list. By default, no files are dropped.
-      #exclude_files: [".gz$"]
+      # exclude_files: [".gz$"]
 
       # Optional additional fields. These field can be freely picked
       # to add additional information to the crawled log files for filtering
@@ -79,7 +57,7 @@ filebeat:
       #fields_under_root: false
 
       # Ignore files which were modified more then the defined timespan in the past.
-      # ignore_older is disabled by default, so no files are ignored by setting it to 0.
+      # In case all files on your system must be read you can set this value very large.
       # Time strings like 2h (2 hours), 5m (5 minutes) can be used.
       #ignore_older: 0
 
@@ -130,12 +108,12 @@ filebeat:
         # Default is 5s.
         #timeout: 5s
 
-      # Setting tail_files to true means filebeat starts reading new files at the end
+      # Setting tail_files to true means filebeat starts readding new files at the end
       # instead of the beginning. If this is used in combination with log rotation
       # this can mean that the first entries of a new file are skipped.
       #tail_files: false
 
-      # Backoff values define how aggressively filebeat crawls new files for updates
+      # Backoff values define how agressively filebeat crawls new files for updates
       # The default values can be used in most cases. Backoff defines how long it is waited
       # to check a file again after EOF is reached. Default is 1s which means the file
       # is checked every second if new lines were added. This leads to a near real time crawling.
@@ -143,7 +121,7 @@ filebeat:
       #backoff: 1s
 
       # Max backoff defines what the maximum backoff time is. After having backed off multiple times
-      # from checking the files, the waiting time will never exceed max_backoff independent of the
+      # from checking the files, the waiting time will never exceed max_backoff idenependent of the
       # backoff factor. Having it set to 10s means in the worst case a new line can be added to a log
       # file after having backed off multiple times, it takes a maximum of 10s to read the new line
       #max_backoff: 10s
@@ -163,11 +141,10 @@ filebeat:
       # but lower the ignore_older value to release files faster.
       #force_close_files: false
 
-    # Additional stdin prospector
-
+    # Additional prospector
+    #-
       # Configuration to use stdin input
-    #- input_type: stdin
-
+      #input_type: stdin
 
   # General filebeat configuration options
   #

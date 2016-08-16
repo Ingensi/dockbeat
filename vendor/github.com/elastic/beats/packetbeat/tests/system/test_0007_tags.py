@@ -1,11 +1,11 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 """
 Tests for tags handling.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     def test_tags(self):
         """
@@ -21,7 +21,6 @@ class Test(BaseTest):
         assert len(objs) == 1
 
         o = objs[0]
-        assert "tags" in o
         assert o["tags"] == ["nginx", "wsgi", "drum"]
 
     def test_empty_tags(self):

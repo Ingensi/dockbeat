@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// DumpInCSVFormat takes a set of fields and rows and returns a string
+// Takes a set of fields and rows and returns a string
 // representing the CSV representation for the fields and rows.
 func DumpInCSVFormat(fields []string, rows [][]string) string {
 

@@ -11,27 +11,20 @@ You can find the documentation on the [elastic.co](https://www.elastic.co/guide/
 
 ## Exported fields
 
-Topbeat exports the following types of JSON documents based on the statistics
-that it's configured to capture:
+There are three types of documents exported:
+- `type: system` for system wide statistics
+- `type: process` for per process statistics. One per process.
+- `type: filesystem` for disk usage statistics. One per mount point.
 
-- `type: system` for system-wide statistics
-- `type: process` for per-process statistics
-- `type: filesystem` for disk usage statistics
-
-By default, Topbeat captures all three types of statistics. As you can see in
-the following examples, the content of the JSON document varies depending on the
-type.
-
-### System-Wide Statistics
-
-Topbeat exports one JSON document for the system. For example:
+System statistics:
 
 <pre>
 {
-  "@timestamp": "2016-02-01T20:16:49.480Z",
+  "@timestamp": "2015-11-10T13:59:48.178Z",
   "beat": {
     "hostname": "MacBook-Pro.local",
-    "name": "MacBook-Pro.local"
+    "name": "MacBook-Pro.local",
+    "version": "1.0.0-rc1"
   },
   "count": 1,
   "cpu": {
@@ -76,31 +69,30 @@ Topbeat exports one JSON document for the system. For example:
     "total": 2147483648,
     "used": 736624640,
     "free": 1410859008,
-    "used_p": 0.34
+    "used_p": 0.34,
+    "actual_used": 0,
+    "actual_free": 0,
+    "actual_used_p": 0
   },
   "type": "system"
 }
 </pre>
 
-If you set `cpu_per_core: true`, the output also includes CPU usage per core
-statistics grouped under `cpus`.
-
-### Per-Process Statistics
-
-Topbeat exports one document per process. For example:
+Per process statistics:
 
 <pre>
 {
-  "@timestamp": "2016-02-01T20:16:49.499Z",
+  "@timestamp": "2015-11-10T13:59:48.178Z",
   "beat": {
     "hostname": "MacBook-Pro.local",
-    "name": "MacBook-Pro.local"
+    "name": "MacBook-Pro.local",
+    "version": "1.0.0-rc1"
   },
   "count": 1,
   "proc": {
     "cpu": {
       "user": 1,
-      "total_p": 0,
+      "user_p": 0,
       "system": 1,
       "total": 2,
       "start_time": "15:59"
@@ -116,20 +108,19 @@ Topbeat exports one document per process. For example:
     "ppid": 10392,
     "state": "running"
   },
-  "type": "process"
+  "type": "proc"
 }
 </pre>
 
-### Disk Usage Statistics
-
-Topbeat exports one document per mount point. For example:
+Per file system statistics:
 
 <pre>
 {
-  "@timestamp": "2016-02-01T20:16:49.499Z",
+  "@timestamp": "2015-11-10T14:02:02.345Z",
   "beat": {
     "hostname": "MacBook-Pro.local",
-    "name": "MacBook-Pro.local"
+    "name": "MacBook-Pro.local",
+    "version": "1.0.0-rc1"
   },
   "count": 1,
   "fs": {
@@ -149,6 +140,6 @@ Topbeat exports one document per mount point. For example:
 
 ## Elasticsearch template
 
-To apply the Topbeat template:
+To apply topbeat template:
 
     curl -XPUT 'http://localhost:9200/_template/topbeat' -d@etc/topbeat.template.json
