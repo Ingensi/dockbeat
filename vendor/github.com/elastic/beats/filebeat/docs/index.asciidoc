@@ -1,6 +1,6 @@
 = Filebeat Reference
-:libbeat: http://www.elastic.co/guide/en/beats/libbeat/master
-:version: master
+:libbeat: http://www.elastic.co/guide/en/beats/libbeat/1.2
+:version: 1.2.3
 :beatname_lc: filebeat
 :beatname_uc: Filebeat
 
@@ -14,9 +14,13 @@ include::./configuring-howto.asciidoc[]
 
 include::../../libbeat/docs/shared-env-vars.asciidoc[]
 
+include::./multiple-prospectors.asciidoc[]
+
+include::./securing-filebeat.asciidoc[]
+
 include::../../libbeat/docs/https.asciidoc[]
 
-include::./multiple-prospectors.asciidoc[]
+include::../../libbeat/docs/shared-tls-logstash-config.asciidoc[]
 
 include::./troubleshooting.asciidoc[]
 

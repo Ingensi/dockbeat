@@ -28,7 +28,6 @@ const (
 	DefaultBackoffFactor                     = 2
 	DefaultMaxBackoff                        = 10 * time.Second
 	DefaultForceCloseFiles                   = false
-	DefaultMaxBytes                          = 10 * (1 << 20) // 10MB
 )
 
 type Config struct {
@@ -36,62 +35,55 @@ type Config struct {
 }
 
 type FilebeatConfig struct {
-	Prospectors  []ProspectorConfig
-	SpoolSize    uint64        `config:"spool_size"`
-	PublishAsync bool          `config:"publish_async"`
-	IdleTimeout  time.Duration `config:"idle_timeout"`
-	RegistryFile string        `config:"registry_file"`
-	ConfigDir    string        `config:"config_dir"`
+	Prospectors         []ProspectorConfig
+	SpoolSize           uint64 `yaml:"spool_size"`
+	PublishAsync        bool   `yaml:"publish_async"`
+	IdleTimeout         string `yaml:"idle_timeout"`
+	IdleTimeoutDuration time.Duration
+	RegistryFile        string `yaml:"registry_file"`
+	ConfigDir           string `yaml:"config_dir"`
 }
 
 type ProspectorConfig struct {
-	ExcludeFiles          []string `config:"exclude_files"`
-	ExcludeFilesRegexp    []*regexp.Regexp
-	Harvester             HarvesterConfig `config:",inline"`
-	Input                 string
-	IgnoreOlder           string `config:"ignore_older"`
-	IgnoreOlderDuration   time.Duration
 	Paths                 []string
-	ScanFrequency         string `config:"scan_frequency"`
+	Input                 string
+	IgnoreOlder           string `yaml:"ignore_older"`
+	IgnoreOlderDuration   time.Duration
+	CloseOlder            string `yaml:"close_older"`
+	CloseOlderDuration    time.Duration
+	ScanFrequency         string `yaml:"scan_frequency"`
 	ScanFrequencyDuration time.Duration
+	Harvester             HarvesterConfig `yaml:",inline"`
+	ExcludeFiles          []string        `yaml:"exclude_files"`
+	ExcludeFilesRegexp    []*regexp.Regexp
 }
 
 type HarvesterConfig struct {
-	common.EventMetadata `config:",inline"` // Fields and tags to add to events.
-
-	BufferSize         int    `config:"harvester_buffer_size"`
-	DocumentType       string `config:"document_type"`
-	Encoding           string `config:"encoding"`
-	InputType          string `config:"input_type"`
-	TailFiles          bool   `config:"tail_files"`
-	Backoff            string `config:"backoff"`
+	InputType          string `yaml:"input_type"`
+	Fields             common.MapStr
+	FieldsUnderRoot    bool   `yaml:"fields_under_root"`
+	BufferSize         int    `yaml:"harvester_buffer_size"`
+	TailFiles          bool   `yaml:"tail_files"`
+	Encoding           string `yaml:"encoding"`
+	DocumentType       string `yaml:"document_type"`
+	Backoff            string `yaml:"backoff"`
 	BackoffDuration    time.Duration
-	BackoffFactor      int    `config:"backoff_factor"`
-	MaxBackoff         string `config:"max_backoff"`
+	BackoffFactor      int    `yaml:"backoff_factor"`
+	MaxBackoff         string `yaml:"max_backoff"`
 	MaxBackoffDuration time.Duration
-	CloseOlder         string `config:"close_older"`
-	CloseOlderDuration time.Duration
-	ForceCloseFiles    bool             `config:"force_close_files"`
-	ExcludeLines       []string         `config:"exclude_lines"`
-	IncludeLines       []string         `config:"include_lines"`
-	MaxBytes           int              `config:"max_bytes"`
-	Multiline          *MultilineConfig `config:"multiline"`
-	JSON               *JSONConfig      `config:"json"`
-}
-
-type JSONConfig struct {
-	MessageKey    string `config:"message_key"`
-	KeysUnderRoot bool   `config:"keys_under_root"`
-	OverwriteKeys bool   `config:"overwrite_keys"`
-	AddErrorKey   bool   `config:"add_error_key"`
+	ForceCloseFiles    bool             `yaml:"force_close_files"`
+	ExcludeLines       []string         `yaml:"exclude_lines"`
+	IncludeLines       []string         `yaml:"include_lines"`
+	MaxBytes           *int             `yaml:"max_bytes"`
+	Multiline          *MultilineConfig `yaml:"multiline"`
 }
 
 type MultilineConfig struct {
-	Negate   bool   `config:"negate"`
-	Match    string `config:"match"`
-	MaxLines *int   `config:"max_lines"`
-	Pattern  string `config:"pattern"`
-	Timeout  string `config:"timeout"`
+	Pattern  string `yaml:"pattern"`
+	Negate   bool   `yaml:"negate"`
+	Match    string `yaml:"match"`
+	MaxLines *int   `yaml:"max_lines"`
+	Timeout  string `yaml:"timeout"`
 }
 
 const (

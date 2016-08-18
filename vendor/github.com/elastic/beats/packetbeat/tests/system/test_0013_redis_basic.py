@@ -1,7 +1,7 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 
-class Test(BaseTest):
+class Test(TestCase):
     """
     Basic REDIS tests
     """

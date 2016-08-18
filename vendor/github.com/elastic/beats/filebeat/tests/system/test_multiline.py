@@ -1,13 +1,14 @@
-from filebeat import BaseTest
+from filebeat import TestCase
 import os
+import socket
+import shutil
 
 """
 Tests for the multiline log messages
 """
 
 
-class Test(BaseTest):
-
+class Test(TestCase):
     def test_java_elasticsearch_log(self):
         """
         Test that multi lines for java logs works.
@@ -26,14 +27,14 @@ class Test(BaseTest):
                         source_dir="../files",
                         target_dir="log")
 
-        proc = self.start_beat()
+        proc = self.start_filebeat()
 
         # wait for the "Skipping file" log message
         self.wait_until(
             lambda: self.output_has(lines=20),
             max_timeout=10)
 
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
         output = self.read_output()
 
@@ -57,66 +58,19 @@ class Test(BaseTest):
                         source_dir="../files",
                         target_dir="log")
 
-        proc = self.start_beat()
+        proc = self.start_filebeat()
 
         # wait for the "Skipping file" log message
         self.wait_until(
             lambda: self.output_has(lines=4),
             max_timeout=10)
 
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
         output = self.read_output()
 
         # Check that output file has the same number of lines as the log file
         assert 4 == len(output)
-
-    def test_rabbitmq_multiline_log(self):
-        """
-        Test rabbitmq multiline log
-        Special about this log file is that it has empty new lines
-        """
-        self.render_config_template(
-                path=os.path.abspath(self.working_dir) + "/log/*",
-                multiline=True,
-                pattern="^=[A-Z]+",
-                match="after",
-                negate="true",
-        )
-
-        logentry = """=ERROR REPORT==== 3-Feb-2016::03:10:32 ===
-connection <0.23893.109>, channel 3 - soft error:
-{amqp_error,not_found,
-            "no queue 'bucket-1' in vhost '/'",
-            'queue.declare'}
-
-
-"""
-        os.mkdir(self.working_dir + "/log/")
-
-        proc = self.start_beat()
-
-        testfile = self.working_dir + "/log/rabbitmq.log"
-        file = open(testfile, 'w')
-        iterations = 3
-        for n in range(0, iterations):
-            file.write(logentry)
-        file.close()
-
-        # wait for the "Skipping file" log message
-        self.wait_until(
-                lambda: self.output_has(lines=3),
-                max_timeout=10)
-
-        proc.check_kill_and_wait()
-
-        output = self.read_output()
-
-        # Check that output file has the same number of lines as the log file
-        assert 3 == len(output)
-
-
-
 
     def test_max_lines(self):
         """
@@ -137,23 +91,21 @@ connection <0.23893.109>, channel 3 - soft error:
                         source_dir="../files",
                         target_dir="log")
 
-        proc = self.start_beat()
+        proc = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(lines=20),
             max_timeout=10)
 
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
         output = self.read_output()
 
         # Checks line 3 is sent
-        assert True == self.log_contains(
-            "MetaDataMappingService.java:388", "output/filebeat")
+        assert True == self.log_contains("MetaDataMappingService.java:388", "output/filebeat")
 
         # Checks line 4 is not sent anymore
-        assert False == self.log_contains(
-            "InternalClusterService.java:388", "output/filebeat")
+        assert False == self.log_contains("InternalClusterService.java:388", "output/filebeat")
 
         # Check that output file has the same number of lines as the log file
         assert 20 == len(output)
@@ -180,7 +132,7 @@ connection <0.23893.109>, channel 3 - soft error:
         file.write("  First Line\n")
         file.write("  Second Line\n")
 
-        proc = self.start_beat()
+        proc = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(lines=1),
@@ -197,7 +149,7 @@ connection <0.23893.109>, channel 3 - soft error:
         self.wait_until(
             lambda: self.output_has(lines=3),
             max_timeout=10)
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
         output = self.read_output()
         assert 3 == len(output)
@@ -220,13 +172,13 @@ connection <0.23893.109>, channel 3 - soft error:
                         source_dir="../files",
                         target_dir="log")
 
-        proc = self.start_beat()
+        proc = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(lines=20),
             max_timeout=10)
 
-        proc.check_kill_and_wait()
+        proc.kill_and_wait()
 
         output = self.read_output()
 

@@ -1,7 +1,7 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 
-class Test(BaseTest):
+class Test(TestCase):
     def test_select(self):
         self.render_config_template(
             pgsql_ports=[5432],

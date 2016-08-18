@@ -6,7 +6,7 @@ os: Windows Server 2012 R2
 
 # Environment variables
 environment:
-  GOROOT: c:\go1.5.3
+  GOROOT: c:\go
   GOPATH: c:\gopath
   PYWIN_DL: https://downloads.sourceforge.net/project/pywin32/pywin32/Build%20219/pywin32-219.win32-py2.7.exe
   matrix:
@@ -24,23 +24,17 @@ clone_folder: c:\gopath\src\github.com\elastic\beats
 cache:
 - C:\ProgramData\chocolatey\bin -> .appveyor.yml
 - C:\ProgramData\chocolatey\lib -> .appveyor.yml
-- C:\go1.5.3 -> .appveyor.yml
 - C:\tools\mingw64 -> .appveyor.yml
 - C:\pywin_inst.exe -> .appveyor.yml
 
 # Scripts that run after cloning repository
 install:
-  - ps: c:\gopath\src\github.com\elastic\beats\libbeat\scripts\install-go.ps1 -version 1.5.3
-  - set PATH=%GOROOT%\bin;%PATH%
   # AppVeyor installed mingw is 32-bit only.
-  - ps: >-
-      if(!(Test-Path "C:\tools\mingw64\bin\gcc.exe")) {
-        cinst mingw > mingw-install.txt
-        Push-AppveyorArtifact mingw-install.txt
-      }
+  - cinst mingw > mingw-install.txt
+  - ps: Push-AppveyorArtifact mingw-install.txt
   - set PATH=C:\tools\mingw64\bin;%GOROOT%\bin;%PATH%
   - set PATH=%GOPATH%\bin;%PATH%
-  - go get github.com/pierrre/gotestcover
+  - go get github.com/pierrre/gotestcover golang.org/x/tools/cmd/cover
   - set GO15VENDOREXPERIMENT=1
   - go version
   - go env
@@ -52,7 +46,7 @@ install:
   - set PYTHONPATH=C:\Python27
   - set PATH=%PYTHONPATH%;%PYTHONPATH%\Scripts;%PATH%
   - python --version
-  - pip install jinja2 nose nose-timer PyYAML
+  - pip install jinja2 nose nose-timer
   - easy_install C:/pywin_inst.exe
 
 # To run your custom scripts instead of automatic MSBuild
@@ -79,8 +73,8 @@ test_script:
 
 after_test:
   - ps: cd $env:GOPATH\src\$env:PROJ
-  - python ..\dev-tools\aggregate_coverage.py -o build\coverage\system.cov .\build\system-tests\run
-  - python ..\dev-tools\aggregate_coverage.py -o build\coverage\full.cov .\build\coverage
+  - python ..\scripts\aggregate_coverage.py -o build\coverage\system.cov .\build\system-tests\run
+  - python ..\scripts\aggregate_coverage.py -o build\coverage\full.cov .\build\coverage
   - go tool cover -html=build\coverage\full.cov -o build\coverage\full.html
   - ps: Push-AppveyorArtifact build\coverage\full.cov
   - ps: Push-AppveyorArtifact build\coverage\full.html

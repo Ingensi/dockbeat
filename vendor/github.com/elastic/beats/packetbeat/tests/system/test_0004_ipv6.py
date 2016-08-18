@@ -1,7 +1,7 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     def test_ipv6_thrift_framed(self):
         self.render_config_template(

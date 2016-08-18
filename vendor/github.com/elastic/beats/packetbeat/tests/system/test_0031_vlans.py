@@ -1,11 +1,11 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 """
 Tests for traffic with VLAN tags.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
     def test_http_vlan(self):
         """
         Should extract a request/response that have vlan tags.

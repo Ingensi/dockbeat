@@ -1,5 +1,3 @@
-// +build integration
-
 package redis
 
 import (
@@ -28,6 +26,9 @@ func GetRedisAddr() string {
 }
 
 func TestTopologyInRedis(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping topology tests in short mode, because they require REDIS")
+	}
 
 	var redisOutput1 = redisOutput{
 		Index:          "packetbeat",

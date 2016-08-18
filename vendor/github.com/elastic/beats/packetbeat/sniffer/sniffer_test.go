@@ -1,5 +1,3 @@
-// +build !integration
-
 package sniffer
 
 import (

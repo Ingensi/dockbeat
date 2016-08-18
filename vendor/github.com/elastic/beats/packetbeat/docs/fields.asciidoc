@@ -6,11 +6,11 @@ This file is generated! See etc/fields.yml and scripts/generate_field_docs.py
 [[exported-fields]]
 == Exported Fields
 
-This document describes the fields that are exported by Packetbeat. They are
-grouped in the following categories:
+This document describes the fields that are exported by 
+Packetbeat for each transaction. They are grouped in the
+following categories:
 
-* <<exported-fields-flows_event>>
-* <<exported-fields-trans_event>>
+* <<exported-fields-event>>
 * <<exported-fields-icmp>>
 * <<exported-fields-dns>>
 * <<exported-fields-http>>
@@ -20,265 +20,12 @@ grouped in the following categories:
 * <<exported-fields-thrift>>
 * <<exported-fields-redis>>
 * <<exported-fields-mongodb>>
-* <<exported-fields-trans_measurements>>
-* <<exported-fields-trans_env>>
-* <<exported-fields-flows_env>>
+* <<exported-fields-measurements>>
+* <<exported-fields-env>>
 * <<exported-fields-raw>>
 
-[[exported-fields-flows_event]]
-=== Flow Event Fields
-
-These fields contain data about the flow itself.
-
-
-
-==== @timestamp
-
-type: date
-
-example: 2015-01-24 14:06:05.071000
-
-format: YYYY-MM-DDTHH:MM:SS.milliZ
-
-required: True
-
-The timestamp of the event, as measured by the Beat. The precision is in milliseconds. The timezone is UTC.
-
-
-==== start_time
-
-type: date
-
-example: 2015-01-24 14:06:05.071000
-
-format: YYYY-MM-DDTHH:MM:SS.milliZ
-
-required: True
-
-The time, the first packet for the flow has been seen.
-
-
-==== last_time
-
-type: date
-
-example: 2015-01-24 14:06:05.071000
-
-format: YYYY-MM-DDTHH:MM:SS.milliZ
-
-required: True
-
-The time, the most recent processed packet for the flow has been seen.
-
-
-==== type
-
-required: True
-
-Indicates the event to be a flow event. This field is always set to "flow".
-
-
-==== final
-
-Indicates if event is last event in flow. If final is false, the event reports an intermediate flow state only.
-
-
-==== flow_id
-
-Internal flow id based on connection meta data and address.
-
-
-==== mac_source
-
-Source MAC address as indicated by first packet seen for the current flow.
-
-
-==== mac_dest
-
-Destination MAC address as indicated by first packet seen for the current flow.
-
-
-==== vlan
-
-Innermost VLAN address used in network packets.
-
-
-==== outter_vlan
-
-Second innermost VLAN address used in network packets.
-
-
-==== ip4_source
-
-Innermost IPv4 source address as indicated by first packet seen for the current flow.
-
-
-==== ip4_source_location
-
-type: geo_point
-
-example: 40.715, -74.011
-
-The GeoIP location of the `ip4_source` IP address. The field is a string containing the latitude and longitude separated by a comma.
-
-
-==== ip4_dest
-
-Innermost IPv4 destination address as indicated by first packet seen for the current flow.
-
-
-==== ip4_dest_location
-
-type: geo_point
-
-example: 40.715, -74.011
-
-The GeoIP location of the `ip4_dest` IP address. The field is a string containing the latitude and longitude separated by a comma.
-
-
-==== outter_ip4_source
-
-Second innermost IPv4 source address as indicated by first packet seen for the current flow.
-
-
-==== outter_ip4_source_location
-
-type: geo_point
-
-example: 40.715, -74.011
-
-The GeoIP location of the `outter_ip4_source` IP address. The field is a string containing the latitude and longitude separated by a comma.
-
-
-==== outter_ip4_dest
-
-Second innermost IPv4 destination address as indicated by first packet seen for the current flow.
-
-
-==== outter_ip4_dest_location
-
-type: geo_point
-
-example: 40.715, -74.011
-
-The GeoIP location of the `outter_ip4_dest` IP address. The field is a string containing the latitude and longitude separated by a comma.
-
-
-==== ip6_source
-
-Innermost IPv6 source address as indicated by first packet seen for the current flow.
-
-
-==== ip6_source_location
-
-type: geo_point
-
-example: 60.715, -76.011
-
-The GeoIP location of the `ip6_source` IP address. The field is a string containing the latitude and longitude separated by a comma.
-
-
-==== ip6_dest
-
-Innermost IPv6 destination address as indicated by first packet seen for the current flow.
-
-
-==== ip6_dest_location
-
-type: geo_point
-
-example: 60.715, -76.011
-
-The GeoIP location of the `ip6_dest` IP address. The field is a string containing the latitude and longitude separated by a comma.
-
-
-==== outter_ip6_source
-
-Second innermost IPv6 source address as indicated by first packet seen for the current flow.
-
-
-==== outter_ip6_source_location
-
-type: geo_point
-
-example: 60.715, -76.011
-
-The GeoIP location of the `outter_ip6_source` IP address. The field is a string containing the latitude and longitude separated by a comma.
-
-
-==== outter_ip6_dest
-
-Second innermost IPv6 destination address as indicated by first packet seen for the current flow.
-
-
-==== outter_ip6_dest_location
-
-type: geo_point
-
-example: 60.715, -76.011
-
-The GeoIP location of the `outter_ip6_dest` IP address. The field is a string containing the latitude and longitude separated by a comma.
-
-
-==== icmp_id
-
-ICMP id used in ICMP based flow.
-
-
-==== port_source
-
-Source port number as indicated by first packet seen for the current flow.
-
-
-==== port_dest
-
-Destination port number as indicated by first packet seen for the current flow.
-
-
-==== transport
-
-The transport protocol used by the flow. If known, one of "udp" or "tcp".
-
-
-==== connection_id
-
-optional TCP connection id
-
-
-=== stats_source Fields
-
-Object with source to destination flow measurements.
-
-
-
-==== stats_source.net_packets_total
-
-Total number of packets
-
-
-==== stats_source.net_bytes_total
-
-Total number of bytes
-
-
-=== stats_dest Fields
-
-Object with destination to source flow measurements.
-
-
-
-==== stats_dest.net_packets_total
-
-Total number of packets
-
-
-==== stats_dest.net_bytes_total
-
-Total number of bytes
-
-
-[[exported-fields-trans_event]]
-=== Transaction Event Fields
+[[exported-fields-event]]
+=== Event Fields
 
 These fields contain data about the transaction itself.
 
@@ -434,7 +181,7 @@ type: bool
 A DNS flag specifying that the responding server is an authority for the domain name used in the question.
 
 
-==== dns.flags.recursion_available
+==== dns.flags.recursion_allowed
 
 type: bool
 
@@ -446,20 +193,6 @@ A DNS flag specifying whether recursive query support is available in the name s
 type: bool
 
 A DNS flag specifying that the client directs the server to pursue a query recursively. Recursive query support is optional.
-
-
-==== dns.flags.authentic_data
-
-type: bool
-
-A DNS flag specifying that the recursive server considers the response authentic.
-
-
-==== dns.flags.checking_disabled
-
-type: bool
-
-A DNS flag specifying that the client disables the server signature validation of the query.
 
 
 ==== dns.flags.truncated_response
@@ -477,7 +210,7 @@ The DNS status code.
 
 ==== dns.question.name
 
-example: www.google.com.
+example: www.google.com
 
 The domain name being queried. If the name field contains non-printable characters (below 32 or above 126), then those characters are represented as escaped base 10 integers (\DDD). Back slashes and quotes are escaped. Tabs, carriage returns, and line feeds are converted to \t, \r, and \n respectively.
 
@@ -494,12 +227,6 @@ example: IN
 
 The class of of records being queried.
 
-==== dns.question.etld_plus_one
-
-example: amazon.co.uk.
-
-The effective top-level domain (eTLD) plus one more label. For example, the eTLD+1 for "foo.bar.golang.org." is "golang.org.". The data for determining the eTLD comes from an embedded copy of the data from http://publicsuffix.org.
-
 ==== dns.answers_count
 
 type: int
@@ -509,7 +236,7 @@ The number of resource records contained in the `dns.answers` field.
 
 ==== dns.answers.name
 
-example: example.com.
+example: example.com
 
 The domain name to which this resource record pertains.
 
@@ -529,7 +256,7 @@ The class of DNS data contained in this resource record.
 
 type: int
 
-The time interval in seconds that this resource record may be cached before it should be discarded. Zero values mean that the data should not be cached.
+The time interval in seconds that this resource record may be cached before it should be discarded. Zero values mean that the data should  not be cached.
 
 
 ==== dns.answers.data
@@ -553,7 +280,7 @@ The number of resource records contained in the `dns.authorities` field. The `dn
 
 ==== dns.authorities.name
 
-example: example.com.
+example: example.com
 
 The domain name to which this resource record pertains.
 
@@ -580,7 +307,7 @@ An array containing a dictionary about each answer section returned by the serve
 
 type: int
 
-The time interval in seconds that this resource record may be cached before it should be discarded. Zero values mean that the data should not be cached.
+The time interval in seconds that this resource record may be cached before it should be discarded. Zero values mean that the data should  not be cached.
 
 
 ==== dns.answers.data
@@ -604,7 +331,7 @@ The number of resource records contained in the `dns.additionals` field. The `dn
 
 ==== dns.additionals.name
 
-example: example.com.
+example: example.com
 
 The domain name to which this resource record pertains.
 
@@ -624,290 +351,12 @@ The class of DNS data contained in this resource record.
 
 type: int
 
-The time interval in seconds that this resource record may be cached before it should be discarded. Zero values mean that the data should not be cached.
+The time interval in seconds that this resource record may be cached before it should be discarded. Zero values mean that the data should  not be cached.
 
 
 ==== dns.additionals.data
 
 The data describing the resource. The meaning of this data depends on the type and class of the resource record.
-
-
-=== amqp Fields
-
-AMQP specific event fields.
-
-
-==== amqp.reply-code
-
-type: int
-
-example: 404
-
-AMQP reply code to an error, similar to http reply-code
-
-
-==== amqp.reply-text
-
-type: string
-
-Text explaining the error.
-
-
-==== amqp.class-id
-
-type: int
-
-Failing method class.
-
-
-==== amqp.method-id
-
-type: int
-
-Failing method ID.
-
-
-==== amqp.exchange
-
-type: string
-
-Name of the exchange.
-
-
-==== amqp.exchange-type
-
-type: string
-
-example: fanout
-
-Exchange type.
-
-
-==== amqp.passive
-
-type: bool
-
-If set, do not create exchange/queue.
-
-
-==== amqp.durable
-
-type: bool
-
-If set, request a durable exchange/queue.
-
-
-==== amqp.exclusive
-
-type: bool
-
-If set, request an exclusive queue.
-
-
-==== amqp.auto-delete
-
-type: bool
-
-If set, auto-delete queue when unused.
-
-
-==== amqp.no-wait
-
-type: bool
-
-If set, the server will not respond to the method.
-
-
-==== amqp.consumer-tag
-
-Identifier for the consumer, valid within the current channel.
-
-
-==== amqp.delivery-tag
-
-type: int
-
-The server-assigned and channel-specific delivery tag.
-
-
-==== amqp.message-count
-
-type: int
-
-The number of messages in the queue, which will be zero for newly-declared queues.
-
-
-==== amqp.consumer-count
-
-type: int
-
-The number of consumers of a queue.
-
-
-==== amqp.routing-key
-
-type: int
-
-Message routing key.
-
-
-==== amqp.no-ack
-
-type: bool
-
-If set, the server does not expect acknowledgements for messages.
-
-
-==== amqp.no-local
-
-type: bool
-
-If set, the server will not send messages to the connection that published them.
-
-
-==== amqp.if-unused
-
-type: bool
-
-Delete only if unused.
-
-
-==== amqp.if-empty
-
-type: bool
-
-Delete only if empty.
-
-
-==== amqp.queue
-
-type: string
-
-The queue name identifies the queue within the vhost.
-
-
-==== amqp.redelivered
-
-type: bool
-
-Indicates that the message has been previously delivered to this or another client.
-
-
-==== amqp.multiple
-
-type: bool
-
-Acknowledge multiple messages.
-
-
-==== amqp.arguments.*
-
-Optional additional arguments passed to some methods. Can be of various types.
-
-
-==== amqp.mandatory
-
-type: bool
-
-Indicates mandatory routing.
-
-
-==== amqp.immediate
-
-type: bool
-
-Request immediate delivery.
-
-
-==== amqp.content-type
-
-type: string
-
-example: text/plain
-
-MIME content type.
-
-
-==== amqp.content-encoding
-
-type: string
-
-MIME content encoding.
-
-
-==== amqp.headers.*
-
-Message header field table.
-
-
-==== amqp.delivery-mode
-
-type: int
-
-Non-persistent (1) or persistent (2).
-
-
-==== amqp.priority
-
-type: int
-
-Message priority, 0 to 9.
-
-
-==== amqp.correlation-id
-
-type: string
-
-Application correlation identifier.
-
-
-==== amqp.reply-to
-
-type: string
-
-Address to reply to.
-
-
-==== amqp.expiration
-
-type: string
-
-Message expiration specification.
-
-
-==== amqp.message-id
-
-type: string
-
-Application message identifier.
-
-
-==== amqp.timestamp
-
-type: string
-
-Message timestamp.
-
-
-==== amqp.type
-
-type: string
-
-Message type name.
-
-
-==== amqp.user-id
-
-type: string
-
-Creating user id.
-
-
-==== amqp.app-id
-
-type: string
-
-Creating application id.
 
 
 [[exported-fields-http]]
@@ -932,14 +381,14 @@ The HTTP status phrase.
 
 type: dict
 
-A map containing the captured header fields from the request. Which headers to capture is configurable. If headers with the same header name are present in the message, they will be separated by commas.
+A map containing the captured header fields from the request.  Which headers to capture is configurable. If headers with the same header name are present in the message, they will be separated by commas.
 
 
 ==== http.response_headers
 
 type: dict
 
-A map containing the captured header fields from the response. Which headers to capture is configurable. If headers with the same header name are present in the message, they will be separated by commas.
+A map containing the captured header fields from the response.  Which headers to capture is configurable. If headers with the same header name are present in the message, they will be separated by commas.
 
 
 ==== http.content_length
@@ -959,7 +408,7 @@ Memcached-specific event fields
 
 type: string
 
-The memcache protocol implementation. The value can be "binary" for binary-based, "text" for text-based, or "unknown" for an unknown memcache protocol type.
+The memcache protocol implementation. The value can be "binary"  for binary-based, "text" for text-based, or "unknown" for an unknown  memcache protocol type.
 
 
 ==== memcache.request.line
@@ -1239,7 +688,7 @@ The CAS (compare-and-swap) identifier to be used with CAS-based updates (if pres
 
 type: list
 
-The list of statistic values returned. Each entry is a dictionary with the fields "name" and "value".
+The list of statistic values returned. Each entry is a dictionary with the  fields "name" and "value".
 
 
 ==== memcache.response.version
@@ -1453,8 +902,8 @@ A BSON document that specifies the update to be performed. For information on sp
 The cursor identifier returned in the OP_REPLY. This must be the value that was returned from the database.
 
 
-[[exported-fields-trans_measurements]]
-=== Measurements (Transactions) Fields
+[[exported-fields-measurements]]
+=== Measurements Fields
 
 These fields contain measurements related to the transaction.
 
@@ -1515,8 +964,8 @@ type: int
 In RUM (real-user-monitoring), the total time it takes for the DOM to be loaded. In terms of the W3 Navigation Timing API, this is the difference between `domContentLoadedEnd` and `domContentLoadedStart`.
 
 
-[[exported-fields-trans_env]]
-=== Environmental (Transactions) Fields
+[[exported-fields-env]]
+=== Environmental Fields
 
 These fields contain data about the environment in which the transaction was captured.
 
@@ -1617,28 +1066,6 @@ The name of the process that initiated the transaction.
 ==== release
 
 The software release of the service serving the transaction. This can be the commit id or a semantic version.
-
-
-==== tags
-
-Arbitrary tags that can be set per Beat and per transaction type.
-
-
-[[exported-fields-flows_env]]
-=== Environmental (Flows) Fields
-
-These fields contain data about the environment in which the flow data was captured.
-
-
-
-==== beat.name
-
-Name of the Beat sending the events. If the shipper name is set in the configuration file, then that value is used. If it is not set, the hostname is used.
-
-
-==== beat.hostname
-
-The hostname as returned by the operating system on which the Beat is running.
 
 
 ==== tags

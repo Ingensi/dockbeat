@@ -1,4 +1,4 @@
-// build +windows,!integration
+// build +windows
 
 package eventlogging
 

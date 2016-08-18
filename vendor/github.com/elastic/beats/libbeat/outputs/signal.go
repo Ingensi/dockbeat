@@ -1,9 +1,8 @@
 package outputs
 
 import (
-	"sync/atomic"
-
 	"github.com/elastic/beats/libbeat/logp"
+	"sync/atomic"
 )
 
 // Signaler signals the completion of potentially asynchronous output operation.
@@ -50,16 +49,10 @@ type CompositeSignal struct {
 func NewChanSignal(ch chan bool) *ChanSignal { return &ChanSignal{ch} }
 
 // Completed sends true to the confiugred channel.
-func (c *ChanSignal) Completed() {
-	logp.Debug("output", "send completed")
-	c.ch <- true
-}
+func (c *ChanSignal) Completed() { c.ch <- true }
 
 // Failed sends false to the confiugred channel.
-func (c *ChanSignal) Failed() {
-	logp.Debug("output", "send failed")
-	c.ch <- false
-}
+func (c *ChanSignal) Failed() { c.ch <- false }
 
 // NewSyncSignal create a new SyncSignal signaler. Use Wait() method to wait for
 // a signal from the publisher

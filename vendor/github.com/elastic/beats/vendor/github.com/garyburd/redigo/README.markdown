@@ -30,18 +30,15 @@ Install Redigo using the "go get" command:
 
 The Go distribution is Redigo's only dependency.
 
-Related Projects
-----------------
-
-- [rafaeljusto/redigomock](https://godoc.org/github.com/rafaeljusto/redigomock) - A mock library for Redigo.
-- [chasex/redis-go-cluster](https://github.com/chasex/redis-go-cluster) - A Redis cluster client implementation.
-
 Contributing
 ------------
 
-Gary is looking for someone to take over maintenance of this project. If you are interested, contact Gary at the email address listed on his GitHub profile page.
+Contributions are welcome. 
 
-PRs for major features will not be accepted until a new maintainer is found.  Bug reports and PRs for bug fixes are welcome.
+Before writing code, send mail to gary@beagledreams.com to discuss what you
+plan to do. This gives me a chance to validate the design, avoid duplication of
+effort and ensure that the changes fit the goals of the project. Do not start
+the discussion with a pull request. 
 
 License
 -------

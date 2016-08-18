@@ -1,25 +1,19 @@
-// +build !integration
-
 package outputs
 
 import (
 	"crypto/tls"
 	"testing"
 
-	"github.com/elastic/beats/libbeat/common"
 	"github.com/stretchr/testify/assert"
+
+	"gopkg.in/yaml.v2"
 )
 
 // test TLS config loading
 
 func load(yamlStr string) (*TLSConfig, error) {
 	var cfg TLSConfig
-	config, err := common.NewConfigWithYAML([]byte(yamlStr), "")
-	if err != nil {
-		return nil, err
-	}
-
-	if err = config.Unpack(&cfg); err != nil {
+	if err := yaml.Unmarshal([]byte(yamlStr), &cfg); err != nil {
 		return nil, err
 	}
 	return &cfg, nil

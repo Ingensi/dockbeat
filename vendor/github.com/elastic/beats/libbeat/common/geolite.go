@@ -9,19 +9,19 @@ import (
 	"github.com/nranchev/go-libGeoIP"
 )
 
-// Geoip represents a string slice of GeoIP paths
 type Geoip struct {
 	Paths *[]string
 }
 
 func LoadGeoIPData(config Geoip) *libgeo.GeoIP {
+
 	geoipPaths := []string{}
 
 	if config.Paths != nil {
 		geoipPaths = *config.Paths
 	}
 	if len(geoipPaths) == 0 {
-		logp.Info("GeoIP disabled: No paths were set under shipper.geoip.paths")
+		logp.Info("GeoIP disabled: No paths were set under output.geoip.paths")
 		// disabled
 		return nil
 	}

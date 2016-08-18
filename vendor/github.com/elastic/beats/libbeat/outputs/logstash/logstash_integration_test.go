@@ -1,5 +1,3 @@
-// +build integration
-
 package logstash
 
 import (
@@ -16,6 +14,8 @@ import (
 )
 
 const (
+	logstashDefaultHost        = "localhost"
+	logstashTestDefaultPort    = "5044"
 	logstashTestDefaultTLSPort = "5055"
 
 	elasticsearchDefaultHost = "localhost"
@@ -49,6 +49,24 @@ type esCountReader interface {
 	Count() (int, error)
 }
 
+func strDefault(a, defaults string) string {
+	if len(a) == 0 {
+		return defaults
+	}
+	return a
+}
+
+func getenv(name, defaultValue string) string {
+	return strDefault(os.Getenv(name), defaultValue)
+}
+
+func getLogstashHost() string {
+	return fmt.Sprintf("%v:%v",
+		getenv("LS_HOST", logstashDefaultHost),
+		getenv("LS_TCP_PORT", logstashTestDefaultPort),
+	)
+}
+
 func getLogstashTLSHost() string {
 	return fmt.Sprintf("%v:%v",
 		getenv("LS_HOST", logstashDefaultHost),
@@ -72,7 +90,7 @@ func esConnect(t *testing.T, index string) *esConnection {
 
 	username := os.Getenv("ES_USER")
 	password := os.Getenv("ES_PASS")
-	client := elasticsearch.NewClient(host, "", nil, nil, username, password, nil)
+	client := elasticsearch.NewClient(host, "", nil, nil, username, password)
 
 	// try to drop old index if left over from failed test
 	_, _, _ = client.Delete(index, "", "", nil) // ignore error
@@ -101,16 +119,19 @@ func testElasticsearchIndex(test string) string {
 func newTestLogstashOutput(t *testing.T, test string, tls bool) *testOutputer {
 	windowSize := integrationTestWindowSize
 
-	config := map[string]interface{}{
-		"hosts":         []string{getLogstashHost()},
-		"index":         testLogstashIndex(test),
-		"bulk_max_size": &windowSize,
+	config := &outputs.MothershipConfig{
+		Hosts:       []string{getLogstashHost()},
+		TLS:         nil,
+		Index:       testLogstashIndex(test),
+		BulkMaxSize: &windowSize,
 	}
 	if tls {
-		config["hosts"] = []string{getLogstashTLSHost()}
-		config["tls.insecure"] = false
-		config["tls.certificate_authorities"] = []string{
-			"../../../testing/environments/docker/logstash/pki/tls/certs/logstash.crt",
+		config.Hosts = []string{getLogstashTLSHost()}
+		config.TLS = &outputs.TLSConfig{
+			Insecure: false,
+			CAs: []string{
+				"/etc/pki/tls/certs/logstash.crt",
+			},
 		}
 	}
 
@@ -135,16 +156,16 @@ func newTestElasticsearchOutput(t *testing.T, test string) *testOutputer {
 
 	flushInterval := 0
 	bulkSize := 0
-	config, _ := common.NewConfigFrom(map[string]interface{}{
-		"hosts":          []string{getElasticsearchHost()},
-		"index":          index,
-		"flush_interval": &flushInterval,
-		"bulk_max_size":  &bulkSize,
-		"username":       os.Getenv("ES_USER"),
-		"password":       os.Getenv("ES_PASS"),
-	})
+	config := outputs.MothershipConfig{
+		Hosts:         []string{getElasticsearchHost()},
+		Index:         index,
+		FlushInterval: &flushInterval,
+		BulkMaxSize:   &bulkSize,
+		Username:      os.Getenv("ES_USER"),
+		Password:      os.Getenv("ES_PASS"),
+	}
 
-	output, err := plugin(config, 10)
+	output, err := plugin.NewOutput(&config, 10)
 	if err != nil {
 		t.Fatalf("init elasticsearch output plugin failed: %v", err)
 	}
@@ -242,6 +263,9 @@ func TestSendMessageViaLogstashTLS(t *testing.T) {
 }
 
 func testSendMessageViaLogstash(t *testing.T, name string, tls bool) {
+	if testing.Short() {
+		t.Skip("Skipping in short mode. Requires Logstash and Elasticsearch")
+	}
 
 	ls := newTestLogstashOutput(t, name, tls)
 	defer ls.Cleanup()
@@ -276,6 +300,9 @@ func TestSendMultipleViaLogstashTLS(t *testing.T) {
 }
 
 func testSendMultipleViaLogstash(t *testing.T, name string, tls bool) {
+	if testing.Short() {
+		t.Skip("Skipping in short mode. Requires Logstash and Elasticsearch")
+	}
 
 	ls := newTestLogstashOutput(t, name, tls)
 	defer ls.Cleanup()
@@ -333,6 +360,9 @@ func testSendMultipleBatchesViaLogstash(
 	batchSize int,
 	tls bool,
 ) {
+	if testing.Short() {
+		t.Skip("Skipping in short mode. Requires Logstash and Elasticsearch")
+	}
 
 	ls := newTestLogstashOutput(t, name, tls)
 	defer ls.Cleanup()
@@ -382,6 +412,9 @@ func TestLogstashElasticOutputPluginCompatibleMessageTLS(t *testing.T) {
 }
 
 func testLogstashElasticOutputPluginCompatibleMessage(t *testing.T, name string, tls bool) {
+	if testing.Short() {
+		t.Skip("Skipping in short mode. Requires Logstash and Elasticsearch")
+	}
 
 	timeout := 10 * time.Second
 
@@ -433,6 +466,9 @@ func TestLogstashElasticOutputPluginBulkCompatibleMessageTLS(t *testing.T) {
 }
 
 func testLogstashElasticOutputPluginBulkCompatibleMessage(t *testing.T, name string, tls bool) {
+	if testing.Short() {
+		t.Skip("Skipping in short mode. Requires Logstash and Elasticsearch")
+	}
 
 	timeout := 10 * time.Second
 

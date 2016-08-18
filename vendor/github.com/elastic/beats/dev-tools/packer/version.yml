@@ -1,3 +1,0 @@
-version: "5.0.0-nightly${BUILDID}"
-rpm_version: "5.0.0~nightly${BUILDID}"
-deb_version: "5.0.0~nightly${BUILDID}"
