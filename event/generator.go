@@ -11,13 +11,13 @@ import (
 )
 
 type EGNetworkStats struct {
-	sync.RWMutex
-	M map[string]map[string]calculator.NetworkData
+	Mutex sync.RWMutex
+	M     map[string]map[string]calculator.NetworkData
 }
 
 type EGBlkioStats struct {
-	sync.RWMutex
-	M map[string]calculator.BlkioData
+	Mutex sync.RWMutex
+	M     map[string]calculator.BlkioData
 }
 
 type Label struct {
@@ -101,7 +101,7 @@ func (d *EventGenerator) GetNetworksEvent(container *docker.APIContainers, stats
 	}
 
 	// purge old saved data
-	d.NetworkStats.Lock()
+	d.NetworkStats.Mutex.Lock()
 	for container, networkDataMap := range d.NetworkStats.M {
 		useless := true
 		for networkName, networkData := range networkDataMap {
@@ -118,7 +118,7 @@ func (d *EventGenerator) GetNetworksEvent(container *docker.APIContainers, stats
 			delete(d.NetworkStats.M, container)
 		}
 	}
-	d.NetworkStats.Unlock()
+	d.NetworkStats.Mutex.Unlock()
 
 	return events
 }
@@ -139,9 +139,9 @@ func (d *EventGenerator) GetNetworkEvent(container *docker.APIContainers, time t
 
 	var event common.MapStr
 
-	d.NetworkStats.RLock()
+	d.NetworkStats.Mutex.RLock()
 	oldNetworkData, ok := d.NetworkStats.M[container.ID][network]
-	d.NetworkStats.RUnlock()
+	d.NetworkStats.Mutex.RUnlock()
 
 	if ok {
 		calculator := d.CalculatorFactory.NewNetworkCalculator(oldNetworkData, newNetworkData)
@@ -187,12 +187,12 @@ func (d *EventGenerator) GetNetworkEvent(container *docker.APIContainers, time t
 	}
 
 	// save status
-	d.NetworkStats.Lock()
+	d.NetworkStats.Mutex.Lock()
 	if _, exists := d.NetworkStats.M[container.ID]; !exists {
 		d.NetworkStats.M[container.ID] = map[string]calculator.NetworkData{}
 	}
 	d.NetworkStats.M[container.ID][network] = newNetworkData
-	d.NetworkStats.Unlock()
+	d.NetworkStats.Mutex.Unlock()
 	return event
 }
 
@@ -225,9 +225,9 @@ func (d *EventGenerator) GetBlkioEvent(container *docker.APIContainers, stats *d
 
 	var event common.MapStr
 
-	d.BlkioStats.RLock()
+	d.BlkioStats.Mutex.RLock()
 	oldBlkioStats, ok := d.BlkioStats.M[container.ID]
-	d.BlkioStats.RUnlock()
+	d.BlkioStats.Mutex.RUnlock()
 
 	if ok {
 		calculator := d.CalculatorFactory.NewBlkioCalculator(oldBlkioStats, blkioStats)
@@ -260,7 +260,7 @@ func (d *EventGenerator) GetBlkioEvent(container *docker.APIContainers, stats *d
 		}
 	}
 
-	d.BlkioStats.Lock()
+	d.BlkioStats.Mutex.Lock()
 	d.BlkioStats.M[container.ID] = blkioStats
 
 	// purge old saved data
@@ -270,7 +270,7 @@ func (d *EventGenerator) GetBlkioEvent(container *docker.APIContainers, stats *d
 			delete(d.BlkioStats.M, containerId)
 		}
 	}
-	d.BlkioStats.Unlock()
+	d.BlkioStats.Mutex.Unlock()
 	return event
 }
 
@@ -305,7 +305,7 @@ func (d *EventGenerator) convertContainerPorts(ports *[]docker.APIPort) []map[st
 
 func (d *EventGenerator) CleanOldStats(containers []docker.APIContainers) {
 	found := false
-	d.NetworkStats.Lock()
+	d.NetworkStats.Mutex.Lock()
 	for containerStatKey := range d.NetworkStats.M {
 		for _, container := range containers {
 			if container.ID == containerStatKey {
@@ -317,7 +317,7 @@ func (d *EventGenerator) CleanOldStats(containers []docker.APIContainers) {
 			delete(d.NetworkStats.M, containerStatKey)
 		}
 	}
-	d.NetworkStats.Unlock()
+	d.NetworkStats.Mutex.Unlock()
 }
 
 func (d *EventGenerator) buildStats(time time.Time, entry []docker.BlkioStatsEntry) calculator.BlkioData {
