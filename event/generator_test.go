@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+	"fmt"
 )
 
 // NETWORK EVENT GENERATION
@@ -608,8 +609,9 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	labels["label3.with.dots"] = "value3"
+
 	container := docker.APIContainers{
-		ID:         containerId,
+		ID:         "containerId",
 		Image:      "container_image",
 		Command:    "container command",
 		Created:    9876543210,
@@ -683,7 +685,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	labels["label2"] = "value2"
 	labels["label3.with.dots"] = "value3"
 	container := docker.APIContainers{
-		ID:         containerId,
+		ID:         "container_id",
 		Image:      "container_image",
 		Command:    "container command",
 		Created:    9876543210,
@@ -699,7 +701,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, calculator.CalculatorFactoryImpl{}, time.Second}
+	var eventGenerator = &EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, calculator.CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	expectedEvent := common.MapStr{
@@ -728,7 +730,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 			"created":    common.Time(time.Unix(container.Created, 0)),
 			"image":      container.Image,
 			"names":      container.Names,
-			"ports":      []map[string]interface{}{},
+			"ports":     eventGenerator.convertContainerPorts(&container.Ports),
 			"sizeRootFs": container.SizeRootFs,
 			"sizeRw":     container.SizeRw,
 			"status":     container.Status,
@@ -737,7 +739,6 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 
 	// WHEN
 	event := eventGenerator.GetContainerEvent(&container, stats)
-
 	// THEN
 	assert.True(t, equalEvent(expectedEvent, event))
 }
