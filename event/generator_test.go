@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"fmt"
 )
 
 // NETWORK EVENT GENERATION
@@ -730,7 +729,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 			"created":    common.Time(time.Unix(container.Created, 0)),
 			"image":      container.Image,
 			"names":      container.Names,
-			"ports":     eventGenerator.convertContainerPorts(&container.Ports),
+			"ports":      eventGenerator.convertContainerPorts(&container.Ports),
 			"sizeRootFs": container.SizeRootFs,
 			"sizeRw":     container.SizeRw,
 			"status":     container.Status,
@@ -739,6 +738,7 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 
 	// WHEN
 	event := eventGenerator.GetContainerEvent(&container, stats)
+
 	// THEN
 	assert.True(t, equalEvent(expectedEvent, event))
 }
