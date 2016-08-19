@@ -321,7 +321,7 @@ func (d *EventGenerator) CleanOldStats(containers []docker.APIContainers) {
 }
 
 func (d *EventGenerator) buildStats(time time.Time, entry []docker.BlkioStatsEntry) calculator.BlkioData {
-	var stats = calculator.BlkioData{time, 0, 0, 0}
+	var stats = calculator.BlkioData{Time: time, Reads: 0, Writes: 0, Totals: 0}
 	for _, s := range entry {
 		if s.Op == "Read" {
 			stats.Reads += s.Value

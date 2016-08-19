@@ -39,18 +39,18 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -242,18 +242,18 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -459,18 +459,18 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -608,18 +608,18 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	labels["label3.with.dots"] = "value3"
-	var container = docker.APIContainers{
-		"container_id",
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	timestamp := time.Now()
@@ -682,18 +682,18 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	labels["label3.with.dots"] = "value3"
-	var container = docker.APIContainers{
-		"container_id",
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{}, // no port
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	timestamp := time.Now()
@@ -763,18 +763,18 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// CPU stats from Docker API
@@ -862,18 +862,18 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// main stats object
@@ -944,18 +944,18 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// main stats object
@@ -1039,18 +1039,18 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// main stats object
@@ -1144,18 +1144,18 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	labels["label2"] = "value2"
 	containerId := "container_id"
 	anotherContainerId := "container_id2"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// main stats object
