@@ -31,7 +31,7 @@ commit:
 
 .PHONY: update-deps
 update-deps:
-	glide update --no-recursive --strip-vcs
+	glide update
 
 .PHONY: fullupdate
 fullupdate:
