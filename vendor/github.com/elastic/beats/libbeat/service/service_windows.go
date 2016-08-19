@@ -11,8 +11,6 @@ import (
 
 type beatService struct{}
 
-// Execute runs the beat service with the arguments and manages changes that
-// occur in the environment or runtime that may affect the beat.
 func (m *beatService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
@@ -37,11 +35,11 @@ loop:
 	return
 }
 
-// ProcessWindowsControlEvents on Windows machines creates a loop
-// that only finishes when a Stop or Shutdown request is received.
-// On non-windows platforms, the function does nothing. The
-// stopCallback function is called when the Stop/Shutdown
-// request is received.
+// On windows this creates a loop that only finishes when
+// a Stop or Shutdown request is received. On non-windows
+// platforms, the function does nothing. The stopCallback
+// function is called when the Stop/Shutdown request is
+// received.
 func ProcessWindowsControlEvents(stopCallback func()) {
 	isInteractive, err := svc.IsAnInteractiveSession()
 	if err != nil {

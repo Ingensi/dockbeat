@@ -1,4 +1,4 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 import os
 
 """
@@ -6,7 +6,7 @@ Tests for reading the geoip files.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     def test_geoip_config_disabled(self):
         self.render_config_template(

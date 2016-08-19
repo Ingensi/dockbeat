@@ -848,9 +848,9 @@ func (s *S) TestAuthPlainCred(c *C) {
 		c.Skip("no -plain")
 	}
 	cred := &mgo.Credential{
-		Username: plainUser,
-		Password: plainPass,
-		Source:   "$external",
+		Username:  plainUser,
+		Password:  plainPass,
+		Source:    "$external",
 		Mechanism: "PLAIN",
 	}
 	c.Logf("Connecting to %s...", *plainFlag)

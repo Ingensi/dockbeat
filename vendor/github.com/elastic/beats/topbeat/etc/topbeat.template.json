@@ -36,22 +36,6 @@
             }
           }
         },
-        "cpus": {
-          "properties": {
-            "cpuX": {
-              "properties": {
-                "system_p": {
-                  "doc_values": "true",
-                  "type": "float"
-                },
-                "user_p": {
-                  "doc_values": "true",
-                  "type": "float"
-                }
-              }
-            }
-          }
-        },
         "fs": {
           "properties": {
             "used_p": {
@@ -92,7 +76,7 @@
           "properties": {
             "cpu": {
               "properties": {
-                "total_p": {
+                "user_p": {
                   "doc_values": "true",
                   "type": "float"
                 }

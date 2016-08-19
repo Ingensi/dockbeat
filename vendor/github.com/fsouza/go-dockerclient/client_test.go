@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -19,7 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fsouza/go-dockerclient/external/github.com/hashicorp/go-cleanhttp"
+	"github.com/hashicorp/go-cleanhttp"
+	"golang.org/x/net/context"
 )
 
 func TestNewAPIClient(t *testing.T) {
@@ -454,6 +456,219 @@ func TestPingErrorWithUnixSocket(t *testing.T) {
 	err := client.Ping()
 	if err == nil {
 		t.Fatal("Expected non nil error, got nil")
+	}
+}
+
+func TestClientStreamTimeoutNotHit(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for i := 0; i < 5; i++ {
+			fmt.Fprintf(w, "%d\n", i)
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+	}))
+	client, err := NewClient(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var w bytes.Buffer
+	err = client.stream("POST", "/image/create", streamOptions{
+		setRawTerminal:    true,
+		stdout:            &w,
+		inactivityTimeout: 300 * time.Millisecond,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected := "0\n1\n2\n3\n4\n"
+	result := w.String()
+	if result != expected {
+		t.Fatalf("expected stream result %q, got: %q", expected, result)
+	}
+}
+
+func TestClientStreamInactivityTimeout(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		for i := 0; i < 5; i++ {
+			fmt.Fprintf(w, "%d\n", i)
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}))
+	client, err := NewClient(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var w bytes.Buffer
+	err = client.stream("POST", "/image/create", streamOptions{
+		setRawTerminal:    true,
+		stdout:            &w,
+		inactivityTimeout: 100 * time.Millisecond,
+	})
+	if err != ErrInactivityTimeout {
+		t.Fatalf("expected request canceled error, got: %s", err)
+	}
+	expected := "0\n"
+	result := w.String()
+	if result != expected {
+		t.Fatalf("expected stream result %q, got: %q", expected, result)
+	}
+}
+
+func TestClientStreamContextDeadline(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "abc\n")
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		time.Sleep(500 * time.Millisecond)
+		fmt.Fprint(w, "def\n")
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+	}))
+	client, err := NewClient(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var w bytes.Buffer
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+	err = client.stream("POST", "/image/create", streamOptions{
+		setRawTerminal: true,
+		stdout:         &w,
+		context:        ctx,
+	})
+	if err != context.DeadlineExceeded {
+		t.Fatalf("expected %s, got: %s", context.DeadlineExceeded, err)
+	}
+	expected := "abc\n"
+	result := w.String()
+	if result != expected {
+		t.Fatalf("expected stream result %q, got: %q", expected, result)
+	}
+}
+
+func TestClientStreamContextCancel(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "abc\n")
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		time.Sleep(500 * time.Millisecond)
+		fmt.Fprint(w, "def\n")
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+	}))
+	client, err := NewClient(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var w bytes.Buffer
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(200 * time.Millisecond)
+		cancel()
+	}()
+	err = client.stream("POST", "/image/create", streamOptions{
+		setRawTerminal: true,
+		stdout:         &w,
+		context:        ctx,
+	})
+	if err != context.Canceled {
+		t.Fatalf("expected %s, got: %s", context.Canceled, err)
+	}
+	expected := "abc\n"
+	result := w.String()
+	if result != expected {
+		t.Fatalf("expected stream result %q, got: %q", expected, result)
+	}
+}
+
+func TestClientDoContextDeadline(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(500 * time.Millisecond)
+	}))
+	client, err := NewClient(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+	_, err = client.do("POST", "/image/create", doOptions{
+		context: ctx,
+	})
+	if err != context.DeadlineExceeded {
+		t.Fatalf("expected %s, got: %s", context.DeadlineExceeded, err)
+	}
+}
+
+func TestClientDoContextCancel(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(500 * time.Millisecond)
+	}))
+	client, err := NewClient(srv.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		cancel()
+	}()
+	_, err = client.do("POST", "/image/create", doOptions{
+		context: ctx,
+	})
+	if err != context.Canceled {
+		t.Fatalf("expected %s, got: %s", context.Canceled, err)
+	}
+}
+
+func TestClientStreamTimeoutUnixSocket(t *testing.T) {
+	tmpdir, err := ioutil.TempDir("", "socket")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpdir)
+	socketPath := filepath.Join(tmpdir, "docker_test.sock")
+	l, err := net.Listen("unix", socketPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer l.Close()
+	go func() {
+		http.Serve(l, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			for i := 0; i < 5; i++ {
+				fmt.Fprintf(w, "%d\n", i)
+				if f, ok := w.(http.Flusher); ok {
+					f.Flush()
+				}
+				time.Sleep(500 * time.Millisecond)
+			}
+		}))
+	}()
+	client, err := NewClient("unix://" + socketPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var w bytes.Buffer
+	err = client.stream("POST", "/image/create", streamOptions{
+		setRawTerminal:    true,
+		stdout:            &w,
+		inactivityTimeout: 100 * time.Millisecond,
+	})
+	if err != ErrInactivityTimeout {
+		t.Fatalf("expected request canceled error, got: %s", err)
+	}
+	expected := "0\n"
+	result := w.String()
+	if result != expected {
+		t.Fatalf("expected stream result %q, got: %q", expected, result)
 	}
 }
 

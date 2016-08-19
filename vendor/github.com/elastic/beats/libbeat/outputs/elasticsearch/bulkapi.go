@@ -28,8 +28,7 @@ type bulkMetaIndex struct {
 }
 
 type BulkResult struct {
-	raw []byte
-	// Items []json.RawMessage `json:"items"`
+	Items []json.RawMessage `json:"items"`
 }
 
 func (r *bulkRequest) Send(meta, obj interface{}) error {
@@ -45,15 +44,15 @@ func (r *bulkRequest) Send(meta, obj interface{}) error {
 	return err
 }
 
-func (r *bulkRequest) Flush() (int, BulkResult, error) {
+func (r *bulkRequest) Flush() (int, *BulkResult, error) {
 	if r.buf.Len() == 0 {
 		logp.Debug("elasticsearch", "Empty channel. Wait for more data.")
-		return 0, BulkResult{}, nil
+		return 0, nil, nil
 	}
 
 	status, resp, err := r.es.sendBulkRequest("POST", r.path, r.params, &r.buf)
 	if err != nil {
-		return status, BulkResult{}, err
+		return status, nil, err
 	}
 	r.buf.Truncate(0)
 
@@ -161,6 +160,15 @@ func bulkEncode(metaBuilder MetaBuilder, body []interface{}) bytes.Buffer {
 	return buf
 }
 
-func readBulkResult(obj []byte) (BulkResult, error) {
-	return BulkResult{obj}, nil
+func readBulkResult(obj []byte) (*BulkResult, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	var result BulkResult
+	err := json.Unmarshal(obj, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }

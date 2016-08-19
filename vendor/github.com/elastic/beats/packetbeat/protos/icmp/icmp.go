@@ -7,7 +7,7 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 
-	"github.com/elastic/beats/packetbeat/flows"
+	"github.com/elastic/beats/packetbeat/config"
 	"github.com/elastic/beats/packetbeat/protos"
 	"github.com/elastic/beats/packetbeat/publish"
 
@@ -15,11 +15,11 @@ import (
 )
 
 type ICMPv4Processor interface {
-	ProcessICMPv4(flowID *flows.FlowID, hdr *layers.ICMPv4, pkt *protos.Packet)
+	ProcessICMPv4(tcphdr *layers.ICMPv4, pkt *protos.Packet)
 }
 
 type ICMPv6Processor interface {
-	ProcessICMPv6(flowID *flows.FlowID, hdr *layers.ICMPv6, pkt *protos.Packet)
+	ProcessICMPv6(tcphdr *layers.ICMPv6, pkt *protos.Packet)
 }
 
 type Icmp struct {
@@ -49,23 +49,16 @@ const (
 	orphanedResponseMsg = "Response was received without an associated request."
 )
 
-func New(testMode bool, results publish.Transactions, cfg *common.Config) (*Icmp, error) {
-	p := &Icmp{}
-	config := defaultConfig
+func NewIcmp(testMode bool, results publish.Transactions) (*Icmp, error) {
+	icmp := &Icmp{}
+	icmp.initDefaults()
+
 	if !testMode {
-		if err := cfg.Unpack(&config); err != nil {
+		err := icmp.setFromConfig(config.ConfigSingleton.Protocols.Icmp)
+		if err != nil {
 			return nil, err
 		}
 	}
-
-	if err := p.init(results, &config); err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-
-func (icmp *Icmp) init(results publish.Transactions, config *icmpConfig) error {
-	icmp.setFromConfig(config)
 
 	var err error
 	icmp.localIps, err = common.LocalIpAddrs()
@@ -88,82 +81,73 @@ func (icmp *Icmp) init(results publish.Transactions, config *icmpConfig) error {
 
 	icmp.results = results
 
+	return icmp, nil
+}
+
+func (icmp *Icmp) initDefaults() {
+	icmp.sendRequest = false
+	icmp.sendResponse = false
+	icmp.transactionTimeout = protos.DefaultTransactionExpiration
+}
+
+func (icmp *Icmp) setFromConfig(config config.Icmp) (err error) {
+	if config.SendRequest != nil {
+		icmp.sendRequest = *config.SendRequest
+	}
+	if config.SendResponse != nil {
+		icmp.sendResponse = *config.SendResponse
+	}
+	if config.TransactionTimeout != nil && *config.TransactionTimeout > 0 {
+		icmp.transactionTimeout = time.Duration(*config.TransactionTimeout) * time.Second
+	}
+
 	return nil
 }
 
-func (icmp *Icmp) setFromConfig(config *icmpConfig) {
-	icmp.sendRequest = config.SendRequest
-	icmp.sendResponse = config.SendResponse
-	icmp.transactionTimeout = config.TransactionTimeout
-}
-
-func (icmp *Icmp) ProcessICMPv4(
-	flowID *flows.FlowID,
-	icmp4 *layers.ICMPv4,
-	pkt *protos.Packet,
-) {
+func (icmp *Icmp) ProcessICMPv4(icmp4 *layers.ICMPv4, pkt *protos.Packet) {
 	typ := uint8(icmp4.TypeCode >> 8)
 	code := uint8(icmp4.TypeCode)
 	id, seq := extractTrackingData(4, typ, &icmp4.BaseLayer)
-
-	tuple := &icmpTuple{
+	tuple := icmpTuple{
 		IcmpVersion: 4,
 		SrcIp:       pkt.Tuple.Src_ip,
 		DstIp:       pkt.Tuple.Dst_ip,
 		Id:          id,
 		Seq:         seq,
 	}
-	msg := &icmpMessage{
+	msg := icmpMessage{
 		Ts:     pkt.Ts,
 		Type:   typ,
 		Code:   code,
 		Length: len(icmp4.BaseLayer.Payload),
 	}
-
-	if isRequest(tuple, msg) {
-		if flowID != nil {
-			flowID.AddICMPv4Request(id)
-		}
-		icmp.processRequest(tuple, msg)
-	} else {
-		if flowID != nil {
-			flowID.AddICMPv4Response(id)
-		}
-		icmp.processResponse(tuple, msg)
-	}
+	icmp.processMessage(&tuple, &msg)
 }
 
-func (icmp *Icmp) ProcessICMPv6(
-	flowID *flows.FlowID,
-	icmp6 *layers.ICMPv6,
-	pkt *protos.Packet,
-) {
+func (icmp *Icmp) ProcessICMPv6(icmp6 *layers.ICMPv6, pkt *protos.Packet) {
 	typ := uint8(icmp6.TypeCode >> 8)
 	code := uint8(icmp6.TypeCode)
 	id, seq := extractTrackingData(6, typ, &icmp6.BaseLayer)
-	tuple := &icmpTuple{
+	tuple := icmpTuple{
 		IcmpVersion: 6,
 		SrcIp:       pkt.Tuple.Src_ip,
 		DstIp:       pkt.Tuple.Dst_ip,
 		Id:          id,
 		Seq:         seq,
 	}
-	msg := &icmpMessage{
+	msg := icmpMessage{
 		Ts:     pkt.Ts,
 		Type:   typ,
 		Code:   code,
 		Length: len(icmp6.BaseLayer.Payload),
 	}
+	icmp.processMessage(&tuple, &msg)
+}
 
+func (icmp *Icmp) processMessage(tuple *icmpTuple, msg *icmpMessage) {
 	if isRequest(tuple, msg) {
-		if flowID != nil {
-			flowID.AddICMPv6Request(id)
-		}
 		icmp.processRequest(tuple, msg)
 	} else {
-		if flowID != nil {
-			flowID.AddICMPv6Response(id)
-		}
 		icmp.processResponse(tuple, msg)
 	}
 }

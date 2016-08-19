@@ -24,24 +24,9 @@
         "@timestamp": {
           "type": "date"
         },
-        "event_id": {
-          "doc_values": "true",
-          "type": "long"
-        },
         "message": {
           "index": "analyzed",
-          "norms": {
-            "enabled": false
-          },
           "type": "string"
-        },
-        "process_id": {
-          "doc_values": "true",
-          "type": "long"
-        },
-        "thread_id": {
-          "doc_values": "true",
-          "type": "long"
         }
       }
     }

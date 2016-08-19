@@ -1,4 +1,4 @@
-// +build windows,integration
+// +build windows
 
 package eventlog
 
@@ -145,7 +145,9 @@ func uninstallLog(provider, source string, log *elog.Log) error {
 
 // Verify that all messages are read from the event log.
 func TestRead(t *testing.T) {
-
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode.")
+	}
 	configureLogp()
 	log, err := initLog(providerName, sourceName, eventCreateMsgFile)
 	if err != nil {
@@ -190,9 +192,9 @@ func TestRead(t *testing.T) {
 	assert.Len(t, records, len(messages))
 	for _, record := range records {
 		t.Log(record)
-		m, exists := messages[record.EventIdentifier.ID]
+		m, exists := messages[record.EventID]
 		if !exists {
-			t.Errorf("Unknown EventId %d Read() from event log. %v", record.EventIdentifier.ID, record)
+			t.Errorf("Unknown EventId %d Read() from event log. %v", record.EventID, record)
 			continue
 		}
 		assert.Equal(t, eventlogging.EventType(m.eventType).String(), record.Level)
@@ -208,7 +210,9 @@ func TestRead(t *testing.T) {
 // Test that when an unknown Event ID is found, that a message containing the
 // insert strings (the message parameters) is returned.
 func TestReadUnknownEventId(t *testing.T) {
-
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode.")
+	}
 	configureLogp()
 	log, err := initLog(providerName, sourceName, servicesMsgFile)
 	if err != nil {
@@ -253,9 +257,9 @@ func TestReadUnknownEventId(t *testing.T) {
 	if len(records) != 1 {
 		t.FailNow()
 	}
-	assert.Equal(t, eventID, records[0].EventIdentifier.ID)
-	assert.Equal(t, msg, records[0].EventData.Pairs[0].Value)
-	assert.NotNil(t, records[0].RenderErr)
+	assert.Equal(t, eventID, records[0].EventID)
+	assert.Equal(t, msg, records[0].MessageInserts[0])
+	assert.NotNil(t, records[0].MessageErr)
 	assert.Equal(t, "", records[0].Message)
 }
 
@@ -264,7 +268,9 @@ func TestReadUnknownEventId(t *testing.T) {
 // separated list of files. If the message for an event ID is not found in one
 // of the files then the next file should be checked.
 func TestReadTriesMultipleEventMsgFiles(t *testing.T) {
-
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode.")
+	}
 	configureLogp()
 	log, err := initLog(providerName, sourceName,
 		servicesMsgFile+";"+eventCreateMsgFile)
@@ -310,13 +316,15 @@ func TestReadTriesMultipleEventMsgFiles(t *testing.T) {
 	if len(records) != 1 {
 		t.FailNow()
 	}
-	assert.Equal(t, eventID, records[0].EventIdentifier.ID)
+	assert.Equal(t, eventID, records[0].EventID)
 	assert.Equal(t, msg, strings.TrimRight(records[0].Message, "\r\n"))
 }
 
 // Test event messages that require more than one message parameter.
 func TestReadMultiParameterMsg(t *testing.T) {
-
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode.")
+	}
 	configureLogp()
 	log, err := initLog(providerName, sourceName, servicesMsgFile)
 	if err != nil {
@@ -333,10 +341,9 @@ func TestReadMultiParameterMsg(t *testing.T) {
 	// <EventID Qualifiers="16384">7036</EventID>
 	// 1073748860 = 16384 << 16 + 7036
 	// https://msdn.microsoft.com/en-us/library/windows/desktop/aa385206(v=vs.85).aspx
-	var eventID uint32 = 1073748860
 	template := "The %s service entered the %s state."
 	msgs := []string{"Windows Update", "running"}
-	err = log.Report(elog.Info, eventID, msgs)
+	err = log.Report(elog.Info, uint32(1073748860), msgs)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -366,7 +373,7 @@ func TestReadMultiParameterMsg(t *testing.T) {
 	if len(records) != 1 {
 		t.FailNow()
 	}
-	assert.Equal(t, eventID, records[0].EventIdentifier.ID)
+	assert.Equal(t, uint32(7036), records[0].EventID)
 	assert.Equal(t, fmt.Sprintf(template, msgs[0], msgs[1]),
 		strings.TrimRight(records[0].Message, "\r\n"))
 }
@@ -374,7 +381,9 @@ func TestReadMultiParameterMsg(t *testing.T) {
 // Verify that opening an invalid provider succeeds. Windows opens the
 // Application event log provider when this happens (unfortunately).
 func TestOpenInvalidProvider(t *testing.T) {
-
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode.")
+	}
 	configureLogp()
 
 	el, err := newEventLogging(Config{Name: "nonExistentProvider"})
@@ -389,7 +398,9 @@ func TestOpenInvalidProvider(t *testing.T) {
 
 // Test event messages that require no parameters.
 func TestReadNoParameterMsg(t *testing.T) {
-
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode.")
+	}
 	configureLogp()
 	log, err := initLog(providerName, sourceName, netEventMsgFile)
 	if err != nil {
@@ -435,7 +446,7 @@ func TestReadNoParameterMsg(t *testing.T) {
 	if len(records) != 1 {
 		t.FailNow()
 	}
-	assert.Equal(t, eventID, records[0].EventIdentifier.ID)
+	assert.Equal(t, uint32(6006), records[0].EventID)
 	assert.Equal(t, template,
 		strings.TrimRight(records[0].Message, "\r\n"))
 }
@@ -443,7 +454,9 @@ func TestReadNoParameterMsg(t *testing.T) {
 // TestReadWhileCleared tests that the Read method recovers from the event log
 // being cleared or reset while reading.
 func TestReadWhileCleared(t *testing.T) {
-
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode.")
+	}
 	configureLogp()
 	log, err := initLog(providerName, sourceName, eventCreateMsgFile)
 	if err != nil {
@@ -487,7 +500,7 @@ func TestReadWhileCleared(t *testing.T) {
 	assert.NoError(t, err, "Expected 1 message but received error")
 	assert.Len(t, lr, 1, "Expected 1 message")
 	if len(lr) > 0 {
-		assert.Equal(t, uint32(3), lr[0].EventIdentifier.ID)
+		assert.Equal(t, uint32(3), lr[0].EventID)
 	}
 }
 

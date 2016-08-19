@@ -18,7 +18,7 @@ type RemovalListener func(k Key, v Value)
 // Clock is the function type used to get the current time.
 type clock func() time.Time
 
-// element represents an element stored in the cache.
+// An element stored in the cache.
 type element struct {
 	expiration time.Time
 	timeout    time.Duration
@@ -188,7 +188,7 @@ func (c *Cache) CleanUp() int {
 	return count
 }
 
-// Entries returns a shallow copy of the non-expired elements in the cache.
+// Entries returns a copy of the non-expired elements in the cache.
 func (c *Cache) Entries() map[Key]Value {
 	c.RLock()
 	defer c.RUnlock()

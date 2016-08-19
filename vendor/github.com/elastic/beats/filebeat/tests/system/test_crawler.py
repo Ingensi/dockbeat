@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from filebeat import BaseTest
+from filebeat import TestCase
 
 import codecs
 import os
@@ -10,10 +10,7 @@ from nose.plugins.skip import Skip, SkipTest
 # Additional tests to be added:
 # * Check what happens when file renamed -> no recrawling should happen
 # * Check if file descriptor is "closed" when file disappears
-
-
-class Test(BaseTest):
-
+class Test(TestCase):
     def test_fetched_lines(self):
         """
         Checks if all lines are read from the log file.
@@ -34,15 +31,17 @@ class Test(BaseTest):
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
-            lambda: self.output_has(lines=iterations), max_timeout=10)
+            lambda: self.log_contains(
+                "Processing 80 events"),
+            max_timeout=15)
 
         # TODO: Find better solution when filebeat did crawl the file
         # Idea: Special flag to filebeat so that filebeat is only doing and
         # crawl and then finishes
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
 
@@ -72,14 +71,14 @@ class Test(BaseTest):
         # be read as there is no finishing \n or \r
         file.write("unfinished line")
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(lines=80),
             max_timeout=15)
 
         # Give it more time to make sure it doesn't read the unfinished line
-        # This must be smaller then partial_line_waiting
+        # This mus be smaller then partial_line_waiting
         time.sleep(1)
 
         output = self.read_output()
@@ -101,7 +100,7 @@ class Test(BaseTest):
             lambda: self.output_has(lines=82),
             max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
 
@@ -126,7 +125,7 @@ class Test(BaseTest):
         file.write("complete line\n")
         file.write("unfinished line ")
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         # Check that unfinished line is read after timeout and sent
         self.wait_until(
@@ -155,7 +154,7 @@ class Test(BaseTest):
             lambda: self.output_has(lines=3),
             max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
     def test_file_renaming(self):
         """
@@ -170,17 +169,19 @@ class Test(BaseTest):
         testfile1 = self.working_dir + "/log/test-old.log"
         file = open(testfile1, 'w')
 
-        iterations1 = 5
-        for n in range(0, iterations1):
+        iterations = 5
+        for n in range(0, iterations):
             file.write("old file")
             file.write("\n")
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
-            lambda: self.output_has(lines=iterations1), max_timeout=10)
+            lambda: self.log_contains(
+                "Processing 5 events"),
+            max_timeout=15)
 
         # Rename the file (no new file created)
         testfile2 = self.working_dir + "/log/test-new.log"
@@ -189,8 +190,8 @@ class Test(BaseTest):
 
         # using 6 events to have a separate log line that we can
         # grep for.
-        iterations2 = 6
-        for n in range(0, iterations2):
+        iterations = 6
+        for n in range(0, iterations):
             file.write("new file")
             file.write("\n")
 
@@ -198,9 +199,11 @@ class Test(BaseTest):
 
         # expecting 6 more events
         self.wait_until(
-            lambda: self.output_has(lines=iterations1+iterations2), max_timeout=10)
+            lambda: self.log_contains(
+                "Processing 6 events"),
+            max_timeout=20)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
 
@@ -220,26 +223,28 @@ class Test(BaseTest):
         testfile = self.working_dir + "/log/test.log"
         file = open(testfile, 'w')
 
-        iterations1 = 5
-        for n in range(0, iterations1):
+        iterations = 5
+        for n in range(0, iterations):
             file.write("disappearing file")
             file.write("\n")
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         # Let it read the file
         self.wait_until(
-            lambda: self.output_has(lines=iterations1), max_timeout=10)
+            lambda: self.log_contains(
+                "Processing 5 events"),
+            max_timeout=15)
         os.remove(testfile)
 
         # Create new file to check if new file is picked up
         testfile2 = self.working_dir + "/log/test2.log"
         file = open(testfile2, 'w')
 
-        iterations2 = 6
-        for n in range(0, iterations2):
+        iterations = 6
+        for n in range(0, iterations):
             file.write("new file")
             file.write("\n")
 
@@ -247,9 +252,11 @@ class Test(BaseTest):
 
         # Let it read the file
         self.wait_until(
-            lambda: self.output_has(lines=iterations1 + iterations2), max_timeout=10)
+            lambda: self.log_contains(
+                "Processing 6 events"),
+            max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         data = self.get_dot_filebeat()
 
@@ -286,7 +293,7 @@ class Test(BaseTest):
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         # Let it read the file
         self.wait_until(
@@ -311,9 +318,9 @@ class Test(BaseTest):
 
         # Let it read the file
         self.wait_until(
-            lambda: self.output_has(lines=iterations1 + iterations2), max_timeout=10)
+            lambda: self.output_has(lines=iterations1+iterations2), max_timeout=10)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         data = self.get_dot_filebeat()
 
@@ -349,7 +356,7 @@ class Test(BaseTest):
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         # Let it read the file
         self.wait_until(
@@ -369,9 +376,9 @@ class Test(BaseTest):
 
         # Let it read the file
         self.wait_until(
-            lambda: self.output_has(lines=iterations1 + 1), max_timeout=10)
+            lambda: self.output_has(lines=iterations1+1), max_timeout=10)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         data = self.get_dot_filebeat()
 
@@ -383,6 +390,7 @@ class Test(BaseTest):
         # from scratch
         output = self.read_output()
         #assert len(output) == 5 + 6
+
 
     def test_new_line_on_existing_file(self):
         """
@@ -399,10 +407,12 @@ class Test(BaseTest):
         with open(testfile, 'w') as f:
             f.write("hello world\n")
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
-            lambda: self.output_has(lines=1), max_timeout=10)
+            lambda: self.log_contains(
+                "Processing 1 events"),
+            max_timeout=15)
 
         with open(testfile, 'a') as f:
             # now write another line
@@ -410,9 +420,11 @@ class Test(BaseTest):
             f.write("hello world 2\n")
 
         self.wait_until(
-            lambda: self.output_has(lines=1+2), max_timeout=10)
+            lambda: self.log_contains(
+                "Processing 2 events"),
+            max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         # Check that output file has the same number of lines as the log file
         output = self.read_output()
@@ -431,7 +443,7 @@ class Test(BaseTest):
 
         testfile = self.working_dir + "/log/test.log"
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         # Write initial file
         with open(testfile, 'w') as f:
@@ -454,10 +466,10 @@ class Test(BaseTest):
                 f.flush()
 
                 self.wait_until(
-                    lambda: self.output_has(lines_written + 1),
+                    lambda: self.output_has( lines_written + 1),
                     max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         # Check that output file has the same number of lines as the log file
         output = self.read_output()
@@ -480,10 +492,11 @@ class Test(BaseTest):
             f.write("hello world\n")
             f.flush()
 
-            filebeat = self.start_beat()
+            filebeat = self.start_filebeat()
 
             self.wait_until(
-                lambda: self.output_has(lines=1),
+                lambda: self.log_contains(
+                    "Processing 1 events"),
                 max_timeout=15)
 
             # now write another line
@@ -492,10 +505,11 @@ class Test(BaseTest):
             f.flush()
 
             self.wait_until(
-                lambda: self.output_has(lines=3),
+                lambda: self.log_contains(
+                    "Processing 2 events"),
                 max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         # Check that output file has the same number of lines as the log file
         output = self.read_output()
@@ -520,7 +534,7 @@ class Test(BaseTest):
             f.write("hello world 2\n")
             f.flush()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
         self.wait_until(
             lambda: self.log_contains(
                 "Start next scan"),
@@ -532,11 +546,12 @@ class Test(BaseTest):
             f.write("hello world 4\n")
             f.flush()
 
+
         self.wait_until(
             lambda: self.output_has(lines=2),
             max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         # Make sure output has only 2 and not 4 lines, means it started at
         # the end
@@ -556,7 +571,7 @@ class Test(BaseTest):
 
         testfile = self.working_dir + "/log/test.log"
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
         self.wait_until(
             lambda: self.log_contains(
                 "Start next scan"),
@@ -571,7 +586,9 @@ class Test(BaseTest):
             f.flush()
 
             self.wait_until(
-                lambda: self.output_has(lines=1), max_timeout=10)
+                lambda: self.log_contains(
+                    "Processing 1 events"),
+                max_timeout=15)
 
         # Append utf-8 chars to check if it keeps reading
         with codecs.open(testfile, "a") as f:
@@ -581,9 +598,11 @@ class Test(BaseTest):
             f.flush()
 
             self.wait_until(
-                lambda: self.output_has(lines=1+2), max_timeout=10)
+                lambda: self.log_contains(
+                    "Processing 2 events"),
+                max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         # Make sure output has 3
         output = self.read_output()
@@ -632,7 +651,7 @@ class Test(BaseTest):
         )
 
         # run filebeat
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
         self.wait_until(lambda: self.output_has(lines=len(encodings)),
                         max_timeout=15)
 
@@ -643,9 +662,9 @@ class Test(BaseTest):
                 f.write(text + " 2" + "\n")
 
         # wait again
-        self.wait_until(lambda: self.output_has(lines=len(encodings) * 2),
+        self.wait_until(lambda: self.output_has(lines=len(encodings)*2),
                         max_timeout=15)
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         # check that all outputs are present in the JSONs in UTF-8
         # encoding
@@ -680,7 +699,7 @@ class Test(BaseTest):
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(40),
@@ -689,12 +708,12 @@ class Test(BaseTest):
         # TODO: Find better solution when filebeat did crawl the file
         # Idea: Special flag to filebeat so that filebeat is only doing and
         # crawl and then finishes
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
 
         # Check that output file has the same number of lines as the log file
-        assert iterations * 2 == len(output)
+        assert iterations*2 == len(output)
 
     def test_default_include_exclude_lines(self):
         """
@@ -720,7 +739,7 @@ class Test(BaseTest):
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(60),
@@ -729,12 +748,12 @@ class Test(BaseTest):
         # TODO: Find better solution when filebeat did crawl the file
         # Idea: Special flag to filebeat so that filebeat is only doing and
         # crawl and then finishes
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
 
         # Check that output file has the same number of lines as the log file
-        assert iterations * 3 == len(output)
+        assert iterations*3 == len(output)
 
     def test_exclude_lines(self):
         """
@@ -761,7 +780,7 @@ class Test(BaseTest):
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(40),
@@ -770,12 +789,12 @@ class Test(BaseTest):
         # TODO: Find better solution when filebeat did crawl the file
         # Idea: Special flag to filebeat so that filebeat is only doing and
         # crawl and then finishes
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
 
         # Check that output file has the same number of lines as the log file
-        assert iterations * 2 == len(output)
+        assert iterations*2 == len(output)
 
     def test_include_exclude_lines(self):
         """
@@ -803,7 +822,7 @@ class Test(BaseTest):
 
         file.close()
 
-        filebeat = self.start_beat()
+        filebeat = self.start_filebeat()
 
         self.wait_until(
             lambda: self.output_has(20),
@@ -812,12 +831,13 @@ class Test(BaseTest):
         # TODO: Find better solution when filebeat did crawl the file
         # Idea: Special flag to filebeat so that filebeat is only doing and
         # crawl and then finishes
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         output = self.read_output()
 
         # Check that output file has the same number of lines as the log file
         assert iterations == len(output)
+
 
     def test_file_no_permission(self):
         """
@@ -857,28 +877,25 @@ class Test(BaseTest):
             import win32security
             import ntsecuritycon as con
 
-            user, domain, type = win32security.LookupAccountName(
-                "", win32api.GetUserName())
-            sd = win32security.GetFileSecurity(
-                testfile, win32security.DACL_SECURITY_INFORMATION)
+            user, domain, type = win32security.LookupAccountName ("", win32api.GetUserName ())
+            sd = win32security.GetFileSecurity (testfile, win32security.DACL_SECURITY_INFORMATION)
 
-            dacl = win32security.ACL()
+            dacl = win32security.ACL ()
             # Remove all access rights
-            dacl.AddAccessAllowedAce(win32security.ACL_REVISION, 0, user)
+            dacl.AddAccessAllowedAce (win32security.ACL_REVISION, 0, user)
 
-            sd.SetSecurityDescriptorDacl(1, dacl, 0)
-            win32security.SetFileSecurity(
-                testfile, win32security.DACL_SECURITY_INFORMATION, sd)
+            sd.SetSecurityDescriptorDacl (1, dacl, 0)
+            win32security.SetFileSecurity (testfile, win32security.DACL_SECURITY_INFORMATION, sd)
 
-        filebeat = self.start_beat()
+
+        filebeat = self.start_filebeat()
 
         self.wait_until(
             lambda: self.log_contains("permission denied"),
             max_timeout=15)
 
-        filebeat.check_kill_and_wait()
+        filebeat.kill_and_wait()
 
         os.chmod(testfile, 0o755)
 
-        assert False == os.path.isfile(
-            os.path.join(self.working_dir, "output/filebeat"))
+        assert False == os.path.isfile(os.path.join(self.working_dir, "output/filebeat"))

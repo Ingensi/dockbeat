@@ -1,5 +1,3 @@
-// +build !integration
-
 package mysql
 
 import (
@@ -20,8 +18,7 @@ import (
 func MysqlModForTests() *Mysql {
 	var mysql Mysql
 	results := &publish.ChanTransactions{make(chan common.MapStr, 10)}
-	config := defaultConfig
-	mysql.init(results, &config)
+	mysql.Init(true, results)
 	return &mysql
 }
 

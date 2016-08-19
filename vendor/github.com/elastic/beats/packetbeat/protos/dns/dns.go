@@ -10,18 +10,18 @@ package dns
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 
+	"github.com/elastic/beats/packetbeat/config"
 	"github.com/elastic/beats/packetbeat/protos"
 	"github.com/elastic/beats/packetbeat/publish"
 
-	mkdns "github.com/miekg/dns"
-	"golang.org/x/net/publicsuffix"
+	"github.com/tsg/gopacket"
+	"github.com/tsg/gopacket/layers"
 )
 
 const MaxDnsTupleRawSize = 16 + 16 + 2 + 2 + 4 + 1
@@ -53,15 +53,6 @@ func (t Transport) String() string {
 }
 
 type HashableDnsTuple [MaxDnsTupleRawSize]byte
-
-// DnsMessage contains a single DNS message.
-type DnsMessage struct {
-	Ts           time.Time          // Time when the message was received.
-	Tuple        common.IpPortTuple // Source and destination addresses of packet.
-	CmdlineTuple *common.CmdlineTuple
-	Data         *mkdns.Msg // Parsed DNS packet data.
-	Length       int        // Length of the DNS message in bytes (without DecodeOffset).
-}
 
 // DnsTuple contains source IP/port, destination IP/port, transport protocol,
 // and DNS ID.
@@ -184,59 +175,6 @@ type DnsTransaction struct {
 	Response *DnsMessage
 }
 
-func init() {
-	protos.Register("dns", New)
-}
-
-func New(
-	testMode bool,
-	results publish.Transactions,
-	cfg *common.Config,
-) (protos.Plugin, error) {
-	p := &Dns{}
-	config := defaultConfig
-	if !testMode {
-		if err := cfg.Unpack(&config); err != nil {
-			return nil, err
-		}
-	}
-
-	if err := p.init(results, &config); err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-
-func (dns *Dns) init(results publish.Transactions, config *dnsConfig) error {
-	dns.setFromConfig(config)
-	dns.transactions = common.NewCacheWithRemovalListener(
-		dns.transactionTimeout,
-		protos.DefaultTransactionHashSize,
-		func(k common.Key, v common.Value) {
-			trans, ok := v.(*DnsTransaction)
-			if !ok {
-				logp.Err("Expired value is not a *DnsTransaction.")
-				return
-			}
-			dns.expireTransaction(trans)
-		})
-	dns.transactions.StartJanitor(dns.transactionTimeout)
-
-	dns.results = results
-
-	return nil
-}
-
-func (dns *Dns) setFromConfig(config *dnsConfig) error {
-	dns.Ports = config.Ports
-	dns.Send_request = config.SendRequest
-	dns.Send_response = config.SendResponse
-	dns.Include_authorities = config.Include_authorities
-	dns.Include_additionals = config.Include_additionals
-	dns.transactionTimeout = config.TransactionTimeout
-	return nil
-}
-
 func newTransaction(ts time.Time, tuple DnsTuple, cmd common.CmdlineTuple) *DnsTransaction {
 	trans := &DnsTransaction{
 		Transport: tuple.Transport,
@@ -263,6 +201,61 @@ func (dns *Dns) deleteTransaction(k HashableDnsTuple) *DnsTransaction {
 	if v != nil {
 		return v.(*DnsTransaction)
 	}
+	return nil
+}
+
+func (dns *Dns) initDefaults() {
+	dns.Send_request = false
+	dns.Send_response = false
+	dns.Include_authorities = false
+	dns.Include_additionals = false
+	dns.transactionTimeout = protos.DefaultTransactionExpiration
+}
+
+func (dns *Dns) setFromConfig(config config.Dns) error {
+
+	dns.Ports = config.Ports
+
+	if config.SendRequest != nil {
+		dns.Send_request = *config.SendRequest
+	}
+	if config.SendResponse != nil {
+		dns.Send_response = *config.SendResponse
+	}
+	if config.Include_authorities != nil {
+		dns.Include_authorities = *config.Include_authorities
+	}
+	if config.Include_additionals != nil {
+		dns.Include_additionals = *config.Include_additionals
+	}
+	if config.TransactionTimeout != nil && *config.TransactionTimeout > 0 {
+		dns.transactionTimeout = time.Duration(*config.TransactionTimeout) * time.Second
+	}
+
+	return nil
+}
+
+func (dns *Dns) Init(test_mode bool, results publish.Transactions) error {
+	dns.initDefaults()
+	if !test_mode {
+		dns.setFromConfig(config.ConfigSingleton.Protocols.Dns)
+	}
+
+	dns.transactions = common.NewCacheWithRemovalListener(
+		dns.transactionTimeout,
+		protos.DefaultTransactionHashSize,
+		func(k common.Key, v common.Value) {
+			trans, ok := v.(*DnsTransaction)
+			if !ok {
+				logp.Err("Expired value is not a *DnsTransaction.")
+				return
+			}
+			dns.expireTransaction(trans)
+		})
+	dns.transactions.StartJanitor(dns.transactionTimeout)
+
+	dns.results = results
+
 	return nil
 }
 
@@ -335,15 +328,15 @@ func (dns *Dns) publishTransaction(t *DnsTransaction) {
 		event["bytes_in"] = t.Request.Length
 		event["bytes_out"] = t.Response.Length
 		event["responsetime"] = int32(t.Response.Ts.Sub(t.ts).Nanoseconds() / 1e6)
-		event["method"] = dnsOpCodeToString(t.Request.Data.Opcode)
-		if len(t.Request.Data.Question) > 0 {
-			event["query"] = dnsQuestionToString(t.Request.Data.Question[0])
-			event["resource"] = t.Request.Data.Question[0].Name
+		event["method"] = dnsOpCodeToString(t.Request.Data.OpCode)
+		if len(t.Request.Data.Questions) > 0 {
+			event["query"] = dnsQuestionToString(t.Request.Data.Questions[0])
+			event["resource"] = nameToString(t.Request.Data.Questions[0].Name)
 		}
 		addDnsToMapStr(dnsEvent, t.Response.Data, dns.Include_authorities,
 			dns.Include_additionals)
 
-		if t.Response.Data.Rcode == 0 {
+		if t.Response.Data.ResponseCode == 0 {
 			event["status"] = common.OK_STATUS
 		}
 
@@ -355,10 +348,10 @@ func (dns *Dns) publishTransaction(t *DnsTransaction) {
 		}
 	} else if t.Request != nil {
 		event["bytes_in"] = t.Request.Length
-		event["method"] = dnsOpCodeToString(t.Request.Data.Opcode)
-		if len(t.Request.Data.Question) > 0 {
-			event["query"] = dnsQuestionToString(t.Request.Data.Question[0])
-			event["resource"] = t.Request.Data.Question[0].Name
+		event["method"] = dnsOpCodeToString(t.Request.Data.OpCode)
+		if len(t.Request.Data.Questions) > 0 {
+			event["query"] = dnsQuestionToString(t.Request.Data.Questions[0])
+			event["resource"] = nameToString(t.Request.Data.Questions[0].Name)
 		}
 		addDnsToMapStr(dnsEvent, t.Request.Data, dns.Include_authorities,
 			dns.Include_additionals)
@@ -368,10 +361,10 @@ func (dns *Dns) publishTransaction(t *DnsTransaction) {
 		}
 	} else if t.Response != nil {
 		event["bytes_out"] = t.Response.Length
-		event["method"] = dnsOpCodeToString(t.Response.Data.Opcode)
-		if len(t.Response.Data.Question) > 0 {
-			event["query"] = dnsQuestionToString(t.Response.Data.Question[0])
-			event["resource"] = t.Response.Data.Question[0].Name
+		event["method"] = dnsOpCodeToString(t.Response.Data.OpCode)
+		if len(t.Response.Data.Questions) > 0 {
+			event["query"] = dnsQuestionToString(t.Response.Data.Questions[0])
+			event["resource"] = nameToString(t.Response.Data.Questions[0].Name)
 		}
 		addDnsToMapStr(dnsEvent, t.Response.Data, dns.Include_authorities,
 			dns.Include_additionals)
@@ -390,266 +383,240 @@ func (dns *Dns) expireTransaction(t *DnsTransaction) {
 }
 
 // Adds the DNS message data to the supplied MapStr.
-func addDnsToMapStr(m common.MapStr, dns *mkdns.Msg, authority bool, additional bool) {
-	m["id"] = dns.Id
-	m["op_code"] = dnsOpCodeToString(dns.Opcode)
+func addDnsToMapStr(m common.MapStr, dns *layers.DNS, authority bool, additional bool) {
+	m["id"] = dns.ID
+	m["op_code"] = dnsOpCodeToString(dns.OpCode)
 
 	m["flags"] = common.MapStr{
-		"authoritative":       dns.Authoritative,
-		"truncated_response":  dns.Truncated,
-		"recursion_desired":   dns.RecursionDesired,
-		"recursion_available": dns.RecursionAvailable,
-		"authentic_data":      dns.AuthenticatedData, // [RFC4035]
-		"checking_disabled":   dns.CheckingDisabled,  // [RFC4035]
+		"authoritative":      dns.AA,
+		"truncated_response": dns.TC,
+		"recursion_desired":  dns.RD,
+		"recursion_allowed":  dns.RA,
+		// Need to add RFC4035 flag parsing to gopacket.
+		//"authentic_data":     dns.AD
+		//"checking_disabled":  dns.CD
 	}
-	m["response_code"] = dnsResponseCodeToString(dns.Rcode)
+	m["response_code"] = dnsResponseCodeToString(dns.ResponseCode)
 
-	if len(dns.Question) > 0 {
-		q := dns.Question[0]
-		qMapStr := common.MapStr{
-			"name":  q.Name,
-			"type":  dnsTypeToString(q.Qtype),
-			"class": dnsClassToString(q.Qclass),
-		}
-		m["question"] = qMapStr
-
-		eTLDPlusOne, err := publicsuffix.EffectiveTLDPlusOne(strings.TrimRight(q.Name, "."))
-		if err == nil {
-			qMapStr["etld_plus_one"] = eTLDPlusOne + "."
+	if len(dns.Questions) > 0 {
+		q := dns.Questions[0]
+		m["question"] = common.MapStr{
+			"name":  nameToString(q.Name),
+			"type":  dnsTypeToString(q.Type),
+			"class": dnsClassToString(q.Class),
 		}
 	}
 
-	m["answers_count"] = len(dns.Answer)
-	if len(dns.Answer) > 0 {
-		m["answers"] = rrToMapStr(dns.Answer)
+	m["answers_count"] = len(dns.Answers)
+	if len(dns.Answers) > 0 {
+		m["answers"] = rrToMapStr(dns.Answers)
 	}
 
-	m["authorities_count"] = len(dns.Ns)
-	if authority && len(dns.Ns) > 0 {
-		m["authorities"] = rrToMapStr(dns.Ns)
+	m["authorities_count"] = len(dns.Authorities)
+	if authority && len(dns.Authorities) > 0 {
+		m["authorities"] = rrToMapStr(dns.Authorities)
 	}
 
-	m["additionals_count"] = len(dns.Extra)
-	if additional && len(dns.Extra) > 0 {
-		m["additionals"] = rrToMapStr(dns.Extra)
+	m["additionals_count"] = len(dns.Additionals)
+	if additional && len(dns.Additionals) > 0 {
+		m["additionals"] = rrToMapStr(dns.Additionals)
 	}
 }
 
 // rrToMapStr converts an array of DNSResourceRecord's to an array of MapStr's.
-func rrToMapStr(records []mkdns.RR) []common.MapStr {
+func rrToMapStr(records []layers.DNSResourceRecord) []common.MapStr {
 	mapStrArray := make([]common.MapStr, len(records))
-	for i, rr := range records {
-		rrHeader := rr.Header()
-		rrType := rrHeader.Rrtype
-
+	for i, r := range records {
 		mapStr := common.MapStr{
-			"name":  rrHeader.Name,
-			"type":  dnsTypeToString(rrType),
-			"class": dnsClassToString(rrHeader.Class),
-			"ttl":   strconv.FormatInt(int64(rrHeader.Ttl), 10),
+			"name":  nameToString(r.Name),
+			"type":  dnsTypeToString(r.Type),
+			"class": dnsClassToString(r.Class),
+			"ttl":   r.TTL,
 		}
 		mapStrArray[i] = mapStr
 
-		switch x := rr.(type) {
+		switch r.Type {
 		default:
-			// We don't have special handling for this type
-			logp.Debug("dns", "No special handling for RR type %s", dnsTypeToString(rrType))
-			unsupportedRR := new(mkdns.RFC3597)
-			err := unsupportedRR.ToRFC3597(x)
-			if err == nil {
-				rData, err := hexStringToString(unsupportedRR.Rdata)
-				mapStr["data"] = rData
-				if err != nil {
-					logp.Debug("dns", "%s", err.Error())
-				}
-			} else {
-				logp.Debug("dns", "Rdata for the unhandled RR type %s could not be fetched", dnsTypeToString(rrType))
-			}
-		case *mkdns.A:
-			mapStr["data"] = x.A.String()
-		case *mkdns.AAAA:
-			mapStr["data"] = x.AAAA.String()
-		case *mkdns.CNAME:
-			mapStr["data"] = x.Target
-		case *mkdns.MX:
-			mapStr["preference"] = x.Preference
-			mapStr["data"] = x.Mx
-		case *mkdns.NS:
-			mapStr["data"] = x.Ns
-		case *mkdns.PTR:
-			mapStr["data"] = x.Ptr
-		case *mkdns.RFC3597:
-			// Miekg/dns lib doesn't handle this type
-			//TODO: write a test for this.
-			logp.Debug("dns", "Unknown RR type %s", dnsTypeToString(rrType))
-			rData, err := hexStringToString(x.Rdata)
-			mapStr["data"] = rData
-			if err != nil {
-				logp.Debug("dns", "%s", err.Error())
-			}
-		case *mkdns.SOA:
-			mapStr["rname"] = x.Mbox
-			mapStr["serial"] = x.Serial
-			mapStr["refresh"] = x.Refresh
-			mapStr["retry"] = x.Retry
-			mapStr["expire"] = x.Expire
-			mapStr["minimum"] = x.Minttl
-			mapStr["data"] = x.Ns
-		case *mkdns.SRV:
-			mapStr["priority"] = x.Priority
-			mapStr["weight"] = x.Weight
-			mapStr["port"] = x.Port
-			mapStr["data"] = x.Target
-		case *mkdns.TXT:
-			mapStr["data"] = strings.Join(x.Txt, " ")
+			// We don't have special handling for this type so use the same
+			// encoding used for names to output the raw data for this type.
+			mapStr["data"] = nameToString(r.Data)
+		case layers.DNSTypeA, layers.DNSTypeAAAA:
+			mapStr["data"] = r.IP.String()
+		case layers.DNSTypeSOA:
+			mapStr["rname"] = nameToString(r.SOA.RName)
+			mapStr["serial"] = r.SOA.Serial
+			mapStr["refresh"] = r.SOA.Refresh
+			mapStr["retry"] = r.SOA.Retry
+			mapStr["expire"] = r.SOA.Expire
+			mapStr["minimum"] = r.SOA.Minimum
+			mapStr["data"] = nameToString(r.SOA.MName)
+		case layers.DNSTypeMX:
+			mapStr["preference"] = r.MX.Preference
+			mapStr["data"] = nameToString(r.MX.Name)
+		case layers.DNSTypeSRV:
+			mapStr["priority"] = r.SRV.Priority
+			mapStr["weight"] = r.SRV.Weight
+			mapStr["port"] = r.SRV.Port
+			mapStr["data"] = nameToString(r.SRV.Name)
+		case layers.DNSTypeCNAME:
+			mapStr["data"] = nameToString(r.CNAME)
+		case layers.DNSTypePTR:
+			mapStr["data"] = nameToString(r.PTR)
+		case layers.DNSTypeNS:
+			mapStr["data"] = nameToString(r.NS)
 		}
 	}
 
 	return mapStrArray
 }
 
-// dnsQuestionToString converts a Question to a string.
-func dnsQuestionToString(q mkdns.Question) string {
-	name := q.Name
-
-	return fmt.Sprintf("class %s, type %s, %s", dnsClassToString(q.Qclass),
-		dnsTypeToString(q.Qtype), name)
+// dnsQuestionToString converts a DNSQuestion to a string.
+func dnsQuestionToString(q layers.DNSQuestion) string {
+	name := nameToString(q.Name)
+	if len(name) == 0 {
+		name = "Root"
+	}
+	return fmt.Sprintf("class %s, type %s, %s", dnsClassToString(q.Class),
+		dnsTypeToString(q.Type), name)
 }
 
-// dnsResourceRecordToString converts a RR to a string.
-func dnsResourceRecordToString(rr mkdns.RR) string {
-	rrHeader := rr.Header()
-	rrType := rrHeader.Rrtype
-
+// dnsResourceRecordToString converts a DNSResourceRecord to a string.
+func dnsResourceRecordToString(rr *layers.DNSResourceRecord) string {
+	name := nameToString(rr.Name)
+	if len(name) == 0 {
+		name = "Root"
+	}
 	var data string
-	switch x := rr.(type) {
+	switch rr.Type {
 	default:
-		// We don't have special handling for this type
-		logp.Debug("dns", "No special handling for RR type %s", dnsTypeToString(rrType))
-		unsupportedRR := new(mkdns.RFC3597)
-		err := unsupportedRR.ToRFC3597(x)
-		if err == nil {
-			rData, err := hexStringToString(unsupportedRR.Rdata)
-			data = rData
-			if err != nil {
-				logp.Debug("dns", "%s", err.Error())
-			}
-		} else {
-			logp.Debug("dns", "Rdata for the unhandled RR type %s could not be fetched", dnsTypeToString(rrType))
-		}
-	case *mkdns.A:
-		data = x.A.String()
-	case *mkdns.AAAA:
-		data = x.AAAA.String()
-	case *mkdns.CNAME:
-		data = x.Target
-	case *mkdns.MX:
-		data = fmt.Sprintf("preference %d, %s", x.Preference, x.Mx)
-	case *mkdns.NS:
-		data = x.Ns
-	case *mkdns.PTR:
-		data = x.Ptr
-	case *mkdns.RFC3597:
-		// Miekg/dns lib doesn't handle this type
-		logp.Debug("dns", "Unknown RR type %s", dnsTypeToString(rrType))
-		rData, err := hexStringToString(x.Rdata)
-		data = rData
-		if err != nil {
-			logp.Debug("dns", "%s", err.Error())
-		}
-	case *mkdns.SOA:
+		// We don't have special handling for this type so use the same
+		// encoding used for names to output the raw data for this type.
+		data = nameToString(rr.Data)
+	case layers.DNSTypeA, layers.DNSTypeAAAA:
+		data = rr.IP.String()
+	case layers.DNSTypeSOA:
 		data = fmt.Sprintf("mname %s, rname %s, serial %d, refresh %d, "+
-			"retry %d, expire %d, minimum %d", x.Ns, x.Mbox,
-			x.Serial, x.Refresh, x.Retry, x.Expire,
-			x.Minttl)
-	case *mkdns.SRV:
-		data = fmt.Sprintf("priority %d, weight %d, port %d, %s", x.Priority,
-			x.Weight, x.Port, x.Target)
-	case *mkdns.TXT:
-		data = strings.Join(x.Txt, " ")
+			"retry %d, expire %d, minimum %d", rr.SOA.MName, rr.SOA.RName,
+			rr.SOA.Serial, rr.SOA.Refresh, rr.SOA.Retry, rr.SOA.Expire,
+			rr.SOA.Minimum)
+	case layers.DNSTypeMX:
+		data = fmt.Sprintf("preference %d, %s", rr.MX.Preference, rr.MX.Name)
+	case layers.DNSTypeSRV:
+		data = fmt.Sprintf("priority %d, weight %d, port %d, %s", rr.SRV.Priority,
+			rr.SRV.Weight, rr.SRV.Port, rr.SRV.Name)
+	case layers.DNSTypeCNAME:
+		data = nameToString(rr.CNAME)
+	case layers.DNSTypePTR:
+		data = nameToString(rr.PTR)
+	case layers.DNSTypeNS:
+		data = nameToString(rr.NS)
 	}
 
-	return fmt.Sprintf("%s: ttl %d, class %s, type %s, %s", rrHeader.Name,
-		int(rrHeader.Ttl), dnsClassToString(rrHeader.Class),
-		dnsTypeToString(rrType), data)
+	return fmt.Sprintf("%s: ttl %d, class %s, type %s, %s", name,
+		int(rr.TTL), dnsClassToString(rr.Class),
+		dnsTypeToString(rr.Type), data)
 }
 
 // dnsResourceRecordsToString converts an array of DNSResourceRecord's to a
 // string.
-func dnsResourceRecordsToString(r []mkdns.RR) string {
+func dnsResourceRecordsToString(r []layers.DNSResourceRecord) string {
 	var rrStrs []string
 	for _, rr := range r {
-		rrStrs = append(rrStrs, dnsResourceRecordToString(rr))
+		rrStrs = append(rrStrs, dnsResourceRecordToString(&rr))
 	}
 	return strings.Join(rrStrs, "; ")
 }
 
 // dnsToString converts a DNS message to a string.
-func dnsToString(dns *mkdns.Msg) string {
+func dnsToString(dns *layers.DNS) string {
 	var msgType string
-	if dns.Response {
-		msgType = "response"
-	} else {
+	if dns.QR == Query {
 		msgType = "query"
+	} else {
+		msgType = "response"
 	}
 
 	var t []string
-	if dns.Authoritative {
+	if dns.AA {
 		t = append(t, "aa")
 	}
-	if dns.Truncated {
+	if dns.TC {
 		t = append(t, "tc")
 	}
-	if dns.RecursionDesired {
+	if dns.RD {
 		t = append(t, "rd")
 	}
-	if dns.RecursionAvailable {
+	if dns.RA {
 		t = append(t, "ra")
 	}
-	if dns.AuthenticatedData {
-		t = append(t, "ad")
-	}
-	if dns.CheckingDisabled {
-		t = append(t, "cd")
-	}
+	// Need to add RFC4035 flag parsing to gopacket.
+	//if dns.AD { t = append(t, "ad") }
+	//if dns.CD { t = append(t, "cd") }
 	flags := strings.Join(t, " ")
 
 	var a []string
 	a = append(a, fmt.Sprintf("ID %d; QR %s; OPCODE %s; FLAGS %s; RCODE %s",
-		dns.Id, msgType, dnsOpCodeToString(dns.Opcode), flags,
-		dnsResponseCodeToString(dns.Rcode)))
+		dns.ID, msgType, dnsOpCodeToString(dns.OpCode), flags,
+		dnsResponseCodeToString(dns.ResponseCode)))
 
-	if len(dns.Question) > 0 {
+	if len(dns.Questions) > 0 {
 		t = []string{}
-		for _, question := range dns.Question {
+		for _, question := range dns.Questions {
 			t = append(t, dnsQuestionToString(question))
 		}
 		a = append(a, fmt.Sprintf("QUESTION %s", strings.Join(t, "; ")))
 	}
 
-	if len(dns.Answer) > 0 {
+	if len(dns.Answers) > 0 {
 		a = append(a, fmt.Sprintf("ANSWER %s",
-			dnsResourceRecordsToString(dns.Answer)))
+			dnsResourceRecordsToString(dns.Answers)))
 	}
 
-	if len(dns.Ns) > 0 {
+	if len(dns.Authorities) > 0 {
 		a = append(a, fmt.Sprintf("AUTHORITY %s",
-			dnsResourceRecordsToString(dns.Ns)))
+			dnsResourceRecordsToString(dns.Authorities)))
 	}
 
-	if len(dns.Extra) > 0 {
+	if len(dns.Additionals) > 0 {
 		a = append(a, fmt.Sprintf("ADDITIONAL %s",
-			dnsResourceRecordsToString(dns.Extra)))
+			dnsResourceRecordsToString(dns.Additionals)))
 	}
 
 	return strings.Join(a, "; ")
 }
 
+// nameToString converts bytes representing a domain name to a string. Bytes
+// below 32 or above 126 are represented as an escaped base10 integer (\DDD).
+// Back slashes and quotes are escaped. Tabs, carriage returns, and line feeds
+// will be converted to \t, \r and \n respectively.
+func nameToString(name []byte) string {
+	var s []byte
+	for _, value := range name {
+		switch value {
+		default:
+			if value < 32 || value >= 127 {
+				// Unprintable characters are written as \\DDD (e.g. \\012).
+				s = append(s, []byte(fmt.Sprintf("\\%03d", int(value)))...)
+			} else {
+				s = append(s, value)
+			}
+		case '"', '\\':
+			s = append(s, '\\', value)
+		case '\t':
+			s = append(s, '\\', 't')
+		case '\r':
+			s = append(s, '\\', 'r')
+		case '\n':
+			s = append(s, '\\', 'n')
+		}
+	}
+	return string(s)
+}
+
 // decodeDnsData decodes a byte array into a DNS struct. If an error occurs
 // then the returnd dns pointer will be nil. This method recovers from panics
 // and is concurrency-safe.
-// We do not handle Unpack ErrTruncated for now. See https://github.com/miekg/dns/pull/281
-func decodeDnsData(transport Transport, rawData []byte) (dns *mkdns.Msg, err error) {
+func decodeDnsData(transport Transport, rawData []byte) (dns *layers.DNS, err error) {
 	var offset int
 	if transport == TransportTcp {
 		offset = DecodeOffset
@@ -662,15 +629,10 @@ func decodeDnsData(transport Transport, rawData []byte) (dns *mkdns.Msg, err err
 		}
 	}()
 
-	msg := &mkdns.Msg{}
-	err = msg.Unpack(rawData[offset:])
-
-	// Message should be more than 12 bytes.
-	// The 12 bytes value corresponds to a message header length.
-	// We use this check because Unpack does not return an error for some unvalid messages.
-	// TODO: can a better solution be found?
-	if msg.Len() <= 12 || err != nil {
+	d := &layers.DNS{}
+	err = d.DecodeFromBytes(rawData[offset:], gopacket.NilDecodeFeedback)
+	if err != nil {
 		return nil, NonDnsMsg
 	}
-	return msg, nil
+	return d, nil
 }
