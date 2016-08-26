@@ -11,7 +11,7 @@ PREFIX?=.
 
 .PHONY: init
 init:
-	glide update  --no-recursive
+	glide update --strip-vcs
 	make update
 	git init
 
@@ -31,7 +31,7 @@ commit:
 
 .PHONY: update-deps
 update-deps:
-	glide update --no-recursive --strip-vcs
+	glide update --strip-vcs
 
 .PHONY: fullupdate
 fullupdate:

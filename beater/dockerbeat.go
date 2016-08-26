@@ -58,7 +58,7 @@ type Dockerbeat struct {
 	beatConfig           *config.Config
 	dockerClient         *docker.Client
 	events               publisher.Client
-	eventGenerator       event.EventGenerator
+	eventGenerator       *event.EventGenerator
 	minimalDockerVersion SoftwareVersion
 }
 
@@ -178,7 +178,7 @@ func (bt *Dockerbeat) Setup(b *beat.Beat) error {
 	bt.events = b.Events
 	bt.done = make(chan struct{})
 	bt.dockerClient, clientErr = bt.getDockerClient()
-	bt.eventGenerator = event.EventGenerator{
+	bt.eventGenerator = &event.EventGenerator{
 		Socket:            &bt.socketConfig.socket,
 		NetworkStats:      event.EGNetworkStats{M: map[string]map[string]calculator.NetworkData{}},
 		BlkioStats:        event.EGBlkioStats{M: map[string]calculator.BlkioData{}},
