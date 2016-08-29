@@ -24,7 +24,7 @@ Ensure that this folder is at the following location:
 
 ### Requirements
 
-* [Golang](https://golang.org/dl/) 1.6
+* [Golang](https://golang.org/dl/) 1.7
 * [Glide](https://github.com/Masterminds/glide) >= 0.10.0
 
 

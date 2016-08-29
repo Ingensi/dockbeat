@@ -39,7 +39,7 @@ Ensure that this folder is at the following location:
 
 ### Requirements
 
-* [Golang](https://golang.org/dl/) 1.6
+* [Golang](https://golang.org/dl/) 1.7
 * [Glide](https://github.com/Masterminds/glide) >= 0.10.0
 
 
@@ -73,7 +73,7 @@ Example:
 
 ```
 docker run -d -v /var/run/docker.sock:/var/run/docker.sock \
-  --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-rc2
+  --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-rc3
 ```
 
 To override the default configuration, just link yours to `/etc/dockerbeat/dockerbeat.yml`:
@@ -82,7 +82,7 @@ To override the default configuration, just link yours to `/etc/dockerbeat/docke
 docker run -d --link elastic:elasticsearch \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /volumes/dockerbeat-config/:/etc/dockerbeat \
-  ingensi/dockerbeat:1.0.0-rc2
+  ingensi/dockerbeat:1.0.0-rc3
 ```
 
 By default, when dockerbeat is running from this image, it logs into the `/var/log/dockerbeat` directory. To access this logs from the host, link a directory to the dockerbeat logging directory:
@@ -91,7 +91,7 @@ docker run -d --link elastic:elasticsearch \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /volumes/dockerbeat-config/:/etc/dockerbeat \
   -v /volumes/dockerbeat-logs/:/var/logs/dockerbeat \
-  ingensi/dockerbeat:1.0.0-rc2
+  ingensi/dockerbeat:1.0.0-rc3
 ```
 
 ### Configuring Dockerbeat
@@ -132,7 +132,7 @@ docker run -d \
   --link elastic2:es2 \
   -e PERIOD=30 \
   -e DOCKER_SOCKET=unix:///another/path.sock \
-  ingensi/dockerbeat:1.0.0-rc2
+  ingensi/dockerbeat:1.0.0-rc3
 ```
 
 ### Contribute to the project
