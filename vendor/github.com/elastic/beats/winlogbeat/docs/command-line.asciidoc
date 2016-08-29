@@ -1,0 +1,34 @@
+[[winlogbeat-command-line-options]]
+=== Command Line Options
+
+Winlogbeat does not have any Winlogbeat-specific command line options. Instead,
+you configure the behavior of Winlogbeat by specifying options in the
+configuration file.
+
+The following command line options from libbeat are also available for
+Winlogbeat.
+
+[source,shell]
+--------------------------------------------------------------------------------
+$ winlogbeat -h
+Usage of ./winlogbeat:
+  -N	Disable actual publishing for testing
+  -c string
+    	Configuration file (defaults to winlogbeat.yml in the same dir as winlogbeat.exe)
+  -configtest
+    	Test configuration and exit.
+  -cpuprofile string
+    	Write cpu profile to file
+  -d string
+    	Enable certain debug selectors
+  -e	Log to stderr and disable syslog/file output
+  -httpprof string
+    	Start pprof http server
+  -memprofile string
+    	Write memory profile to this file
+  -v	Log at INFO level
+  -version
+    	Print version and exit
+--------------------------------------------------------------------------------
+
+include::../../libbeat/docs/shared-command-line.asciidoc[]
