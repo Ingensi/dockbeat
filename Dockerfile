@@ -1,4 +1,4 @@
-FROM golang:1.6.1
+FROM golang:1.7
 MAINTAINER Ingensi labs <contact@ingensi.com>
 
 # install pyyaml
