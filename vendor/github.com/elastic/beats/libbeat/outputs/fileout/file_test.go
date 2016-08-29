@@ -1,3 +1,1 @@
-// +build !integration
-
 package fileout

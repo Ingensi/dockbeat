@@ -1,5 +1,3 @@
-// +build !integration
-
 package config
 
 import (
@@ -31,18 +29,6 @@ func TestConfigValidate(t *testing.T) {
 				},
 			},
 			"", // No Error
-		},
-		{
-			Settings{
-				WinlogbeatConfig{
-					EventLogs: []EventLogConfig{
-						{Name: "App"},
-					},
-				},
-				map[string]interface{}{"other": "value"},
-			},
-			"1 error: Invalid top-level key 'other' found. Valid keys are " +
-				"logging, output, shipper, winlogbeat",
 		},
 		{
 			WinlogbeatConfig{},

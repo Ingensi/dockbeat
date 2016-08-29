@@ -25,6 +25,25 @@ func TestCPUperCpuUsage(t *testing.T) {
 	}, value)
 }
 
+func TestCPUperCpuUsageAvoidMassiveValues(t *testing.T) {
+	// GIVEN
+	var oldData = CPUData{[]uint64{1, 2, 3, 4}, 0, 0, 0}
+	var newData = CPUData{[]uint64{0, 1, 2, 3}, 0, 0, 0}
+	var calculator = CPUCalculatorImpl{oldData, newData}
+
+	// WHEN
+	value := calculator.PerCpuUsage()
+
+	// THEN
+	// value should be 0%, 0%, 0% and 0%
+	assert.Equal(t, common.MapStr{
+		"cpu0": float64(0.0),
+		"cpu1": float64(0.0),
+		"cpu2": float64(0.0),
+		"cpu3": float64(0.0),
+	}, value)
+}
+
 func TestCPUTotalUsage(t *testing.T) {
 	// GIVEN
 	var oldData = CPUData{nil, 50, 0, 0}
@@ -37,6 +56,20 @@ func TestCPUTotalUsage(t *testing.T) {
 	// THEN
 	// value should be 50%
 	assert.Equal(t, 0.50, value)
+}
+
+func TestCPUTotalUsageAvoidMassiveValues(t *testing.T) {
+	// GIVEN
+	var oldData = CPUData{nil, 55, 0, 0}
+	var newData = CPUData{nil, 5, 0, 0}
+	var calculator = CPUCalculatorImpl{oldData, newData}
+
+	// WHEN
+	value := calculator.TotalUsage()
+
+	// THEN
+	// value should be 0%
+	assert.Equal(t, 0.0, value)
 }
 
 func TestCPUUsageInKernelmode(t *testing.T) {
@@ -53,10 +86,38 @@ func TestCPUUsageInKernelmode(t *testing.T) {
 	assert.Equal(t, float64(0.80), value)
 }
 
+func TestCPUUsageInKernelmodeAvoidMassiveValues(t *testing.T) {
+	// GIVEN
+	var oldData = CPUData{nil, 0, 1, 0}
+	var newData = CPUData{nil, 0, 0, 0}
+	var calculator = CPUCalculatorImpl{oldData, newData}
+
+	// WHEN
+	value := calculator.UsageInKernelmode()
+
+	// THEN
+	// value should be 0%
+	assert.Equal(t, float64(0.0), value)
+}
+
 func TestCPUUsageInUsermode(t *testing.T) {
 	// GIVEN
-	var oldData = CPUData{nil, 0, 0, 800000000}
+	var oldData = CPUData{nil, 0, 0, 0}
 	var newData = CPUData{nil, 0, 0, 800000000}
+	var calculator = CPUCalculatorImpl{oldData, newData}
+
+	// WHEN
+	value := calculator.UsageInUsermode()
+
+	// THEN
+	// value should be 80%
+	assert.Equal(t, float64(0.8), value)
+}
+
+func TestCPUUsageInUsermodeAvoidMassiveValues(t *testing.T) {
+	// GIVEN
+	var oldData = CPUData{nil, 0, 0, 1}
+	var newData = CPUData{nil, 0, 0, 0}
 	var calculator = CPUCalculatorImpl{oldData, newData}
 
 	// WHEN

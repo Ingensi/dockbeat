@@ -6,7 +6,6 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 
-	"github.com/elastic/beats/packetbeat/flows"
 	"github.com/elastic/beats/packetbeat/protos"
 )
 
@@ -16,7 +15,7 @@ type Udp struct {
 }
 
 type Processor interface {
-	Process(id *flows.FlowID, pkt *protos.Packet)
+	Process(pkt *protos.Packet)
 }
 
 // decideProtocol determines the protocol based on the source and destination
@@ -40,7 +39,7 @@ func (udp *Udp) decideProtocol(tuple *common.IpPortTuple) protos.Protocol {
 // determine the protocol type and then invokes the associated
 // UdpProtocolPlugin's ParseUdp method. If the protocol cannot be determined
 // or the payload is empty then the method is a noop.
-func (udp *Udp) Process(id *flows.FlowID, pkt *protos.Packet) {
+func (udp *Udp) Process(pkt *protos.Packet) {
 	protocol := udp.decideProtocol(&pkt.Tuple)
 	if protocol == protos.UnknownProtocol {
 		logp.Debug("udp", "unknown protocol")
@@ -63,7 +62,7 @@ func (udp *Udp) Process(id *flows.FlowID, pkt *protos.Packet) {
 // buildPortsMap creates a mapping of port numbers to protocol identifiers. If
 // any two UdpProtocolPlugins operate on the same port number then an error
 // will be returned.
-func buildPortsMap(plugins map[protos.Protocol]protos.UdpPlugin) (map[uint16]protos.Protocol, error) {
+func buildPortsMap(plugins map[protos.Protocol]protos.UdpProtocolPlugin) (map[uint16]protos.Protocol, error) {
 	var res = map[uint16]protos.Protocol{}
 
 	for proto, protoPlugin := range plugins {

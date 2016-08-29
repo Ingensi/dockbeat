@@ -9,7 +9,7 @@ import (
 
 type bulkWorker struct {
 	output worker
-	ws     *common.WorkerSignal
+	ws     *workerSignal
 
 	queue       chan message
 	bulkQueue   chan message
@@ -22,7 +22,7 @@ type bulkWorker struct {
 }
 
 func newBulkWorker(
-	ws *common.WorkerSignal, hwm int, bulkHWM int,
+	ws *workerSignal, hwm int, bulkHWM int,
 	output worker,
 	flushInterval time.Duration,
 	maxBatchSize int,
@@ -38,17 +38,15 @@ func newBulkWorker(
 		pending:      nil,
 	}
 
-	b.ws.WorkerStart()
+	ws.wg.Add(1)
 	go b.run()
 	return b
 }
 
 func (b *bulkWorker) send(m message) {
 	if m.events == nil {
-		b.ws.AddEvent(1)
 		b.queue <- m
 	} else {
-		b.ws.AddEvent(len(m.events))
 		b.bulkQueue <- m
 	}
 }
@@ -58,21 +56,17 @@ func (b *bulkWorker) run() {
 
 	for {
 		select {
-		case <-b.ws.Done:
+		case <-b.ws.done:
 			return
 		case m := <-b.queue:
 			b.onEvent(&m.context, m.event)
 		case m := <-b.bulkQueue:
 			b.onEvents(&m.context, m.events)
 		case <-b.flushTicker.C:
-			b.flush()
+			if len(b.events) > 0 {
+				b.publish()
+			}
 		}
-	}
-}
-
-func (b *bulkWorker) flush() {
-	if len(b.events) > 0 {
-		b.publish()
 	}
 }
 
@@ -133,7 +127,6 @@ func (b *bulkWorker) publish() {
 		events: b.events,
 	})
 
-	b.ws.AddEvent(-len(b.events))
 	b.pending = nil
 	b.guaranteed = false
 	b.events = make([]common.MapStr, 0, b.maxBatchSize)
@@ -141,7 +134,7 @@ func (b *bulkWorker) publish() {
 
 func (b *bulkWorker) shutdown() {
 	b.flushTicker.Stop()
-	close(b.queue)
-	close(b.bulkQueue)
-	b.ws.WorkerFinished()
+	stopQueue(b.queue)
+	stopQueue(b.bulkQueue)
+	b.ws.wg.Done()
 }

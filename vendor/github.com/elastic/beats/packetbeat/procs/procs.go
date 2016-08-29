@@ -60,10 +60,10 @@ type ProcessesWatcher struct {
 }
 
 type ProcsConfig struct {
-	Enabled            bool          `config:"enabled"`
-	Max_proc_read_freq time.Duration `config:"max_proc_read_freq"`
-	Monitored          []ProcConfig  `config:"monitored"`
-	Refresh_pids_freq  time.Duration `config:"refresh_pids_freq"`
+	Enabled            bool
+	Max_proc_read_freq int
+	Monitored          []ProcConfig
+	Refresh_pids_freq  int
 }
 
 type ProcConfig struct {
@@ -87,20 +87,20 @@ func (proc *ProcessesWatcher) Init(config ProcsConfig) error {
 		} else {
 			logp.Info("Process matching enabled")
 		}
-	} else {
-		logp.Info("Process matching disabled")
 	}
 
 	if config.Max_proc_read_freq == 0 {
 		proc.MaxReadFreq = 10 * time.Millisecond
 	} else {
-		proc.MaxReadFreq = config.Max_proc_read_freq
+		proc.MaxReadFreq = time.Duration(config.Max_proc_read_freq) *
+			time.Millisecond
 	}
 
 	if config.Refresh_pids_freq == 0 {
 		proc.RefreshPidsFreq = 1 * time.Second
 	} else {
-		proc.RefreshPidsFreq = config.Refresh_pids_freq
+		proc.RefreshPidsFreq = time.Duration(config.Refresh_pids_freq) *
+			time.Millisecond
 	}
 
 	// Read the local IP addresses

@@ -1,5 +1,3 @@
-// +build !integration
-
 package mode
 
 import (
@@ -9,23 +7,15 @@ import (
 	"time"
 
 	"github.com/elastic/beats/libbeat/common"
-	"github.com/elastic/beats/libbeat/logp"
 	"github.com/elastic/beats/libbeat/outputs"
 	"github.com/stretchr/testify/assert"
 )
 
 type mockClient struct {
-	publish      func([]common.MapStr) ([]common.MapStr, error)
-	asyncPublish func(func([]common.MapStr, error), []common.MapStr) error
-	close        func() error
-	connected    bool
-	connect      func(time.Duration) error
-}
-
-func enableLogging(selectors []string) {
-	if testing.Verbose() {
-		logp.LogInit(logp.LOG_DEBUG, "", false, true, selectors)
-	}
+	publish   func([]common.MapStr) ([]common.MapStr, error)
+	close     func() error
+	connected bool
+	connect   func(time.Duration) error
 }
 
 func (c *mockClient) Connect(timeout time.Duration) error {
@@ -47,16 +37,6 @@ func (c *mockClient) PublishEvents(events []common.MapStr) ([]common.MapStr, err
 func (c *mockClient) PublishEvent(event common.MapStr) error {
 	_, err := c.PublishEvents([]common.MapStr{event})
 	return err
-}
-
-func (c *mockClient) AsyncPublishEvents(cb func([]common.MapStr, error), events []common.MapStr) error {
-	return c.asyncPublish(cb, events)
-}
-
-func (c *mockClient) AsyncPublishEvent(cb func(error), event common.MapStr) error {
-	return c.AsyncPublishEvents(
-		func(evts []common.MapStr, err error) { cb(err) },
-		[]common.MapStr{event})
 }
 
 func connectOK(timeout time.Duration) error {
@@ -91,20 +71,6 @@ func collectPublish(
 
 		*collected = append(*collected, events)
 		return nil, nil
-	}
-}
-
-func asyncCollectPublish(
-	collected *[][]common.MapStr,
-) func(func([]common.MapStr, error), []common.MapStr) error {
-	mutex := sync.Mutex{}
-	return func(cb func([]common.MapStr, error), events []common.MapStr) error {
-		mutex.Lock()
-		defer mutex.Unlock()
-
-		*collected = append(*collected, events)
-		cb(nil, nil)
-		return nil
 	}
 }
 
@@ -152,52 +118,6 @@ func publishFailStart(
 	return publishFailWith(n, errNetTimeout{}, pub)
 }
 
-func asyncFailStart(
-	n int,
-	pub func(func([]common.MapStr, error), []common.MapStr) error,
-) func(func([]common.MapStr, error), []common.MapStr) error {
-	return asyncFailStartWith(n, errNetTimeout{}, pub)
-}
-
-func asyncFailStartWith(
-	n int,
-	err error,
-	pub func(func([]common.MapStr, error), []common.MapStr) error,
-) func(func([]common.MapStr, error), []common.MapStr) error {
-	count := 0
-	return func(cb func([]common.MapStr, error), events []common.MapStr) error {
-		if count < n {
-			count++
-			debug("fail with(%v): %v", count, err)
-			return err
-		}
-
-		count = 0
-		debug("forward events")
-		return pub(cb, events)
-	}
-}
-
-func asyncFailWith(
-	n int,
-	err error,
-	pub func(func([]common.MapStr, error), []common.MapStr) error,
-) func(func([]common.MapStr, error), []common.MapStr) error {
-	count := 0
-	return func(cb func([]common.MapStr, error), events []common.MapStr) error {
-		if count < n {
-			count++
-			go func() {
-				cb(events, err)
-			}()
-			return nil
-		}
-
-		count = 0
-		return pub(cb, events)
-	}
-}
-
 func closeOK() error {
 	return nil
 }
@@ -206,23 +126,16 @@ var testEvent = common.MapStr{
 	"msg": "hello world",
 }
 
-var testNoOpts = outputs.Options{}
-var testGuaranteed = outputs.Options{Guaranteed: true}
+var testOpts = outputs.Options{}
 
 func testMode(
 	t *testing.T,
 	mode ConnectionMode,
-	opts outputs.Options,
 	events []eventInfo,
 	expectedSignals []bool,
 	collectedEvents *[][]common.MapStr,
 ) {
-	defer func() {
-		err := mode.Close()
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
+	defer mode.Close()
 
 	if events == nil {
 		return
@@ -244,14 +157,14 @@ func testMode(
 	for _, pubEvents := range events {
 		if pubEvents.single {
 			for _, event := range pubEvents.events {
-				_ = mode.PublishEvent(signal, opts, event)
+				_ = mode.PublishEvent(signal, testOpts, event)
 				if expectedSignals[idx] {
 					expectedEvents = append(expectedEvents, []common.MapStr{event})
 				}
 				idx++
 			}
 		} else {
-			_ = mode.PublishEvents(signal, opts, pubEvents.events)
+			_ = mode.PublishEvents(signal, testOpts, pubEvents.events)
 			if expectedSignals[idx] {
 				expectedEvents = append(expectedEvents, pubEvents.events)
 			}
@@ -307,76 +220,65 @@ func signals(s ...bool) []bool {
 	return s
 }
 
-func makeTestClients(c map[string]interface{},
-	newClient func(string) (ProtocolClient, error),
-) ([]ProtocolClient, error) {
-	cfg, err := common.NewConfigFrom(c)
-	if err != nil {
-		return nil, err
-	}
-
-	return MakeClients(cfg, newClient)
-}
-
 func TestMakeEmptyClientFail(t *testing.T) {
-	config := map[string]interface{}{}
-	clients, err := makeTestClients(config, dummyMockClientFactory)
+	config := outputs.MothershipConfig{}
+	clients, err := MakeClients(config, dummyMockClientFactory)
 	assert.Equal(t, ErrNoHostsConfigured, err)
 	assert.Equal(t, 0, len(clients))
 }
 
 func TestMakeSingleClient(t *testing.T) {
-	config := map[string]interface{}{
-		"hosts": []string{"single"},
+	config := outputs.MothershipConfig{
+		Hosts: []string{"single"},
 	}
 
-	clients, err := makeTestClients(config, dummyMockClientFactory)
+	clients, err := MakeClients(config, dummyMockClientFactory)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(clients))
 }
 
 func TestMakeSingleClientWorkers(t *testing.T) {
-	config := map[string]interface{}{
-		"hosts":  []string{"single"},
-		"worker": 3,
+	config := outputs.MothershipConfig{
+		Hosts:  []string{"single"},
+		Worker: 3,
 	}
 
-	clients, err := makeTestClients(config, dummyMockClientFactory)
+	clients, err := MakeClients(config, dummyMockClientFactory)
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(clients))
 }
 
 func TestMakeTwoClient(t *testing.T) {
-	config := map[string]interface{}{
-		"hosts": []string{"client1", "client2"},
+	config := outputs.MothershipConfig{
+		Hosts: []string{"client1", "client2"},
 	}
 
-	clients, err := makeTestClients(config, dummyMockClientFactory)
+	clients, err := MakeClients(config, dummyMockClientFactory)
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(clients))
 }
 
 func TestMakeTwoClientWorkers(t *testing.T) {
-	config := map[string]interface{}{
-		"hosts":  []string{"client1", "client2"},
-		"worker": 3,
+	config := outputs.MothershipConfig{
+		Hosts:  []string{"client1", "client2"},
+		Worker: 3,
 	}
 
-	clients, err := makeTestClients(config, dummyMockClientFactory)
+	clients, err := MakeClients(config, dummyMockClientFactory)
 	assert.Nil(t, err)
 	assert.Equal(t, 6, len(clients))
 }
 
 func TestMakeTwoClientFail(t *testing.T) {
-	config := map[string]interface{}{
-		"hosts":  []string{"client1", "client2"},
-		"worker": 3,
+	config := outputs.MothershipConfig{
+		Hosts:  []string{"client1", "client2"},
+		Worker: 3,
 	}
 
 	testError := errors.New("test")
 
 	i := 1
-	_, err := makeTestClients(config, func(host string) (ProtocolClient, error) {
+	_, err := MakeClients(config, func(host string) (ProtocolClient, error) {
 		if i%3 == 0 {
 			return nil, testError
 		}

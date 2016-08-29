@@ -119,7 +119,7 @@ func True(t TestingT, value bool, msgAndArgs ...interface{}) {
 	}
 }
 
-// False asserts that the specified value is false.
+// False asserts that the specified value is true.
 //
 //    require.False(t, myBool, "myBool should be false")
 func False(t TestingT, value bool, msgAndArgs ...interface{}) {

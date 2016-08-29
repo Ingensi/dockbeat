@@ -1,5 +1,3 @@
-// +build !integration
-
 package thrift
 
 import (
@@ -12,13 +10,6 @@ import (
 	"github.com/elastic/beats/packetbeat/protos"
 )
 
-func thriftForTests() *Thrift {
-	t := &Thrift{}
-	config := defaultConfig
-	t.init(true, nil, &config)
-	return t
-}
-
 func TestThrift_thriftReadString(t *testing.T) {
 
 	if testing.Verbose() {
@@ -30,7 +21,8 @@ func TestThrift_thriftReadString(t *testing.T) {
 	var off int
 	var str string
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.InitDefaults()
 
 	data, _ = hex.DecodeString("0000000470696e67")
 	str, ok, complete, off = thrift.readString(data)
@@ -574,7 +566,7 @@ func createTestPacket(t *testing.T, hexstr string) *protos.Packet {
 }
 
 // Helper function to read from the Publisher Queue
-func expectThriftTransaction(t *testing.T, thrift *Thrift) *ThriftTransaction {
+func expectThriftTransaction(t *testing.T, thrift Thrift) *ThriftTransaction {
 	select {
 	case trans := <-thrift.PublishQueue:
 		return trans
@@ -600,7 +592,9 @@ func TestThrift_ParseSimpleTBinary(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
+
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
 	tcptuple := testTcpTuple()
@@ -628,8 +622,10 @@ func TestThrift_ParseSimpleTFramed(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
+
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
 	tcptuple := testTcpTuple()
@@ -659,8 +655,10 @@ func TestThrift_ParseSimpleTFramedSplit(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
+
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
 	tcptuple := testTcpTuple()
@@ -693,8 +691,10 @@ func TestThrift_ParseSimpleTFramedSplitInterleaved(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
+
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
 	tcptuple := testTcpTuple()
@@ -726,8 +726,10 @@ func TestThrift_Parse_OneWayCallWithFin(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
+
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
 	tcptuple := testTcpTuple()
@@ -753,7 +755,8 @@ func TestThrift_Parse_OneWayCall2Requests(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
@@ -792,7 +795,8 @@ func TestThrift_Parse_RequestReplyMismatch(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
@@ -820,9 +824,11 @@ func TestThrift_ParseSimpleTFramed_NoReply(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
 	thrift.CaptureReply = false
+
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
 	tcptuple := testTcpTuple()
@@ -862,9 +868,11 @@ func TestThrift_ParseObfuscateStrings(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
 	thrift.ObfuscateStrings = true
+
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
 	tcptuple := testTcpTuple()
@@ -893,7 +901,8 @@ func BenchmarkThrift_ParseSkipReply(b *testing.B) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 	thrift.CaptureReply = false
@@ -939,7 +948,9 @@ func TestThrift_Parse_Exception(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
+
 	thrift.PublishQueue = make(chan *ThriftTransaction, 10)
 
 	tcptuple := testTcpTuple()
@@ -969,7 +980,8 @@ func TestThrift_ParametersNames(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.TransportType = ThriftTFramed
 	thrift.Idl = thriftIdlForTesting(t, `
 		service Test {
@@ -1006,7 +1018,8 @@ func TestThrift_ExceptionName(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.Idl = thriftIdlForTesting(t, `
 		exception InvalidOperation {
 		  1: i32 what,
@@ -1048,7 +1061,8 @@ func TestThrift_GapInStream_response(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.Idl = thriftIdlForTesting(t, `
 		exception InvalidOperation {
 		  1: i32 what,
@@ -1100,7 +1114,8 @@ func TestThrift_GapInStream_request(t *testing.T) {
 		logp.LogInit(logp.LOG_DEBUG, "", false, true, []string{"thrift", "thriftdetailed"})
 	}
 
-	thrift := thriftForTests()
+	var thrift Thrift
+	thrift.Init(true, nil)
 	thrift.Idl = thriftIdlForTesting(t, `
 		exception InvalidOperation {
 		  1: i32 what,

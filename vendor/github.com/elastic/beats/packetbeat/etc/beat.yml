@@ -15,42 +15,8 @@
 interfaces:
   device: any
 
-flows:
-  # Set network flow timeout. Flow is killed if no packet is received before being
-  # timed out.
-  #timeout: 30s
-
-  # Configure reporting period. If set to -1, only killed flows will be reported
-  #period: 10s
-
 ############################# Protocols #######################################
 protocols:
-  icmp:
-    # Enable ICMPv4 and ICMPv6 monitoring. Default: false
-    enabled: true
-
-  amqp:
-    # Configure the ports where to listen for AMQP traffic. You can disable
-    # the AMQP protocol by commenting out the list of ports.
-    ports: [5672]
-    # Truncate messages that are published and avoid huge messages being
-    # indexed.
-    # Default: 1000
-    #max_body_length: 1000
-
-    # Hide the header fields in header frames.
-    # Default: false
-    #parse_headers: false
-
-    # Hide the additional arguments of method frames.
-    # Default: false
-    #parse_arguments: false
-
-    # Hide all methods relative to connection negociation between server and
-    # client.
-    # Default: true
-    #hide_connection_information: true
-
   dns:
     # Configure the ports where to listen for DNS traffic. You can disable
     # the DNS protocol by commenting out the list of ports.
@@ -170,3 +136,4 @@ protocols:
 #
 #    - process: app
 #      cmdline_grep: gunicorn
+

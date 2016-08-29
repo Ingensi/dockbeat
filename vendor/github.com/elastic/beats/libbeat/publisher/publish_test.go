@@ -1,11 +1,10 @@
-// +build !integration
-
 package publisher
 
 import (
 	"testing"
 	"time"
 
+	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/outputs"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,6 +32,14 @@ func (topo testTopology) PublishIPs(name string, localAddrs []string) error {
 
 func (topo testTopology) GetNameByIP(ip string) string {
 	return topo.hostname
+}
+
+// Smoke test PrintPublishEvent. The method has no observable outputs so this
+// is only verifying there are no panics.
+func TestPrintPublishEvent(t *testing.T) {
+	PrintPublishEvent(nil)
+	PrintPublishEvent(common.MapStr{})
+	PrintPublishEvent(testEvent())
 }
 
 // Test GetServerName.

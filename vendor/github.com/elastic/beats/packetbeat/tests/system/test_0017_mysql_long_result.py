@@ -1,11 +1,11 @@
-from packetbeat import BaseTest
+from pbtests.packetbeat import TestCase
 
 """
 Tests for trimming long results in mysql.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
 
     def test_default_settings(self):
         """

@@ -39,18 +39,18 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -137,11 +137,11 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -164,11 +164,11 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -196,9 +196,9 @@ func TestEventGeneratorGetNetworksEventFirstPass(t *testing.T) {
 	// check returned events
 	assert.Equal(t, len(expectedEvents), 2)
 
-	for i, _ := range expectedEvents {
+	for i := range expectedEvents {
 		checked := false
-		for j, _ := range events {
+		for j := range events {
 			if equalEvent(expectedEvents[i], events[j]) {
 				checked = true
 				break
@@ -242,18 +242,18 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -352,11 +352,11 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -379,11 +379,11 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -411,9 +411,9 @@ func TestEventGeneratorGetNetworksEvent(t *testing.T) {
 	// check returned events
 	assert.Equal(t, len(expectedEvents), 2)
 
-	for i, _ := range expectedEvents {
+	for i := range expectedEvents {
 		checked := false
-		for j, _ := range events {
+		for j := range events {
 			if equalEvent(expectedEvents[i], events[j]) {
 				checked = true
 				break
@@ -459,18 +459,18 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// network stats from Docker API
@@ -547,11 +547,11 @@ func TestEventGeneratorGetNetworksEventCleanSavedEvents(t *testing.T) {
 			"containerID":   container.ID,
 			"containerName": "name1",
 			"containerLabels": []common.MapStr{
-				common.MapStr{
+				{
 					"key":   "label1",
 					"value": "value1",
 				},
-				common.MapStr{
+				{
 					"key":   "label2",
 					"value": "value2",
 				},
@@ -608,18 +608,19 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	labels["label3.with.dots"] = "value3"
-	var container = docker.APIContainers{
-		"container_id",
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+
+	container := docker.APIContainers{
+		ID:         "containerId",
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	timestamp := time.Now()
@@ -634,15 +635,15 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
-			common.MapStr{
+			{
 				"key":   "label3_with_dots",
 				"value": "value3",
 			},
@@ -651,7 +652,7 @@ func TestEventGeneratorGetContainerEvent(t *testing.T) {
 		"container": common.MapStr{
 			"id":      container.ID,
 			"command": container.Command,
-			"created": time.Unix(container.Created, 0),
+			"created": common.Time(time.Unix(container.Created, 0)),
 			"image":   container.Image,
 			"names":   container.Names,
 			"ports": []map[string]interface{}{common.MapStr{
@@ -682,24 +683,24 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	labels["label3.with.dots"] = "value3"
-	var container = docker.APIContainers{
-		"container_id",
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{}, // no port
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         "container_id",
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	timestamp := time.Now()
 	var stats = new(docker.Stats)
 	stats.Read = timestamp
-	var eventGenerator = EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, calculator.CalculatorFactoryImpl{}, time.Second}
+	var eventGenerator = &EventGenerator{&socket, EGNetworkStats{}, EGBlkioStats{}, calculator.CalculatorFactoryImpl{}, time.Second}
 
 	// expected output
 	expectedEvent := common.MapStr{
@@ -708,15 +709,15 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
-			common.MapStr{
+			{
 				"key":   "label3_with_dots",
 				"value": "value3",
 			},
@@ -725,10 +726,10 @@ func TestEventGeneratorGetContainerEventWithNoPorts(t *testing.T) {
 		"container": common.MapStr{
 			"id":         container.ID,
 			"command":    container.Command,
-			"created":    time.Unix(container.Created, 0),
+			"created":    common.Time(time.Unix(container.Created, 0)),
 			"image":      container.Image,
 			"names":      container.Names,
-			"ports":      []map[string]interface{}{},
+			"ports":      eventGenerator.convertContainerPorts(&container.Ports),
 			"sizeRootFs": container.SizeRootFs,
 			"sizeRw":     container.SizeRw,
 			"status":     container.Status,
@@ -763,18 +764,18 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// CPU stats from Docker API
@@ -816,11 +817,11 @@ func TestEventGeneratorGetCpuEvent(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -862,18 +863,18 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// main stats object
@@ -886,11 +887,11 @@ func TestEventGeneratorGetMemoryEvent(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -944,18 +945,18 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// main stats object
@@ -983,11 +984,11 @@ func TestEventGeneratorGetBlkioEventFirstPass(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -1039,18 +1040,18 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 	labels["label1"] = "value1"
 	labels["label2"] = "value2"
 	containerId := "container_id"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// main stats object
@@ -1086,11 +1087,11 @@ func TestEventGeneratorGetBlkioEvent(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -1144,18 +1145,18 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 	labels["label2"] = "value2"
 	containerId := "container_id"
 	anotherContainerId := "container_id2"
-	var container = docker.APIContainers{
-		containerId,
-		"container_image",
-		"container command",
-		9876543210,
-		"Up",
-		[]docker.APIPort{docker.APIPort{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
-		123,
-		456,
-		[]string{"/name1", "name1/fake"},
-		labels,
-		docker.NetworkList{},
+	container := docker.APIContainers{
+		ID:         containerId,
+		Image:      "container_image",
+		Command:    "container command",
+		Created:    9876543210,
+		Status:     "Up",
+		Ports:      []docker.APIPort{{PrivatePort: 1234, PublicPort: 4567, Type: "portType", IP: "123.456.879.1"}},
+		SizeRw:     123,
+		SizeRootFs: 456,
+		Names:      []string{"/name1", "name1/fake"},
+		Labels:     labels,
+		Networks:   docker.NetworkList{},
 	}
 
 	// main stats object
@@ -1198,11 +1199,11 @@ func TestEventGeneratorGetBlkioEventCleanSavedEvents(t *testing.T) {
 		"containerID":   container.ID,
 		"containerName": "name1",
 		"containerLabels": []common.MapStr{
-			common.MapStr{
+			{
 				"key":   "label1",
 				"value": "value1",
 			},
-			common.MapStr{
+			{
 				"key":   "label2",
 				"value": "value2",
 			},
@@ -1451,9 +1452,9 @@ func getBlkioStats(read time.Time, reads uint64, writes uint64, total uint64) do
 		Read: read,
 		BlkioStats: blkioStats{
 			IOServicedRecursive: []docker.BlkioStatsEntry{
-				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Read", Value: reads},
-				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Write", Value: writes},
-				docker.BlkioStatsEntry{Major: 0, Minor: 0, Op: "Total", Value: total},
+				{Major: 0, Minor: 0, Op: "Read", Value: reads},
+				{Major: 0, Minor: 0, Op: "Write", Value: writes},
+				{Major: 0, Minor: 0, Op: "Total", Value: total},
 			},
 		},
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 
+	"github.com/elastic/beats/packetbeat/config"
 	"github.com/elastic/beats/packetbeat/procs"
 	"github.com/elastic/beats/packetbeat/protos"
 	"github.com/elastic/beats/packetbeat/protos/tcp"
@@ -129,31 +130,57 @@ type Mysql struct {
 		dir uint8, raw_msg []byte)
 }
 
-func init() {
-	protos.Register("mysql", New)
+func (mysql *Mysql) getTransaction(k common.HashableTcpTuple) *MysqlTransaction {
+	v := mysql.transactions.Get(k)
+	if v != nil {
+		return v.(*MysqlTransaction)
+	}
+	return nil
 }
 
-func New(
-	testMode bool,
-	results publish.Transactions,
-	cfg *common.Config,
-) (protos.Plugin, error) {
-	p := &Mysql{}
-	config := defaultConfig
-	if !testMode {
-		if err := cfg.Unpack(&config); err != nil {
-			return nil, err
+func (mysql *Mysql) InitDefaults() {
+	mysql.maxRowLength = 1024
+	mysql.maxStoreRows = 10
+	mysql.Send_request = false
+	mysql.Send_response = false
+	mysql.transactionTimeout = protos.DefaultTransactionExpiration
+}
+
+func (mysql *Mysql) setFromConfig(config config.Mysql) error {
+
+	mysql.Ports = config.Ports
+
+	if config.Max_row_length != nil {
+		mysql.maxRowLength = *config.Max_row_length
+	}
+	if config.Max_rows != nil {
+		mysql.maxStoreRows = *config.Max_rows
+	}
+	if config.SendRequest != nil {
+		mysql.Send_request = *config.SendRequest
+	}
+	if config.SendResponse != nil {
+		mysql.Send_response = *config.SendResponse
+	}
+	if config.TransactionTimeout != nil && *config.TransactionTimeout > 0 {
+		mysql.transactionTimeout = time.Duration(*config.TransactionTimeout) * time.Second
+	}
+	return nil
+}
+
+func (mysql *Mysql) GetPorts() []int {
+	return mysql.Ports
+}
+
+func (mysql *Mysql) Init(test_mode bool, results publish.Transactions) error {
+
+	mysql.InitDefaults()
+	if !test_mode {
+		err := mysql.setFromConfig(config.ConfigSingleton.Protocols.Mysql)
+		if err != nil {
+			return err
 		}
 	}
-
-	if err := p.init(results, &config); err != nil {
-		return nil, err
-	}
-	return p, nil
-}
-
-func (mysql *Mysql) init(results publish.Transactions, config *mysqlConfig) error {
-	mysql.setFromConfig(config)
 
 	mysql.transactions = common.NewCache(
 		mysql.transactionTimeout,
@@ -163,27 +190,6 @@ func (mysql *Mysql) init(results publish.Transactions, config *mysqlConfig) erro
 	mysql.results = results
 
 	return nil
-}
-
-func (mysql *Mysql) setFromConfig(config *mysqlConfig) {
-	mysql.Ports = config.Ports
-	mysql.maxRowLength = config.MaxRowLength
-	mysql.maxStoreRows = config.MaxRows
-	mysql.Send_request = config.SendRequest
-	mysql.Send_response = config.SendResponse
-	mysql.transactionTimeout = config.TransactionTimeout
-}
-
-func (mysql *Mysql) getTransaction(k common.HashableTcpTuple) *MysqlTransaction {
-	v := mysql.transactions.Get(k)
-	if v != nil {
-		return v.(*MysqlTransaction)
-	}
-	return nil
-}
-
-func (mysql *Mysql) GetPorts() []int {
-	return mysql.Ports
 }
 
 func (stream *MysqlStream) PrepareForNewMessage() {

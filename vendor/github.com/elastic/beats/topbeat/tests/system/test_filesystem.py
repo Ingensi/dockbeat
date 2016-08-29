@@ -1,12 +1,12 @@
-from topbeat import BaseTest
-import numbers
+from topbeat import TestCase
+
 
 """
-Contains tests for filesystem statistics.
+Contains tests for ide statistics.
 """
 
 
-class Test(BaseTest):
+class Test(TestCase):
     def test_filesystems(self):
         """
         Checks that system wide stats are found in the output and
@@ -17,9 +17,9 @@ class Test(BaseTest):
             process_stats=False,
             filesystem_stats=True
         )
-        topbeat = self.start_beat()
-        self.wait_until(lambda: self.log_contains(msg="output worker: publish"))
-        topbeat.check_kill_and_wait()
+        topbeat = self.start_topbeat()
+        self.wait_until(lambda: self.output_has(lines=1))
+        topbeat.kill_and_wait()
 
         output = self.read_output()[0]
 
@@ -32,7 +32,7 @@ class Test(BaseTest):
         for key in [
             "fs.used_p",
         ]:
-            assert isinstance(output[key], numbers.Number)
+            assert type(output[key]) is float
 
         for key in [
             "fs.avail",

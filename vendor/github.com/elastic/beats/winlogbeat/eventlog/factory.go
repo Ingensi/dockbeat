@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-
-	"github.com/elastic/beats/libbeat/common"
 )
 
 // Config is the configuration data used to instantiate a new EventLog.
 type Config struct {
-	Name                 string // Name of the event log or channel.
-	RemoteAddress        string // Remote computer to connect to. Optional.
-	common.EventMetadata        // Fields and tags to add to each event.
+	Name          string // Name of the event log or channel.
+	RemoteAddress string // Remote computer to connect to. Optional.
 
 	API string // Name of the API to use. Optional.
 }
