@@ -4,6 +4,7 @@ SYSTEM_TESTS=false
 TEST_ENVIRONMENT=false
 ES_BEATS=./vendor/github.com/elastic/beats
 GOPACKAGES=$(shell glide novendor)
+GOFILES_NOVENDOR = $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 PREFIX?=.
 
 # Path to the libbeat Makefile
@@ -33,10 +34,24 @@ commit:
 update-deps:
 	glide update --strip-vcs
 
-.PHONY: fullupdate
-fullupdate:
-	$(MAKE) update
-	bash ./scripts/fullupdate.sh ${BEATNAME} ${BEAT_DIR}/${BEATNAME}
+# Checks project and source code if everything is according to standard
+.PHONY: check
+check:
+	@gofmt -l ${GOFILES_NOVENDOR} | read && echo "Code differs from gofmt's style" 1>&2 && exit 1 || true
+	go vet ${GOPACKAGES}
+
+# Run integration tests. Unit tests are run as part of the integration tests. It runs all tests with race detection enabled.
+.PHONY: integration-tests
+integration-tests: prepare-tests
+	$(GOPATH)/bin/gotestcover -race -coverprofile=${COVERAGE_DIR}/integration.cov -covermode=atomic ${GOPACKAGES}
+
+# Generates a coverage report from the existing coverage files
+# It assumes that some covrage reports already exists, otherwise it will fail
+.PHONY: coverage-report
+coverage-report:
+	python ${ES_BEATS}/scripts/aggregate_coverage.py -o ./${COVERAGE_DIR}/full.cov ./${COVERAGE_DIR}
+	go tool cover -html=./${COVERAGE_DIR}/full.cov -o ${COVERAGE_DIR}/full.html
+
 
 # This is called by the beats packer before building starts
 .PHONY: before-build
