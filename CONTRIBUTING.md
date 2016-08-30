@@ -66,23 +66,6 @@ make coverage-report
 
 The test coverage is reported in the folder `./build/coverage/`
 
-
-### Package
-
-To be able to package Dockerbeat the requirements are as follows:
-
- * [Docker Environment](https://docs.docker.com/engine/installation/) >= 1.10
- * $GOPATH/bin must be part of $PATH: `export PATH=${PATH}:${GOPATH}/bin`
-
-To cross-compile and package Dockerbeat for all supported platforms, run the following commands:
-
-```
-cd dev-tools/packer
-make deps
-make images
-make
-```
-
 ### Update
 
 Each beat has a template for the mapping in elasticsearch and a documentation for the fields
