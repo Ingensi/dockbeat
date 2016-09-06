@@ -21,7 +21,7 @@ There are five types of documents exported:
 - `type: blkio`: container io access statistics. One document per container is generated.
 - `type: log`: dockerbeat status information. One document per tick is generated if an error occurred.
 
-To get a detailed list of all generated fields, please read the [fields documentation page](doc/fields.asciidoc).
+To get a detailed list of all generated fields, please read the [fields documentation page](docs/fields.asciidoc).
 
 ## Elasticsearch template 
 
