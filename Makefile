@@ -1,4 +1,4 @@
-BEATNAME=dockerbeat
+BEATNAME=dockbeat
 BEAT_DIR=github.com/ingensi
 SYSTEM_TESTS=false
 TEST_ENVIRONMENT=false
@@ -26,7 +26,7 @@ commit:
 	git commit -m "Add git settings"
 	git add .
 	git reset -- .travis.yml
-	git commit -m "Add dockerbeat"
+	git commit -m "Add dockbeat"
 	git add .travis.yml
 	git commit -m "Add Travis CI"
 

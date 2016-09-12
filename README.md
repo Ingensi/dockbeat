@@ -1,14 +1,12 @@
-# Dockerbeat
+# Dockbeat
 
 (if you're on the fast lane, check the TL;DR at the bottom of the readme)
 
-Build status : [![Build Status](https://travis-ci.org/Ingensi/dockerbeat.svg?branch=develop)](https://travis-ci.org/Ingensi/dockerbeat)
+Build status : [![Build Status](https://travis-ci.org/Ingensi/dockbeat.svg?branch=develop)](https://travis-ci.org/Ingensi/dockbeat)
 
-Test coverage : [![codecov.io](http://codecov.io/github/Ingensi/dockerbeat/coverage.svg?branch=develop)](http://codecov.io/github/Ingensi/dockerbeat?branch=develop)
+Test coverage : [![codecov.io](http://codecov.io/github/Ingensi/dockbeat/coverage.svg?branch=develop)](http://codecov.io/github/Ingensi/dockbeat?branch=develop)
 
-Dockerbeat is the [Beat](https://www.elastic.co/products/beats) used for docker daemon monitoring. It is a lightweight agent that installed on your servers, reads periodically docker container statistics and indexes them in Elasticsearch.
-
-We've reached the Release Candidate 1 : it's almost stable today, some minor issues can still appear.
+Dockbeat is the new Dockerbeat name. We had to rename the project due to the [Docker trademarking policy](https://www.docker.com/trademark-guidelines). Dockbeat is a [Beat](https://www.elastic.co/products/beats) used for docker daemon monitoring. It is a lightweight agent that installed on your servers, reads periodically docker container statistics and indexes them in Elasticsearch.
 
 ## Exported document types
 
@@ -19,19 +17,19 @@ There are five types of documents exported:
 - `type: net`: container network statistics. One document per network container is generated.
 - `type: memory`: container memory statistics. One document per container is generated.
 - `type: blkio`: container io access statistics. One document per container is generated.
-- `type: log`: dockerbeat status information. One document per tick is generated if an error occurred.
+- `type: log`: dockbeat status information. One document per tick is generated if an error occurred.
 
 To get a detailed list of all generated fields, please read the [fields documentation page](docs/fields.asciidoc).
 
 ## Elasticsearch template 
 
-To apply Dockerbeat template (recommended but not required) :
+To apply Dockbeat template (recommended but not required) :
 
 ```bash
-curl -XPUT 'http://elastic:9200/_template/dockerbeat' -d@etc/dockerbeat.template.json
+curl -XPUT 'http://elastic:9200/_template/dockbeat' -d@etc/dockbeat.template.json
 ```
     
-## Build Dockerbeat
+## Build Dockbeat
 
 Ensure that this folder is at the following location:
 `${GOPATH}/github.com/ingensi`
@@ -45,24 +43,24 @@ Ensure that this folder is at the following location:
 
 ### Build
 
-To build the binary for Dockerbeat run the command below. This will generate a binary
-in the same directory with the name dockerbeat.
+To build the binary for Dockbeat run the command below. This will generate a binary
+in the same directory with the name dockbeat.
 
 ```
 make
 ```
  
-## Run dockerbeat
+## Run dockbeat
 
-Project compilation generate a `dockerbeat` executable file in the root directory. To launch dockerbeat, run the following command:
+Project compilation generate a `dockbeat` executable file in the root directory. To launch dockbeat, run the following command:
 
 ```bash
-./dockerbeat -c etc/dockerbeat.yml
+./dockbeat -c etc/dockbeat.yml
 ```
 
 ## Run in a docker container
 
-The easiest way to launch dockerbeat is to run it in a container. To achieve this, use the `ingensi/dockerbeat` docker image, available on the [docker hub](https://hub.docker.com/r/ingensi/dockerbeat/).
+The easiest way to launch dockbeat is to run it in a container. To achieve this, use the `ingensi/dockbeat` docker image, available on the [docker hub](https://hub.docker.com/r/ingensi/dockbeat/).
 
 Docker run command should:
 
@@ -73,30 +71,30 @@ Example:
 
 ```
 docker run -d -v /var/run/docker.sock:/var/run/docker.sock \
-  --link elastic:elasticsearch ingensi/dockerbeat:1.0.0-rc3
+  --link elastic:elasticsearch ingensi/dockbeat:1.0.0-rc3
 ```
 
-To override the default configuration, just link yours to `/etc/dockerbeat/dockerbeat.yml`:
+To override the default configuration, just link yours to `/etc/dockbeat/dockbeat.yml`:
 
-```
-docker run -d --link elastic:elasticsearch \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /volumes/dockerbeat-config/:/etc/dockerbeat \
-  ingensi/dockerbeat:1.0.0-rc3
-```
-
-By default, when dockerbeat is running from this image, it logs into the `/var/log/dockerbeat` directory. To access this logs from the host, link a directory to the dockerbeat logging directory:
 ```
 docker run -d --link elastic:elasticsearch \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /volumes/dockerbeat-config/:/etc/dockerbeat \
-  -v /volumes/dockerbeat-logs/:/var/logs/dockerbeat \
-  ingensi/dockerbeat:1.0.0-rc3
+  -v /volumes/dockbeat-config/:/etc/dockbeat \
+  ingensi/dockbeat:1.0.0-rc3
 ```
 
-### Configuring Dockerbeat
+By default, when dockbeat is running from this image, it logs into the `/var/log/dockbeat` directory. To access this logs from the host, link a directory to the dockbeat logging directory:
+```
+docker run -d --link elastic:elasticsearch \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /volumes/dockbeat-config/:/etc/dockbeat \
+  -v /volumes/dockbeat-logs/:/var/logs/dockbeat \
+  ingensi/dockbeat:1.0.0-rc3
+```
 
-Dockerbeat configuration file is located at `etc/dockerbeat.yml`. This default template provides the following environment variable mapping:
+### Configuring Dockbeat
+
+Dockbeat configuration file is located at `etc/dockbeat.yml`. This default template provides the following environment variable mapping:
 
   - How often to read server statistics 
     - ENV : `PERIOD`
@@ -132,7 +130,7 @@ docker run -d \
   --link elastic2:es2 \
   -e PERIOD=30 \
   -e DOCKER_SOCKET=unix:///another/path.sock \
-  ingensi/dockerbeat:1.0.0-rc3
+  ingensi/dockbeat:1.0.0-rc3
 ```
 
 ### Contribute to the project
@@ -156,8 +154,8 @@ $ docker run -d --net=dockernet --name=kibana -p 5601:5601 \
   -e ELASTICSEARCH_URL=http://elastic:9200 \
   kibana:4.4.1
 
-$ docker run -d --net=dockernet --name=dockerbeat \
+$ docker run -d --net=dockernet --name=dockbeat \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /mnt/dv/dockerbeat:/etc/dockerbeat ingensi/dockerbeat:latest
+  -v /mnt/dv/dockbeat:/etc/dockbeat ingensi/dockbeat:latest
 
 ```

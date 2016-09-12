@@ -7,14 +7,14 @@ RUN cd /tmp/PyYAML-3.11 && python setup.py install
 # install glide
 RUN go get github.com/Masterminds/glide
 
-COPY . $GOPATH/src/github.com/ingensi/dockerbeat
-RUN cd $GOPATH/src/github.com/ingensi/dockerbeat && make && make
+COPY . $GOPATH/src/github.com/ingensi/dockbeat
+RUN cd $GOPATH/src/github.com/ingensi/dockbeat && make && make
 
-RUN mkdir -p /etc/dockerbeat/ \
-    && cp $GOPATH/src/github.com/ingensi/dockerbeat/dockerbeat /usr/local/bin/dockerbeat \
-    && cp $GOPATH/src/github.com/ingensi/dockerbeat/dockerbeat-docker.yml /etc/dockerbeat/dockerbeat.yml
+RUN mkdir -p /etc/dockbeat/ \
+    && cp $GOPATH/src/github.com/ingensi/dockbeat/dockbeat /usr/local/bin/dockbeat \
+    && cp $GOPATH/src/github.com/ingensi/dockbeat/dockbeat-docker.yml /etc/dockbeat/dockbeat.yml
 
-WORKDIR /etc/dockerbeat
-ENTRYPOINT dockerbeat
+WORKDIR /etc/dockbeat
+ENTRYPOINT dockbeat
 
-CMD [ "-c", "dockerbeat.yml", "-e" ]
+CMD [ "-c", "dockbeat.yml", "-e" ]

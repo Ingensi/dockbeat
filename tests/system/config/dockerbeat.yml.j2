@@ -17,9 +17,9 @@ output:
     path: {{ output_file_path|default(beat.working_dir + "/output") }}
 
 
-    # Name of the generated files. The default is `dockerbeat` and it generates
-    # files: `dockerbeat`, `dockerbeat.1`, `dockerbeat.2`, etc.
-    filename: "{{ output_file_filename|default("dockerbeat") }}"
+    # Name of the generated files. The default is `dockbeat` and it generates
+    # files: `dockbeat`, `dockbeat.1`, `dockbeat.2`, etc.
+    filename: "{{ output_file_filename|default("dockbeat") }}"
 
     # Maximum size in kilobytes of each file. When this size is reached, the files are
     # rotated. The default value is 10 MB.
@@ -70,10 +70,10 @@ shipper:
 
   #files:
     # The directory where the log files will written to.
-    #path: /var/log/dockerbeat
+    #path: /var/log/dockbeat
 
     # The name of the files where the logs are written to.
-    #name: dockerbeat
+    #name: dockbeat
 
     # Configure log file size limit. If limit is reached, log file will be
     # automatically rotated

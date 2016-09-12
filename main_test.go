@@ -1,6 +1,6 @@
 package main
 
-// This file is mandatory as otherwise the dockerbeat.test binary is not generated correctly.
+// This file is mandatory as otherwise the dockbeat.test binary is not generated correctly.
 
 import (
 	"flag"

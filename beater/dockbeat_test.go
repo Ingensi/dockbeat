@@ -3,68 +3,68 @@ package beater
 import (
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/publisher"
-	"github.com/ingensi/dockerbeat/calculator"
-	"github.com/ingensi/dockerbeat/config"
-	"github.com/ingensi/dockerbeat/event"
+	"github.com/ingensi/dockbeat/calculator"
+	"github.com/ingensi/dockbeat/config"
+	"github.com/ingensi/dockbeat/event"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
 
-// DOCKERBEAT TYPE IS CURRENTLY NOT REALLY TESTABLE BECAUSE OF THE DOCKER GO CLIENT WICH DOES NOT DEFINE INTERFACE
+// DOCKBEAT TYPE IS CURRENTLY NOT REALLY TESTABLE BECAUSE OF THE DOCKER GO CLIENT WICH DOES NOT DEFINE INTERFACE
 // (NOT MOCKABLE)
 
 // SETUP TESTS
 
-func TestDockerbeatSetupMethod(t *testing.T) {
+func TestDockbeatSetupMethod(t *testing.T) {
 	// GIVEN
-	// a dockerbeat instance
-	var dockerbeat = getEmptyDockerbeat()
+	// a dockbeat instance
+	var dockbeat = getEmptyDockbeat()
 	events := publisher.ChanClient{}
 	fakeBeat := beat.Beat{Events: events}
 
 	// WHEN
-	dockerbeat.Setup(&fakeBeat)
+	dockbeat.Setup(&fakeBeat)
 
 	// THEN
-	// events set as dockerbeat.events
-	assert.Equal(t, events, dockerbeat.events)
-	// dockerbeat.done initialized
-	assert.NotNil(t, dockerbeat.done)
+	// events set as dockbeat.events
+	assert.Equal(t, events, dockbeat.events)
+	// dockbeat.done initialized
+	assert.NotNil(t, dockbeat.done)
 	// dockerClient initialized with given socket
-	assert.NotNil(t, dockerbeat.dockerClient)
-	assert.Equal(t, dockerbeat.socketConfig.socket, dockerbeat.dockerClient.Endpoint())
+	assert.NotNil(t, dockbeat.dockerClient)
+	assert.Equal(t, dockbeat.socketConfig.socket, dockbeat.dockerClient.Endpoint())
 	// eventGenerator initialized
-	assert.NotNil(t, dockerbeat.eventGenerator)
-	assert.NotNil(t, dockerbeat.eventGenerator.Socket)
-	assert.NotNil(t, dockerbeat.eventGenerator.BlkioStats)
-	assert.NotNil(t, dockerbeat.eventGenerator.NetworkStats)
-	assert.NotNil(t, dockerbeat.eventGenerator.CalculatorFactory)
-	assert.Equal(t, dockerbeat.period, dockerbeat.eventGenerator.Period)
+	assert.NotNil(t, dockbeat.eventGenerator)
+	assert.NotNil(t, dockbeat.eventGenerator.Socket)
+	assert.NotNil(t, dockbeat.eventGenerator.BlkioStats)
+	assert.NotNil(t, dockbeat.eventGenerator.NetworkStats)
+	assert.NotNil(t, dockbeat.eventGenerator.CalculatorFactory)
+	assert.Equal(t, dockbeat.period, dockbeat.eventGenerator.Period)
 }
 
 // CLOSE TESTS
 
 func TestDockebeatCloseMethod(t *testing.T) {
 	// GIVEN
-	var dockerbeat = getEmptyDockerbeat()
+	var dockbeat = getEmptyDockbeat()
 
 	// WHEN
-	dockerbeat.Stop()
+	dockbeat.Stop()
 
 	// THEN
-	_, ok := <-dockerbeat.done
+	_, ok := <-dockbeat.done
 	if ok {
-		assert.Fail(t, "dockerbeat.done not closed")
+		assert.Fail(t, "dockbeat.done not closed")
 	}
 }
 
 // VALID VERSION TESTS
 
-func TestDockerbeatValidVersionTooOld(t *testing.T) {
+func TestDockbeatValidVersionTooOld(t *testing.T) {
 	// GIVEN
 	var versions = []string{"1.3.0", "1.4.2", "1.4.9"}
-	var beat = getEmptyDockerbeat()
+	var beat = getEmptyDockbeat()
 
 	for _, version := range versions {
 		// WHEN
@@ -76,10 +76,10 @@ func TestDockerbeatValidVersionTooOld(t *testing.T) {
 	}
 }
 
-func TestDockerbeatValidVersionMalformed(t *testing.T) {
+func TestDockbeatValidVersionMalformed(t *testing.T) {
 	// GIVEN
 	var versions = []string{"1.xD", "malformed", "1.5-testMalformed"}
-	var beat = getEmptyDockerbeat()
+	var beat = getEmptyDockbeat()
 
 	for _, version := range versions {
 		// WHEN
@@ -91,10 +91,10 @@ func TestDockerbeatValidVersionMalformed(t *testing.T) {
 	}
 }
 
-func TestDockerbeatValidVersion(t *testing.T) {
+func TestDockbeatValidVersion(t *testing.T) {
 	// GIVEN
 	var versions = []string{"1.5.0", "1.5.3", "1.6.12", "1.8.2"}
-	var beat = getEmptyDockerbeat()
+	var beat = getEmptyDockbeat()
 
 	for _, version := range versions {
 		// WHEN
@@ -109,7 +109,7 @@ func TestDockerbeatValidVersion(t *testing.T) {
 // Docker client getter function
 func TestDockerClientGetterWithUnixPath(t *testing.T) {
 	// GIVEN
-	var beat = getEmptyDockerbeat()
+	var beat = getEmptyDockbeat()
 	socket := "unix:///some/socket/path.sock"
 	beat.socketConfig.socket = socket
 
@@ -123,7 +123,7 @@ func TestDockerClientGetterWithUnixPath(t *testing.T) {
 
 func TestDockerClientGetterWithTCPPath(t *testing.T) {
 	// GIVEN
-	var beat = getEmptyDockerbeat()
+	var beat = getEmptyDockbeat()
 	socket := "tcp://someHostname:9876"
 	beat.socketConfig.socket = socket
 
@@ -138,8 +138,8 @@ func TestDockerClientGetterWithTCPPath(t *testing.T) {
 // TODO write test for TLS docker client instantiation
 
 // helper method
-func getEmptyDockerbeat() Dockerbeat {
-	return Dockerbeat{
+func getEmptyDockbeat() Dockbeat {
+	return Dockbeat{
 		done:   make(chan struct{}),
 		period: time.Duration(10),
 		socketConfig: SocketConfig{
@@ -157,7 +157,7 @@ func getEmptyDockerbeat() Dockerbeat {
 			Memory:    true,
 		},
 		beatConfig: &config.Config{
-			Dockerbeat: config.DockerbeatConfig{
+			Dockbeat: config.DockbeatConfig{
 				Period: nil,
 				Socket: nil,
 				Tls: config.TlsConfig{

@@ -4,7 +4,7 @@
 package config
 
 type Config struct {
-	Dockerbeat DockerbeatConfig
+	Dockbeat DockbeatConfig
 }
 
 type TlsConfig struct {
@@ -22,7 +22,7 @@ type StatsConfig struct {
 	Cpu       *bool `config:"cpu"`
 }
 
-type DockerbeatConfig struct {
+type DockbeatConfig struct {
 	Period *int64      `config:"period"`
 	Socket *string     `config:"socket"`
 	Tls    TlsConfig   `config:"tls"`
