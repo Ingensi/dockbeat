@@ -2,9 +2,9 @@
 /build
 
 .DS_Store
-/dockerbeat
-/dockerbeat.test
+/dockbeat
+/dockbeat.test
 *.pyc
 
 atlassian-ide-plugin.xml
-dockerbeat.iml
+dockbeat.iml

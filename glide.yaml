@@ -1,4 +1,4 @@
-package: github.com/ingensi/dockerbeat
+package: github.com/ingensi/dockbeat
 import:
 - package: github.com/elastic/beats
   version: v1.2.3

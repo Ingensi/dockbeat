@@ -6,6 +6,6 @@ class BaseTest(TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.beat_name = "dockerbeat"
+        self.beat_name = "dockbeat"
         self.build_path = "../../build/system-tests/"
-        self.beat_path = "../../dockerbeat.test"
+        self.beat_path = "../../dockbeat.test"

@@ -1,8 +1,8 @@
-################### Dockerbeat Configuration Example #########################
+################### Dockbeat Configuration Example #########################
 
-############################# Dockerbeat ######################################
+############################# Dockbeat ######################################
 
-dockerbeat:
+dockbeat:
   # Defines how often a docker stat is sent to the output
   period: ${PERIOD:5}
 
@@ -10,7 +10,7 @@ dockerbeat:
   # By default, this will get the unix:///var/run/docker.sock
   socket: ${DOCKER_SOCKET:unix:///var/run/docker.sock}
 
-  # If dockerbeat has to deal with a TLS-enabled docker daemon, you need to enable TLS and configure path for key and certificates.
+  # If dockbeat has to deal with a TLS-enabled docker daemon, you need to enable TLS and configure path for key and certificates.
   tls:
     # By default, TLS is disabled
     enable: ${DOCKER_ENABLE_TLS:false}
@@ -23,14 +23,6 @@ dockerbeat:
 
     # Path to the key file
     key_path: ${DOCKER_KEY_PATH}
-
-  # Enable or disable stats shipping
-  stats:
-    container: true
-    net: true
-    memory: true
-    blkio: true
-    cpu: true
 ###############################################################################
 ############################# Libbeat Config ##################################
 # Base config file used by all other beats for using libbeat features
@@ -47,7 +39,7 @@ output:
     # Scheme and port can be left out and will be set to the default (http and 9200)
     # In case you specify and additional path, the scheme is required: http://localhost:9200/path
     # IPv6 addresses should always be defined as: https://[2001:db8::1]:9200
-    hosts: ["localhost:9200"]
+    hosts: ["elasticsearch:9200"]
 
     # Optional protocol and basic auth credentials.
     #protocol: "https"
@@ -62,20 +54,20 @@ output:
     # Number of workers per Elasticsearch host.
     #worker: 1
 
-    # Optional index name. The default is "dockerbeat" and generates
-    # [dockerbeat-]YYYY.MM.DD keys.
-    #index: "dockerbeat"
+    # Optional index name. The default is "dockbeat" and generates
+    # [dockbeat-]YYYY.MM.DD keys.
+    #index: "dockbeat"
 
     # A template is used to set the mapping in Elasticsearch
     # By default template loading is disabled and no template is loaded.
     # These settings can be adjusted to load your own template or overwrite existing ones
     #template:
 
-      # Template name. By default the template name is dockerbeat.
-      #name: "dockerbeat"
+      # Template name. By default the template name is dockbeat.
+      #name: "dockbeat"
 
       # Path to template file
-      #path: "dockerbeat.template.json"
+      #path: "dockbeat.template.json"
 
       # Overwrite existing template
       #overwrite: false
@@ -157,7 +149,7 @@ output:
 
     # Optional index name. The default index name is set to name of the beat
     # in all lowercase.
-    #index: dockerbeat
+    #index: dockbeat
 
     # SOCKS5 proxy server URL
     #proxy_url: socks5://user:password@socks5-server:2233
@@ -192,10 +184,10 @@ output:
   ### File as output
   #file:
     # Path to the directory where to save the generated files. The option is mandatory.
-    #path: "/tmp/dockerbeat"
+    #path: "/tmp/dockbeat"
 
-    # Name of the generated files. The default is `dockerbeat` and it generates files: `dockerbeat`, `dockerbeat.1`, `dockerbeat.2`, etc.
-    #filename: dockerbeat
+    # Name of the generated files. The default is `dockbeat` and it generates files: `dockbeat`, `dockbeat.1`, `dockbeat.2`, etc.
+    #filename: dockbeat
 
     # Maximum size in kilobytes of each file. When this size is reached, the files are
     # rotated. The default value is 10240 kB.

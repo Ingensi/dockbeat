@@ -15,9 +15,9 @@ import (
 
 	"github.com/fsouza/go-dockerclient"
 
-	"github.com/ingensi/dockerbeat/calculator"
-	"github.com/ingensi/dockerbeat/config"
-	"github.com/ingensi/dockerbeat/event"
+	"github.com/ingensi/dockbeat/calculator"
+	"github.com/ingensi/dockbeat/config"
+	"github.com/ingensi/dockbeat/event"
 )
 
 // const for event logs
@@ -50,7 +50,7 @@ type StatsConfig struct {
 	Cpu       bool
 }
 
-type Dockerbeat struct {
+type Dockbeat struct {
 	done                 chan struct{}
 	period               time.Duration
 	socketConfig         SocketConfig
@@ -63,26 +63,26 @@ type Dockerbeat struct {
 }
 
 // Creates beater
-func New() *Dockerbeat {
-	return &Dockerbeat{}
+func New() *Dockbeat {
+	return &Dockbeat{}
 }
 
 /// *** Beater interface methods ***///
 
-func (bt *Dockerbeat) Config(b *beat.Beat) error {
+func (bt *Dockbeat) Config(b *beat.Beat) error {
 
 	// Requires Docker 1.9 minimum
 	bt.minimalDockerVersion = SoftwareVersion{major: 1, minor: 9}
 
 	err := cfgfile.Read(&bt.beatConfig, "")
 	if err != nil {
-		logp.Err("dockerbeat", "Error reading configuration file: %v", err)
+		logp.Err("dockbeat", "Error reading configuration file: %v", err)
 		return err
 	}
 
 	//init the period
-	if bt.beatConfig.Dockerbeat.Period != nil {
-		bt.period = time.Duration(*bt.beatConfig.Dockerbeat.Period) * time.Second
+	if bt.beatConfig.Dockbeat.Period != nil {
+		bt.period = time.Duration(*bt.beatConfig.Dockbeat.Period) * time.Second
 	} else {
 		bt.period = 1 * time.Second
 	}
@@ -95,25 +95,25 @@ func (bt *Dockerbeat) Config(b *beat.Beat) error {
 		keyPath:   "",
 	}
 
-	if bt.beatConfig.Dockerbeat.Socket != nil {
-		bt.socketConfig.socket = *bt.beatConfig.Dockerbeat.Socket
+	if bt.beatConfig.Dockbeat.Socket != nil {
+		bt.socketConfig.socket = *bt.beatConfig.Dockbeat.Socket
 	} else {
 		bt.socketConfig.socket = "unix:///var/run/docker.sock" // default docker socket location
 	}
-	if bt.beatConfig.Dockerbeat.Tls.Enable != nil {
-		bt.socketConfig.enableTls = *bt.beatConfig.Dockerbeat.Tls.Enable
+	if bt.beatConfig.Dockbeat.Tls.Enable != nil {
+		bt.socketConfig.enableTls = *bt.beatConfig.Dockbeat.Tls.Enable
 	} else {
 		bt.socketConfig.enableTls = false
 	}
 	if bt.socketConfig.enableTls {
-		if bt.beatConfig.Dockerbeat.Tls.CaPath != nil {
-			bt.socketConfig.caPath = *bt.beatConfig.Dockerbeat.Tls.CaPath
+		if bt.beatConfig.Dockbeat.Tls.CaPath != nil {
+			bt.socketConfig.caPath = *bt.beatConfig.Dockbeat.Tls.CaPath
 		}
-		if bt.beatConfig.Dockerbeat.Tls.CertPath != nil {
-			bt.socketConfig.certPath = *bt.beatConfig.Dockerbeat.Tls.CertPath
+		if bt.beatConfig.Dockbeat.Tls.CertPath != nil {
+			bt.socketConfig.certPath = *bt.beatConfig.Dockbeat.Tls.CertPath
 		}
-		if bt.beatConfig.Dockerbeat.Tls.KeyPath != nil {
-			bt.socketConfig.keyPath = *bt.beatConfig.Dockerbeat.Tls.KeyPath
+		if bt.beatConfig.Dockbeat.Tls.KeyPath != nil {
+			bt.socketConfig.keyPath = *bt.beatConfig.Dockbeat.Tls.KeyPath
 		}
 	}
 
@@ -126,35 +126,35 @@ func (bt *Dockerbeat) Config(b *beat.Beat) error {
 		Cpu:       true,
 	}
 
-	if bt.beatConfig.Dockerbeat.Stats.Container != nil && !*bt.beatConfig.Dockerbeat.Stats.Container {
+	if bt.beatConfig.Dockbeat.Stats.Container != nil && !*bt.beatConfig.Dockbeat.Stats.Container {
 		bt.statsConfig.Container = false
 	}
-	if bt.beatConfig.Dockerbeat.Stats.Net != nil && !*bt.beatConfig.Dockerbeat.Stats.Net {
+	if bt.beatConfig.Dockbeat.Stats.Net != nil && !*bt.beatConfig.Dockbeat.Stats.Net {
 		bt.statsConfig.Net = false
 	}
-	if bt.beatConfig.Dockerbeat.Stats.Memory != nil && !*bt.beatConfig.Dockerbeat.Stats.Memory {
+	if bt.beatConfig.Dockbeat.Stats.Memory != nil && !*bt.beatConfig.Dockbeat.Stats.Memory {
 		bt.statsConfig.Memory = false
 	}
-	if bt.beatConfig.Dockerbeat.Stats.Blkio != nil && !*bt.beatConfig.Dockerbeat.Stats.Blkio {
+	if bt.beatConfig.Dockbeat.Stats.Blkio != nil && !*bt.beatConfig.Dockbeat.Stats.Blkio {
 		bt.statsConfig.Blkio = false
 	}
-	if bt.beatConfig.Dockerbeat.Stats.Cpu != nil && !*bt.beatConfig.Dockerbeat.Stats.Cpu {
+	if bt.beatConfig.Dockbeat.Stats.Cpu != nil && !*bt.beatConfig.Dockbeat.Stats.Cpu {
 		bt.statsConfig.Cpu = false
 	}
 
-	logp.Info("dockerbeat", "Init dockerbeat")
-	logp.Info("dockerbeat", "Follow docker socket %v\n", bt.socketConfig.socket)
+	logp.Info("dockbeat", "Init dockbeat")
+	logp.Info("dockbeat", "Follow docker socket %v\n", bt.socketConfig.socket)
 	if bt.socketConfig.enableTls {
-		logp.Info("dockerbeat", "TLS enabled\n")
+		logp.Info("dockbeat", "TLS enabled\n")
 	} else {
-		logp.Info("dockerbeat", "TLS disabled\n")
+		logp.Info("dockbeat", "TLS disabled\n")
 	}
-	logp.Info("dockerbeat", "Period %v\n", bt.period)
+	logp.Info("dockbeat", "Period %v\n", bt.period)
 
 	return nil
 }
 
-func (bt *Dockerbeat) getDockerClient() (*docker.Client, error) {
+func (bt *Dockbeat) getDockerClient() (*docker.Client, error) {
 	var client *docker.Client
 	var err error
 
@@ -171,10 +171,10 @@ func (bt *Dockerbeat) getDockerClient() (*docker.Client, error) {
 	return client, err
 }
 
-func (bt *Dockerbeat) Setup(b *beat.Beat) error {
+func (bt *Dockbeat) Setup(b *beat.Beat) error {
 	var clientErr error
 	var err error
-	//populate Dockerbeat
+	//populate Dockbeat
 	bt.events = b.Events
 	bt.done = make(chan struct{})
 	bt.dockerClient, clientErr = bt.getDockerClient()
@@ -192,8 +192,8 @@ func (bt *Dockerbeat) Setup(b *beat.Beat) error {
 	return err
 }
 
-func (bt *Dockerbeat) Run(b *beat.Beat) error {
-	logp.Info("dockerbeat", "dockerbeat is running! Hit CTRL-C to stop it.")
+func (bt *Dockbeat) Run(b *beat.Beat) error {
+	logp.Info("dockbeat", "dockbeat is running! Hit CTRL-C to stop it.")
 	var err error
 
 	ticker := time.NewTicker(bt.period)
@@ -209,7 +209,7 @@ func (bt *Dockerbeat) Run(b *beat.Beat) error {
 		// check prerequisites
 		err = bt.checkPrerequisites()
 		if err != nil {
-			logp.Err("dockerbeat", "Unable to collect metrics: %v", err)
+			logp.Err("dockbeat", "Unable to collect metrics: %v", err)
 			bt.publishLogEvent(ERROR, fmt.Sprintf("Unable to collect metrics: %v", err))
 			continue
 		}
@@ -220,33 +220,33 @@ func (bt *Dockerbeat) Run(b *beat.Beat) error {
 
 		duration := timerEnd.Sub(timerStart)
 		if duration.Nanoseconds() > bt.period.Nanoseconds() {
-			logp.Warn("dockerbeat", "Ignoring tick(s) due to processing taking longer than one period")
+			logp.Warn("dockbeat", "Ignoring tick(s) due to processing taking longer than one period")
 			bt.publishLogEvent(WARN, "Ignoring tick(s) due to processing taking longer than one period")
 		}
 	}
 }
 
-func (d *Dockerbeat) Cleanup(b *beat.Beat) error {
+func (d *Dockbeat) Cleanup(b *beat.Beat) error {
 	return nil
 }
 
-func (d *Dockerbeat) Stop() {
+func (d *Dockbeat) Stop() {
 	close(d.done)
-	logp.Info("dockerbeat", "Stopping dockerbeat")
+	logp.Info("dockbeat", "Stopping dockbeat")
 }
 
-func (d *Dockerbeat) RunOneTime(b *beat.Beat) error {
-	logp.Debug("dockerbeat", "Tick!, getting list of containers")
+func (d *Dockbeat) RunOneTime(b *beat.Beat) error {
+	logp.Debug("dockbeat", "Tick!, getting list of containers")
 	containers, err := d.dockerClient.ListContainers(docker.ListContainersOptions{})
 
 	if err == nil {
-		logp.Debug("dockerbeat", "got %v containers", len(containers))
+		logp.Debug("dockbeat", "got %v containers", len(containers))
 		//export stats for each container
 		for _, container := range containers {
 			d.exportContainerStats(container)
 		}
 	} else {
-		logp.Err("dockerbeat", "Cannot get container list: %v", err)
+		logp.Err("dockbeat", "Cannot get container list: %v", err)
 		d.publishLogEvent(ERROR, fmt.Sprintf("Cannot get container list: %v", err))
 	}
 
@@ -255,7 +255,7 @@ func (d *Dockerbeat) RunOneTime(b *beat.Beat) error {
 	return nil
 }
 
-func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error {
+func (d *Dockbeat) exportContainerStats(container docker.APIContainers) error {
 	// statsOptions creation
 	statsC := make(chan *docker.Stats)
 	done := make(chan bool)
@@ -284,46 +284,46 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 			// export events if it is enabled in the configuration
 
 			if d.statsConfig.Container {
-				logp.Debug("dockerbeat", "generating container event for %v", container.ID)
+				logp.Debug("dockbeat", "generating container event for %v", container.ID)
 				events = append(events, d.eventGenerator.GetContainerEvent(&container, stats))
-				logp.Debug("dockerbeat", "container event append to event list (container %v)", container.ID)
+				logp.Debug("dockbeat", "container event append to event list (container %v)", container.ID)
 			}
 
 			if d.statsConfig.Cpu {
-				logp.Debug("dockerbeat", "generating cpu event for %v", container.ID)
+				logp.Debug("dockbeat", "generating cpu event for %v", container.ID)
 				events = append(events, d.eventGenerator.GetCpuEvent(&container, stats))
-				logp.Debug("dockerbeat", "container cpu append to event list (container %v)", container.ID)
+				logp.Debug("dockbeat", "container cpu append to event list (container %v)", container.ID)
 
 			}
 
 			if d.statsConfig.Memory {
-				logp.Debug("dockerbeat", "generating memory event for %v", container.ID)
+				logp.Debug("dockbeat", "generating memory event for %v", container.ID)
 				events = append(events, d.eventGenerator.GetMemoryEvent(&container, stats))
-				logp.Debug("dockerbeat", "container memory append to event list (container %v)", container.ID)
+				logp.Debug("dockbeat", "container memory append to event list (container %v)", container.ID)
 
 			}
 
 			if d.statsConfig.Blkio {
-				logp.Debug("dockerbeat", "generating blkio event for %v", container.ID)
+				logp.Debug("dockbeat", "generating blkio event for %v", container.ID)
 				events = append(events, d.eventGenerator.GetBlkioEvent(&container, stats))
-				logp.Debug("dockerbeat", "container blkio append to event list (container %v)", container.ID)
+				logp.Debug("dockbeat", "container blkio append to event list (container %v)", container.ID)
 
 			}
 
 			if d.statsConfig.Net {
-				logp.Debug("dockerbeat", "generating net event for %v", container.ID)
+				logp.Debug("dockbeat", "generating net event for %v", container.ID)
 				events = append(events, d.eventGenerator.GetNetworksEvent(&container, stats)...)
-				logp.Debug("dockerbeat", "container net append to event list (container %v)", container.ID)
+				logp.Debug("dockbeat", "container net append to event list (container %v)", container.ID)
 
 			}
 
-			logp.Info("dockerbeat", "Publishing %v events", len(events))
+			logp.Info("dockbeat", "Publishing %v events", len(events))
 			d.events.PublishEvents(events)
 		} else if err == nil && stats == nil {
-			logp.Warn("dockerbeat", "Container was existing at listing but not when getting statistics: %v", container.ID)
+			logp.Warn("dockbeat", "Container was existing at listing but not when getting statistics: %v", container.ID)
 			d.publishLogEvent(WARN, fmt.Sprintf("Container was existing at listing but not when getting statistics: %v", container.ID))
 		} else {
-			logp.Err("dockerbeat", "An error occurred while getting docker stats: %v", err)
+			logp.Err("dockbeat", "An error occurred while getting docker stats: %v", err)
 			d.publishLogEvent(ERROR, fmt.Sprintf("An error occurred while getting docker stats: %v", err))
 		}
 	}()
@@ -331,7 +331,7 @@ func (d *Dockerbeat) exportContainerStats(container docker.APIContainers) error 
 	return nil
 }
 
-func (d *Dockerbeat) checkPrerequisites() error {
+func (d *Dockbeat) checkPrerequisites() error {
 	var output error = nil
 
 	env, err := d.dockerClient.Version()
@@ -353,7 +353,7 @@ func (d *Dockerbeat) checkPrerequisites() error {
 	return output
 }
 
-func (d *Dockerbeat) validVersion(version string) (bool, error) {
+func (d *Dockbeat) validVersion(version string) (bool, error) {
 
 	splitsStr := strings.Split(version, ".")
 
@@ -380,7 +380,7 @@ func (d *Dockerbeat) validVersion(version string) (bool, error) {
 	return output, nil
 }
 
-func (d *Dockerbeat) publishLogEvent(level string, message string) {
+func (d *Dockbeat) publishLogEvent(level string, message string) {
 	event := d.eventGenerator.GetLogEvent(level, message)
 	d.events.PublishEvent(event)
 }
