@@ -1,6 +1,6 @@
 package mocks
 
-import "github.com/ingensi/dockerbeat/calculator"
+import "github.com/ingensi/dockbeat/calculator"
 import "github.com/stretchr/testify/mock"
 
 type CalculatorFactory struct {

@@ -25,10 +25,10 @@ addons:
 
 before_install:
   # Redo the travis setup but with the elastic/libbeat path. This is needed so the package path is correct
-  - mkdir -p $HOME/gopath/src/github.com/ingensi/dockerbeat
-  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/ingensi/dockerbeat/
-  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/ingensi/dockerbeat
-  - cd $HOME/gopath/src/github.com/ingensi/dockerbeat
+  - mkdir -p $HOME/gopath/src/github.com/ingensi/dockbeat
+  - rsync -az ${TRAVIS_BUILD_DIR}/ $HOME/gopath/src/github.com/ingensi/dockbeat/
+  - export TRAVIS_BUILD_DIR=$HOME/gopath/src/github.com/ingensi/dockbeat
+  - cd $HOME/gopath/src/github.com/ingensi/dockbeat
   - go get github.com/Masterminds/glide
 
 install:

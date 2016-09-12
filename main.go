@@ -5,11 +5,11 @@ import (
 
 	"github.com/elastic/beats/libbeat/beat"
 
-	"github.com/ingensi/dockerbeat/beater"
+	"github.com/ingensi/dockbeat/beater"
 )
 
 func main() {
-	err := beat.Run("dockerbeat", "1.0.0-rc2", beater.New())
+	err := beat.Run("dockbeat", "1.0.0", beater.New())
 	if err != nil {
 		os.Exit(1)
 	}

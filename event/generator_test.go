@@ -3,8 +3,8 @@ package event
 import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/fsouza/go-dockerclient"
-	"github.com/ingensi/dockerbeat/calculator"
-	"github.com/ingensi/dockerbeat/calculator/mocks"
+	"github.com/ingensi/dockbeat/calculator"
+	"github.com/ingensi/dockbeat/calculator/mocks"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"

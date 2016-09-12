@@ -4,7 +4,7 @@ import (
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
 	"github.com/fsouza/go-dockerclient"
-	"github.com/ingensi/dockerbeat/calculator"
+	"github.com/ingensi/dockbeat/calculator"
 	"strings"
 	"sync"
 	"time"
