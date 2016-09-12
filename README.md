@@ -6,9 +6,7 @@ Build status : [![Build Status](https://travis-ci.org/Ingensi/dockbeat.svg?branc
 
 Test coverage : [![codecov.io](http://codecov.io/github/Ingensi/dockbeat/coverage.svg?branch=develop)](http://codecov.io/github/Ingensi/dockbeat?branch=develop)
 
-Dockbeat is the [Beat](https://www.elastic.co/products/beats) used for docker daemon monitoring. It is a lightweight agent that installed on your servers, reads periodically docker container statistics and indexes them in Elasticsearch.
-
-We've reached the Release Candidate 1 : it's almost stable today, some minor issues can still appear.
+Dockbeat is the new Dockerbeat name. We had to rename the project due to the [Docker trademarking policy](https://www.docker.com/trademark-guidelines). Dockbeat is a [Beat](https://www.elastic.co/products/beats) used for docker daemon monitoring. It is a lightweight agent that installed on your servers, reads periodically docker container statistics and indexes them in Elasticsearch.
 
 ## Exported document types
 
