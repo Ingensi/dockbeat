@@ -237,5 +237,5 @@
   "settings": {
     "index.refresh_interval": "5s"
   },
-  "template": "dockerbeat-*"
+  "template": "dockbeat-*"
 }
