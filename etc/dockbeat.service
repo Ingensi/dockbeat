@@ -1,11 +1,11 @@
 [Unit]
-Description=dockerbeat
-Documentation=https://github.com/ingensi/dockerbeat
+Description=dockbeat
+Documentation=https://github.com/ingensi/dockbeat
 Wants=network-online.target
 After=network-online.target
 
 [Service]
-ExecStart=/usr/bin/dockerbeat -c /etc/dockerbeat/dockerbeat.yml
+ExecStart=/usr/bin/dockbeat -c /etc/dockbeat/dockbeat.yml
 Restart=always
 
 [Install]
