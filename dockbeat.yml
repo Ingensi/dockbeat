@@ -31,6 +31,16 @@ dockbeat:
     memory: true
     blkio: true
     cpu: true
+
+  # Read metrics from specific containers
+  #filter:
+    # Read only metrics of containers whose name matches this regex. 
+    # If field not initialized, include all containers
+    # (Regexp format -> without initial and end '/' character)
+    #containers: "sut\\d*_"
+    # Exclude containers whose name matches this regex
+    #exclude: "sut_3717"
+
 ###############################################################################
 ############################# Libbeat Config ##################################
 # Base config file used by all other beats for using libbeat features

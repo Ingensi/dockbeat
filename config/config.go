@@ -22,9 +22,15 @@ type StatsConfig struct {
 	Cpu       *bool `config:"cpu"`
 }
 
+type FilterConfig struct {
+	Containers *string `config:"containers"`
+	Exclude    *string `config:"exclude"`
+}
+
 type DockbeatConfig struct {
-	Period *int64      `config:"period"`
-	Socket *string     `config:"socket"`
-	Tls    TlsConfig   `config:"tls"`
-	Stats  StatsConfig `config:"stats"`
+	Period *int64       `config:"period"`
+	Socket *string      `config:"socket"`
+	Tls    TlsConfig    `config:"tls"`
+	Stats  StatsConfig  `config:"stats"`
+	Filter FilterConfig `config:"filter"`
 }

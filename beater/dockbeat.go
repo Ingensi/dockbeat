@@ -2,11 +2,13 @@ package beater
 
 import (
 	"errors"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"fmt"
+
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/cfgfile"
 	"github.com/elastic/beats/libbeat/common"
@@ -50,12 +52,18 @@ type StatsConfig struct {
 	Cpu       bool
 }
 
+type FilterConfig struct {
+	Containers string
+	Exclude    string
+}
+
 type Dockbeat struct {
 	done                 chan struct{}
 	period               time.Duration
 	socketConfig         SocketConfig
 	statsConfig          StatsConfig
-	beatConfig           *config.Config
+	filter               FilterConfig
+	beatConfig           *config.Config // Config from yml
 	dockerClient         *docker.Client
 	events               publisher.Client
 	eventGenerator       *event.EventGenerator
@@ -69,7 +77,7 @@ func New() *Dockbeat {
 
 /// *** Beater interface methods ***///
 
-func (bt *Dockbeat) Config(b *beat.Beat) error {
+func (bt *Dockbeat) Config(b *beat.Beat) error { // Configure from yml-config-file
 
 	// Requires Docker 1.9 minimum
 	bt.minimalDockerVersion = SoftwareVersion{major: 1, minor: 9}
@@ -86,6 +94,7 @@ func (bt *Dockbeat) Config(b *beat.Beat) error {
 	} else {
 		bt.period = 1 * time.Second
 	}
+
 	//init the socketConfig
 	bt.socketConfig = SocketConfig{
 		socket:    "",
@@ -141,6 +150,22 @@ func (bt *Dockbeat) Config(b *beat.Beat) error {
 	if bt.beatConfig.Dockbeat.Stats.Cpu != nil && !*bt.beatConfig.Dockbeat.Stats.Cpu {
 		bt.statsConfig.Cpu = false
 	}
+
+	// init the Filter
+	bt.filter = FilterConfig{
+		Containers: "All",
+		Exclude:    "",
+	}
+
+	if bt.beatConfig.Dockbeat.Filter.Containers != nil {
+		bt.filter.Containers = *bt.beatConfig.Dockbeat.Filter.Containers
+	}
+
+	if bt.beatConfig.Dockbeat.Filter.Exclude != nil {
+		bt.filter.Exclude = *bt.beatConfig.Dockbeat.Filter.Exclude
+	}
+
+	logp.Debug("dockbeat", "Dockbeat Filter Containers: %+v", bt.filter)
 
 	logp.Info("dockbeat", "Init dockbeat")
 	logp.Info("dockbeat", "Follow docker socket %v\n", bt.socketConfig.socket)
@@ -240,10 +265,31 @@ func (d *Dockbeat) RunOneTime(b *beat.Beat) error {
 	containers, err := d.dockerClient.ListContainers(docker.ListContainersOptions{})
 
 	if err == nil {
-		logp.Debug("dockbeat", "got %v containers", len(containers))
+		logp.Debug("dockbeat", "got %v containers. Appling filters if it's necessary...", len(containers))
 		//export stats for each container
 		for _, container := range containers {
-			d.exportContainerStats(container)
+			var containerName string = container.Names[0]
+			if containerName[0] == '/' {
+				// Remove / added to 0 position (i don't know why is added...))
+				containerName = containerName[1:]
+			}
+
+			if d.filter.Containers == "All" || d.filter.Containers == "" {
+				if found, _ := regexp.MatchString(d.filter.Exclude, containerName); d.filter.Exclude == "" || !found { // And exclude is empty or is not in exclude regexp
+					logp.Debug("dockbeat", "ContainerName %v not excluded. Sending data...", containerName)
+					d.exportContainerStats(container)
+				}
+			} else {
+				if found, _ := regexp.MatchString(d.filter.Containers, containerName); found { // If container name is in Container regexp
+					logp.Debug("dockbeat", "ContainerName %v included in regex %v. Checking if excluded...", containerName, d.filter.Containers)
+					if found, _ := regexp.MatchString(d.filter.Exclude, containerName); d.filter.Exclude == "" || !found { // And exclude is empty or is not in exclude regexp
+						logp.Debug("dockbeat", "Not excluded. Sending data...")
+						d.exportContainerStats(container)
+					} else {
+						logp.Debug("dockbeat", "ContainerName %v Excluded!", containerName)
+					}
+				}
+			}
 		}
 	} else {
 		logp.Err("dockbeat", "Cannot get container list: %v", err)
@@ -260,7 +306,7 @@ func (d *Dockbeat) exportContainerStats(container docker.APIContainers) error {
 	statsC := make(chan *docker.Stats)
 	done := make(chan bool)
 	errC := make(chan error, 1)
-	// the stream bool is set to false to only listen the first stats
+	// the stream bool is set to false to Containers listen the first stats
 	statsOptions := docker.StatsOptions{
 		ID:      container.ID,
 		Stats:   statsC,
