@@ -278,6 +278,8 @@ func (d *Dockbeat) RunOneTime(b *beat.Beat) error {
 				if found, _ := regexp.MatchString(d.filter.Exclude, containerName); d.filter.Exclude == "" || !found { // And exclude is empty or is not in exclude regexp
 					logp.Debug("dockbeat", "ContainerName %v not excluded. Sending data...", containerName)
 					d.exportContainerStats(container)
+				} else {
+					logp.Debug("dockbeat", "ContainerName %v Excluded!", containerName)
 				}
 			} else {
 				if found, _ := regexp.MatchString(d.filter.Containers, containerName); found { // If container name is in Container regexp
