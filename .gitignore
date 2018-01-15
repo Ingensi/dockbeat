@@ -5,6 +5,7 @@
 /dockbeat
 /dockbeat.test
 *.pyc
+.vscode
 
 atlassian-ide-plugin.xml
 dockbeat.iml
