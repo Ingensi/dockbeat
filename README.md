@@ -120,6 +120,14 @@ Dockbeat configuration file is located at `etc/dockbeat.yml`. This default templ
     - ENV : `DOCKER_KEY_PATH`
     - Beats variable : `input.tls.key_path`
     - Default value : no default value
+  - Filter containers by name with REGEXP
+    - ENV: `FILTER_CONTAINERS`
+    - Dockbeat variable: `filter.containers`
+    - Default value: no default value
+  - Exclude containers by name with REGEXP
+    - ENV: `FILTER_EXCLUDE`
+    - Dockbeat variable: `filter.exclude`
+    - Default value: no default value
                                        
 When launching it inside a docker container, you can modify the environment variables using the `-e` flag :
 
